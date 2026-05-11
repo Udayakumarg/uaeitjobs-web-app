@@ -23,15 +23,15 @@ export function Button({ className, variant = 'primary', ...props }: ButtonHTMLA
 }
 
 export function Input(props: InputHTMLAttributes<HTMLInputElement>) {
-  return <input {...props} className={cn('min-h-10 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-950 placeholder:text-slate-400', props.className)} />
+  return <input {...props} className={cn('min-h-10 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-950 placeholder:text-slate-400', props['aria-invalid'] && 'border-red-500 bg-red-50', props.className)} />
 }
 
 export function Textarea(props: TextareaHTMLAttributes<HTMLTextAreaElement>) {
-  return <textarea {...props} className={cn('min-h-28 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-950 placeholder:text-slate-400', props.className)} />
+  return <textarea {...props} className={cn('min-h-28 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-950 placeholder:text-slate-400', props['aria-invalid'] && 'border-red-500 bg-red-50', props.className)} />
 }
 
 export function Select(props: SelectHTMLAttributes<HTMLSelectElement>) {
-  return <select {...props} className={cn('min-h-10 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-950', props.className)} />
+  return <select {...props} className={cn('min-h-10 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-950', props['aria-invalid'] && 'border-red-500 bg-red-50', props.className)} />
 }
 
 export function Field({ label, error, children }: { label: string; error?: string; children: ReactNode }) {
@@ -39,7 +39,7 @@ export function Field({ label, error, children }: { label: string; error?: strin
     <label className="grid gap-1.5 text-sm font-medium text-slate-700">
       <span>{label}</span>
       {children}
-      {error ? <span className="text-xs font-medium text-red-600">{error}</span> : null}
+      {error ? <span className="text-xs font-medium text-red-600" role="alert">{error}</span> : null}
     </label>
   )
 }

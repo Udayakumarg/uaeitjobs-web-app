@@ -5,7 +5,7 @@ import { useForm } from 'react-hook-form'
 import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom'
 import { z } from 'zod'
 import { Button, Card, Field, Input } from '../../components/ui'
-import { errorMessage, authApi } from '../../services/api'
+import { authApi, errorMessage, fieldErrors } from '../../services/api'
 import { useAuthStore } from '../../store/authStore'
 import { useToastStore } from '../../components/Toast'
 
@@ -23,7 +23,7 @@ export default function Login() {
   const { user, setSession } = useAuthStore()
   const toast = useToastStore((state) => state.add)
   const [serverError, setServerError] = useState('')
-  const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<FormValues>({ resolver: zodResolver(schema) })
+  const { register, handleSubmit, setError, formState: { errors, isSubmitting } } = useForm<FormValues>({ resolver: zodResolver(schema) })
 
   if (user) return <Navigate to={user.userType === 'hr' ? '/hr' : '/seeker'} replace />
 
@@ -35,7 +35,16 @@ export default function Login() {
       toast({ type: 'success', title: 'Welcome back', message: 'You are signed in.' })
       navigate((location.state as { from?: string } | null)?.from ?? (data.user.userType === 'hr' ? '/hr' : '/seeker'))
     } catch (error) {
-      setServerError(errorMessage(error))
+      const serverFieldErrors = fieldErrors(error)
+      Object.entries(serverFieldErrors).forEach(([field, message]) => {
+        if (field === 'email' || field === 'password') {
+          setError(field, { type: 'server', message })
+        }
+      })
+      if (Object.keys(serverFieldErrors).length === 0) {
+        setError('email', { type: 'server', message: errorMessage(error) })
+        setServerError(errorMessage(error))
+      }
     }
   }
 
@@ -48,8 +57,8 @@ export default function Login() {
       </section>
       <Card>
         <form className="grid gap-4" onSubmit={handleSubmit(onSubmit)}>
-          <Field label="Email" error={errors.email?.message}><Input type="email" autoComplete="email" {...register('email')} /></Field>
-          <Field label="Password" error={errors.password?.message}><Input type="password" autoComplete="current-password" {...register('password')} /></Field>
+          <Field label="Email" error={errors.email?.message}><Input type="email" autoComplete="email" aria-invalid={Boolean(errors.email)} {...register('email')} /></Field>
+          <Field label="Password" error={errors.password?.message}><Input type="password" autoComplete="current-password" aria-invalid={Boolean(errors.password)} {...register('password')} /></Field>
           <label className="inline-flex items-center gap-2 text-sm text-slate-700">
             <input type="checkbox" className="h-4 w-4 rounded border-slate-300" {...register('remember')} /> Remember me
           </label>

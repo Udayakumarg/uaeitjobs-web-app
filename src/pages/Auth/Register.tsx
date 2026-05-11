@@ -52,7 +52,10 @@ export default function Register() {
           setError(field as keyof FormValues, { type: 'server', message })
         }
       })
-      setServerError(errorMessage(error))
+      if (Object.keys(serverFieldErrors).length === 0) {
+        setError('email', { type: 'server', message: errorMessage(error) })
+        setServerError(errorMessage(error))
+      }
     }
   }
 
@@ -78,11 +81,11 @@ export default function Register() {
         </div>
         <form className="grid gap-4" onSubmit={handleSubmit(onSubmit)}>
           <input type="hidden" {...register('userType')} />
-          <Field label="Email" error={errors.email?.message}><Input type="email" autoComplete="email" {...register('email')} /></Field>
+          <Field label="Email" error={errors.email?.message}><Input type="email" autoComplete="email" aria-invalid={Boolean(errors.email)} {...register('email')} /></Field>
           <Field label="Phone"><Input autoComplete="tel" {...register('phone')} /></Field>
           <Field label="Country"><Select {...register('country')}><option>United Arab Emirates</option><option>India</option><option>Pakistan</option><option>Philippines</option><option>Other</option></Select></Field>
-          <Field label="Password" error={errors.password?.message}><Input type="password" autoComplete="new-password" {...register('password')} /></Field>
-          <Field label="Confirm password" error={errors.confirmPassword?.message}><Input type="password" autoComplete="new-password" {...register('confirmPassword')} /></Field>
+          <Field label="Password" error={errors.password?.message}><Input type="password" autoComplete="new-password" aria-invalid={Boolean(errors.password)} {...register('password')} /></Field>
+          <Field label="Confirm password" error={errors.confirmPassword?.message}><Input type="password" autoComplete="new-password" aria-invalid={Boolean(errors.confirmPassword)} {...register('confirmPassword')} /></Field>
           {serverError ? <p className="rounded-md bg-red-50 p-3 text-sm font-medium text-red-700">{serverError}</p> : null}
           <Button disabled={isSubmitting}><UserPlus size={18} /> {isSubmitting ? 'Creating...' : 'Create account'}</Button>
           <p className="text-sm text-slate-600">Already registered? <Link className="font-semibold text-blue-700" to="/login">Login</Link></p>

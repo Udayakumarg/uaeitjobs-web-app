@@ -5,12 +5,7 @@ import type { Application, ApplicationStatus, AuthResponse, HRProfile, Job, JobR
 
 const configuredApiUrl = import.meta.env.VITE_API_URL
 
-if (!configuredApiUrl) {
-  console.error('VITE_API_URL environment variable is not set. Set it in .env or in Vercel project settings.')
-  throw new Error('Missing required environment variable: VITE_API_URL')
-}
-
-export const API_URL = configuredApiUrl
+export const API_URL = configuredApiUrl ?? ''
 
 export const api = axios.create({
   baseURL: `${API_URL}/api/v1`,
