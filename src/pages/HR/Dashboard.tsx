@@ -55,9 +55,9 @@ export default function HRDashboard() {
                 <td className="p-4">{dateLabel(job.createdAt)}</td>
                 <td className="p-4">
                   <div className="flex gap-2">
-                    <Link to={`/hr/jobs/${job.id}/applicants`}><Button variant="secondary"><Users size={15} /></Button></Link>
-                    <Link to={`/hr/jobs/${job.id}/edit`}><Button variant="secondary"><Edit size={15} /></Button></Link>
-                    <Button variant="danger" onClick={() => remove(job.id)}><Trash2 size={15} /></Button>
+                    <Link to={`/hr/jobs/${job.id}/applicants`}><Button variant="secondary" aria-label={`View applicants for ${job.title}`}><Users size={15} /></Button></Link>
+                    <Link to={`/hr/jobs/${job.id}/edit`}><Button variant="secondary" aria-label={`Edit ${job.title}`}><Edit size={15} /></Button></Link>
+                    <Button variant="danger" aria-label={`Delete ${job.title}`} onClick={() => remove(job.id)}><Trash2 size={15} /></Button>
                   </div>
                 </td>
               </tr>

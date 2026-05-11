@@ -26,6 +26,8 @@ Set the backend URL in `.env`:
 VITE_API_URL=http://localhost:8080
 ```
 
+The app validates this value at startup. Missing `VITE_API_URL` fails fast instead of silently calling the wrong backend.
+
 Production example:
 
 ```bash

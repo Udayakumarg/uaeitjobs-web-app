@@ -71,21 +71,29 @@ export default function JobBrowse() {
 
       <JobFilters value={filters} onChange={applyFilters} onSubmit={() => applyFilters(filters)} />
 
-      {loading ? <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">{Array.from({ length: 6 }).map((_, index) => <div key={index} className="h-64 animate-pulse rounded-lg bg-slate-200" />)}</div> : null}
-      {error ? <EmptyState title={error} action={<Button onClick={() => window.location.reload()}><RefreshCw size={16} /> Retry</Button>} /> : null}
-      {!loading && !error && page.content.length === 0 ? <EmptyState title="No jobs found. Try adjusting the search filters." /> : null}
-      {!loading && !error && page.content.length > 0 ? (
-        <>
-          <div className={view === 'grid' ? 'grid gap-4 md:grid-cols-2 xl:grid-cols-3' : 'grid gap-4'}>
-            {page.content.map((job) => <JobCard key={job.id} job={job} />)}
-          </div>
-          <div className="mt-8 flex items-center justify-between">
-            <Button variant="secondary" disabled={page.number <= 0} onClick={() => go(page.number - 1)}>Previous</Button>
-            <span className="text-sm font-medium text-slate-600">Page {page.number + 1} of {Math.max(page.totalPages, 1)}</span>
-            <Button variant="secondary" disabled={page.number + 1 >= page.totalPages} onClick={() => go(page.number + 1)}>Next</Button>
-          </div>
-        </>
-      ) : null}
+      <section aria-live="polite" aria-busy={loading}>
+        {loading ? (
+          <>
+            <span className="sr-only">Loading jobs</span>
+            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">{Array.from({ length: 6 }).map((_, index) => <div key={index} className="h-64 animate-pulse rounded-lg bg-slate-200" />)}</div>
+          </>
+        ) : null}
+        {error ? <EmptyState title={error} action={<Button onClick={() => window.location.reload()}><RefreshCw size={16} /> Retry</Button>} /> : null}
+        {!loading && !error && page.content.length === 0 ? <EmptyState title="No jobs found. Try adjusting the search filters." /> : null}
+        {!loading && !error && page.content.length > 0 ? (
+          <>
+            <span className="sr-only">{page.totalElements} jobs loaded</span>
+            <div className={view === 'grid' ? 'grid gap-4 md:grid-cols-2 xl:grid-cols-3' : 'grid gap-4'}>
+              {page.content.map((job) => <JobCard key={job.id} job={job} />)}
+            </div>
+            <div className="mt-8 flex items-center justify-between">
+              <Button variant="secondary" disabled={page.number <= 0} onClick={() => go(page.number - 1)}>Previous</Button>
+              <span className="text-sm font-medium text-slate-600">Page {page.number + 1} of {Math.max(page.totalPages, 1)}</span>
+              <Button variant="secondary" disabled={page.number + 1 >= page.totalPages} onClick={() => go(page.number + 1)}>Next</Button>
+            </div>
+          </>
+        ) : null}
+      </section>
     </main>
   )
 }

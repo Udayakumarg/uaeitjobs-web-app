@@ -6,7 +6,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { z } from 'zod'
 import { useToastStore } from '../../components/Toast'
 import { Button, Card, Field, Input, Select } from '../../components/ui'
-import { authApi, errorMessage } from '../../services/api'
+import { authApi, errorMessage, fieldErrors } from '../../services/api'
 import type { UserType } from '../../types'
 
 const schema = z.object({
@@ -27,7 +27,7 @@ export default function Register() {
   const navigate = useNavigate()
   const toast = useToastStore((state) => state.add)
   const [serverError, setServerError] = useState('')
-  const { register, handleSubmit, watch, setValue, formState: { errors, isSubmitting } } = useForm<FormValues>({
+  const { register, handleSubmit, watch, setValue, setError, formState: { errors, isSubmitting } } = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: { userType: 'job_seeker' },
   })
@@ -46,6 +46,12 @@ export default function Register() {
       toast({ type: 'success', title: 'Account created', message: 'Check your email for verification, then sign in.' })
       navigate('/login')
     } catch (error) {
+      const serverFieldErrors = fieldErrors(error)
+      Object.entries(serverFieldErrors).forEach(([field, message]) => {
+        if (field in schema.shape || field === 'confirmPassword') {
+          setError(field as keyof FormValues, { type: 'server', message })
+        }
+      })
       setServerError(errorMessage(error))
     }
   }

@@ -1,8 +1,16 @@
 import axios, { AxiosError, type InternalAxiosRequestConfig } from 'axios'
+import { useToastStore } from '../components/Toast'
 import { useAuthStore } from '../store/authStore'
 import type { Application, ApplicationStatus, AuthResponse, HRProfile, Job, JobRequest, JobSeekerProfile, Page, UserType } from '../types'
 
-export const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:8080'
+const configuredApiUrl = import.meta.env.VITE_API_URL
+
+if (!configuredApiUrl) {
+  console.error('VITE_API_URL environment variable is not set. Set it in .env or in Vercel project settings.')
+  throw new Error('Missing required environment variable: VITE_API_URL')
+}
+
+export const API_URL = configuredApiUrl
 
 export const api = axios.create({
   baseURL: `${API_URL}/api/v1`,
@@ -30,11 +38,22 @@ api.interceptors.response.use(
         return api(original)
       } catch {
         useAuthStore.getState().logout()
+        useToastStore.getState().add({
+          type: 'info',
+          title: 'Session expired',
+          message: 'Please log in again to continue.',
+        })
       }
     }
     return Promise.reject(error)
   },
 )
+
+export function fieldErrors(error: unknown): Record<string, string> {
+  if (!axios.isAxiosError(error)) return {}
+  const data = error.response?.data as { fieldErrors?: Record<string, string>; errors?: Record<string, string> } | undefined
+  return data?.fieldErrors ?? data?.errors ?? {}
+}
 
 export function errorMessage(error: unknown) {
   if (axios.isAxiosError(error)) {
