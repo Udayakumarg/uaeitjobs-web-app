@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { JobCard } from '../../components/JobCard'
+import { CardSkeleton } from '../../components/Skeleton'
 import { useToastStore } from '../../components/Toast'
 import { EmptyState } from '../../components/ui'
 import { errorMessage, seekerApi } from '../../services/api'
@@ -18,7 +19,7 @@ export default function SavedJobs() {
   return (
     <main className="mx-auto max-w-7xl px-4 py-8">
       <h1 className="text-3xl font-bold text-slate-950">Saved jobs</h1>
-      {!jobs ? <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-3">{Array.from({ length: 3 }).map((_, index) => <div key={index} className="h-64 animate-pulse rounded-lg bg-slate-200" />)}</div> : null}
+      {!jobs ? <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-3" aria-live="polite" aria-busy="true"><span className="sr-only">Loading saved jobs</span>{Array.from({ length: 3 }).map((_, index) => <CardSkeleton key={index} />)}</div> : null}
       {jobs?.length === 0 ? <EmptyState title="No saved jobs yet." /> : null}
       {jobs && jobs.length > 0 ? <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-3">{jobs.map((job) => <JobCard key={job.id} job={job} />)}</div> : null}
     </main>

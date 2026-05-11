@@ -10,6 +10,7 @@
 - Added Axios API client with bearer-token injection and refresh-token retry handling.
 - Added Vercel SPA routing config and GitHub Actions CI for lint/build validation.
 - Added route-level lazy loading, visible API environment validation, session-expiry toast feedback, and backend field-error mapping for login/registration.
+- Confirmed mobile hamburger navigation and added consistent accessible skeleton loaders across async pages.
 
 ## Validation
 

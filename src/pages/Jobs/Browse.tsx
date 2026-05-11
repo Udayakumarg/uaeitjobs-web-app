@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { JobCard } from '../../components/JobCard'
 import { JobFilters, type JobFilterValues } from '../../components/JobFilters'
+import { CardSkeleton } from '../../components/Skeleton'
 import { Button, EmptyState } from '../../components/ui'
 import { errorMessage, jobsApi } from '../../services/api'
 import type { Job, Page } from '../../types'
@@ -75,7 +76,7 @@ export default function JobBrowse() {
         {loading ? (
           <>
             <span className="sr-only">Loading jobs</span>
-            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">{Array.from({ length: 6 }).map((_, index) => <div key={index} className="h-64 animate-pulse rounded-lg bg-slate-200" />)}</div>
+            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">{Array.from({ length: 6 }).map((_, index) => <CardSkeleton key={index} />)}</div>
           </>
         ) : null}
         {error ? <EmptyState title={error} action={<Button onClick={() => window.location.reload()}><RefreshCw size={16} /> Retry</Button>} /> : null}

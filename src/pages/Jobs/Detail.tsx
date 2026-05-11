@@ -1,6 +1,7 @@
 import { Bookmark, BriefcaseBusiness, CalendarDays, Eye, MapPin, Send } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
+import { CardSkeleton } from '../../components/Skeleton'
 import { useToastStore } from '../../components/Toast'
 import { Badge, Button, Card, Field, Textarea } from '../../components/ui'
 import { errorMessage, jobsApi, seekerApi } from '../../services/api'
@@ -57,7 +58,7 @@ export default function JobDetail() {
     }
   }
 
-  if (loading) return <main className="mx-auto max-w-5xl px-4 py-10"><div className="h-96 animate-pulse rounded-lg bg-slate-200" /></main>
+  if (loading) return <main className="mx-auto max-w-5xl px-4 py-10" aria-live="polite" aria-busy="true"><span className="sr-only">Loading job detail</span><CardSkeleton lines={5} /></main>
   if (error || !job) return <main className="mx-auto max-w-3xl px-4 py-16"><Card>{error || 'Job not found'}</Card></main>
 
   return (

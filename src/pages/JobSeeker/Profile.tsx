@@ -1,5 +1,6 @@
 import { Upload } from 'lucide-react'
 import { useEffect, useState } from 'react'
+import { CardSkeleton } from '../../components/Skeleton'
 import { useToastStore } from '../../components/Toast'
 import { Button, Card, Field, Input, Textarea } from '../../components/ui'
 import { errorMessage, seekerApi } from '../../services/api'
@@ -48,7 +49,7 @@ export default function JobSeekerProfilePage() {
   return (
     <main className="mx-auto max-w-5xl px-4 py-8">
       <h1 className="text-3xl font-bold text-slate-950">Profile</h1>
-      {loading ? <div className="mt-6 h-96 animate-pulse rounded-lg bg-slate-200" /> : (
+      {loading ? <div className="mt-6" aria-live="polite" aria-busy="true"><span className="sr-only">Loading profile</span><CardSkeleton lines={6} /></div> : (
         <Card className="mt-6">
           <div className="grid gap-4 md:grid-cols-2">
             <Field label="Headline"><Input value={profile.headline ?? ''} onChange={(e) => update('headline', e.target.value)} /></Field>

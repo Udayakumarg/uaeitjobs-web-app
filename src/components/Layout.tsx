@@ -44,12 +44,18 @@ export function Layout() {
               </>
             )}
           </div>
-          <button className="rounded-md p-2 text-slate-700 hover:bg-slate-100 md:hidden" onClick={() => setOpen((value) => !value)} aria-label="Toggle navigation">
+          <button
+            className="rounded-md p-2 text-slate-700 hover:bg-slate-100 md:hidden"
+            onClick={() => setOpen((value) => !value)}
+            aria-label="Toggle navigation"
+            aria-expanded={open}
+            aria-controls="mobile-navigation"
+          >
             {open ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
           </button>
         </div>
         {open ? (
-          <div className="border-t border-slate-200 bg-white px-4 py-4 md:hidden">
+          <div id="mobile-navigation" className="border-t border-slate-200 bg-white px-4 py-4 md:hidden">
             <nav className="grid gap-4" onClick={() => setOpen(false)}>{links}</nav>
             <div className="mt-4 flex gap-2">
               {user ? <Button className="w-full" variant="secondary" onClick={() => { logout(); navigate('/') }}>Logout</Button> : <><Button className="w-full" variant="secondary" onClick={() => navigate('/login')}>Login</Button><Button className="w-full" onClick={() => navigate('/register')}>Register</Button></>}

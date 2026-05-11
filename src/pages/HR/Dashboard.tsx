@@ -1,6 +1,7 @@
 import { Edit, Link2, Plus, Trash2, Users } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { TableSkeleton } from '../../components/Skeleton'
 import { useToastStore } from '../../components/Toast'
 import { Button, Card, EmptyState } from '../../components/ui'
 import { errorMessage, hrApi } from '../../services/api'
@@ -41,7 +42,7 @@ export default function HRDashboard() {
         </div>
       </div>
 
-      {!page ? <div className="mt-6 h-72 animate-pulse rounded-lg bg-slate-200" /> : page.content.length === 0 ? (
+      {!page ? <div className="mt-6" aria-live="polite" aria-busy="true"><span className="sr-only">Loading posted jobs</span><TableSkeleton rows={5} columns={5} /></div> : page.content.length === 0 ? (
         <EmptyState title="No jobs posted yet." action={<Link to="/hr/jobs/new"><Button>Post your first job</Button></Link>} />
       ) : (
         <Card className="mt-6 overflow-x-auto p-0">
