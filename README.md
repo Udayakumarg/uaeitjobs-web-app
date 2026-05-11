@@ -57,4 +57,14 @@ Build output is generated in `dist/`.
 npm run build
 ```
 
-For Vercel, configure `VITE_API_URL` in the project environment variables and deploy the repository connected to the main branch.
+For Vercel, configure `VITE_API_URL` in the project environment variables and deploy the repository connected to the main branch. The included `vercel.json` routes all app paths back to `index.html`, so deep links like `/jobs/12` and `/hr` work after refresh.
+
+## Pull Request Validation
+
+GitHub Actions runs on pushes and pull requests:
+
+```bash
+npm ci
+npm run lint
+npm run build
+```
