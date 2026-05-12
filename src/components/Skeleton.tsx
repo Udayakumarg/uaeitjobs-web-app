@@ -1,12 +1,12 @@
 import { cn } from './ui'
 
 export function SkeletonBlock({ className }: { className?: string }) {
-  return <div className={cn('animate-pulse rounded bg-slate-200', className)} />
+  return <div className={cn('shimmer rounded-md', className)} />
 }
 
 export function CardSkeleton({ lines = 3 }: { lines?: number }) {
   return (
-    <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm" aria-hidden="true">
+    <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm" aria-hidden="true">
       <SkeletonBlock className="h-6 w-3/4" />
       <SkeletonBlock className="mt-3 h-4 w-1/2" />
       <div className="mt-5 grid gap-2">

@@ -58,21 +58,40 @@ export default function JobBrowse() {
   }
 
   return (
-    <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+    <main className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
       <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <p className="text-sm font-semibold uppercase text-blue-700">Jobs</p>
-          <h1 className="mt-2 text-3xl font-bold text-slate-950">Browse UAE IT roles</h1>
+          <p className="text-sm font-semibold uppercase tracking-wider text-blue-700">Jobs</p>
+          <h1 className="mt-2 text-3xl font-bold tracking-tight text-slate-950 sm:text-4xl">
+            Browse UAE IT roles
+          </h1>
+          {!loading && !error ? (
+            <p className="mt-2 text-sm text-slate-500">
+              {page.totalElements.toLocaleString()} {page.totalElements === 1 ? 'role' : 'roles'} found
+            </p>
+          ) : null}
         </div>
-        <div className="inline-flex rounded-md border border-slate-200 bg-white p-1">
-          <button className={`rounded-md p-2 ${view === 'grid' ? 'bg-blue-700 text-white' : 'text-slate-600'}`} onClick={() => setView('grid')} aria-label="Grid view"><Grid2X2 size={18} /></button>
-          <button className={`rounded-md p-2 ${view === 'list' ? 'bg-blue-700 text-white' : 'text-slate-600'}`} onClick={() => setView('list')} aria-label="List view"><List size={18} /></button>
+        <div className="inline-flex rounded-lg border border-slate-200 bg-white p-1 shadow-sm">
+          <button
+            className={`rounded-md p-2 transition ${view === 'grid' ? 'bg-blue-600 text-white shadow-sm' : 'text-slate-500 hover:bg-slate-100'}`}
+            onClick={() => setView('grid')}
+            aria-label="Grid view"
+          >
+            <Grid2X2 size={18} />
+          </button>
+          <button
+            className={`rounded-md p-2 transition ${view === 'list' ? 'bg-blue-600 text-white shadow-sm' : 'text-slate-500 hover:bg-slate-100'}`}
+            onClick={() => setView('list')}
+            aria-label="List view"
+          >
+            <List size={18} />
+          </button>
         </div>
       </div>
 
-      <JobFilters value={filters} onChange={applyFilters} onSubmit={() => applyFilters(filters)} />
+      <JobFilters value={filters} onApply={applyFilters} />
 
-      <section aria-live="polite" aria-busy={loading}>
+      <section aria-live="polite" aria-busy={loading} className="mt-6">
         {loading ? (
           <>
             <span className="sr-only">Loading jobs</span>
