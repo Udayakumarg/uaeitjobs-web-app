@@ -2,7 +2,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { AlertCircle, ArrowRight, BadgeCheck, BriefcaseBusiness, UsersRound } from 'lucide-react'
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { z } from 'zod'
 import { PasswordInput } from '../../components/PasswordInput'
 import { PasswordStrength, passwordMeetsAllRules } from '../../components/PasswordStrength'
@@ -35,6 +35,8 @@ const PERKS = [
 
 export default function Register() {
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+  const initialType = searchParams.get('type') === 'hr' ? 'hr' : 'job_seeker'
   const toast = useToastStore((state) => state.add)
   const [serverError, setServerError] = useState('')
 
@@ -49,7 +51,7 @@ export default function Register() {
     resolver: zodResolver(schema),
     mode: 'onBlur',
     reValidateMode: 'onChange',
-    defaultValues: { userType: 'job_seeker', country: 'United Arab Emirates' },
+    defaultValues: { userType: initialType, country: 'United Arab Emirates' },
   })
   const userType = watch('userType')
   const passwordValue = watch('password') ?? ''

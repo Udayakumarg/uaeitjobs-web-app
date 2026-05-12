@@ -1,13 +1,23 @@
-import { Bookmark, BriefcaseBusiness, CalendarDays, Eye, MapPin, Send } from 'lucide-react'
+import {
+  ArrowLeft,
+  Bookmark,
+  BriefcaseBusiness,
+  CalendarDays,
+  CheckCircle2,
+  Eye,
+  MapPin,
+  Send,
+  Share2,
+} from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { CardSkeleton } from '../../components/Skeleton'
 import { useToastStore } from '../../components/Toast'
-import { Badge, Button, Card, Field, Textarea } from '../../components/ui'
+import { Badge, Button, Card, Container, Field, Textarea } from '../../components/ui'
 import { errorMessage, jobsApi, seekerApi } from '../../services/api'
 import { useAuthStore } from '../../store/authStore'
 import type { Job } from '../../types'
-import { dateLabel, labelize, money, parseSkills } from '../../utils/format'
+import { dateLabel, initials, labelize, money, parseSkills, relativeTime } from '../../utils/format'
 
 export default function JobDetail() {
   const { id } = useParams()
@@ -22,7 +32,8 @@ export default function JobDetail() {
 
   useEffect(() => {
     if (!id) return
-    jobsApi.detail(id)
+    jobsApi
+      .detail(id)
       .then(({ data }) => setJob(data))
       .catch((err) => setError(errorMessage(err)))
       .finally(() => setLoading(false))
@@ -40,7 +51,11 @@ export default function JobDetail() {
     setApplying(true)
     try {
       await seekerApi.apply({ jobId: Number(id), coverLetter })
-      toast({ type: 'success', title: 'Application submitted', message: 'You can track it from your dashboard.' })
+      toast({
+        type: 'success',
+        title: 'Application submitted',
+        message: 'You can track it from your dashboard.',
+      })
     } catch (err) {
       toast({ type: 'error', title: 'Could not apply', message: errorMessage(err) })
     } finally {
@@ -52,59 +67,221 @@ export default function JobDetail() {
     if (!user) return navigate('/login', { state: { from: `/jobs/${id}` } })
     try {
       await seekerApi.saveJob(Number(id))
-      toast({ type: 'success', title: 'Saved job' })
+      toast({ type: 'success', title: 'Saved job', message: 'Available from your dashboard.' })
     } catch (err) {
       toast({ type: 'error', title: 'Could not save', message: errorMessage(err) })
     }
   }
 
-  if (loading) return <main className="mx-auto max-w-5xl px-4 py-10" aria-live="polite" aria-busy="true"><span className="sr-only">Loading job detail</span><CardSkeleton lines={5} /></main>
-  if (error || !job) return <main className="mx-auto max-w-3xl px-4 py-16"><Card>{error || 'Job not found'}</Card></main>
+  async function share() {
+    const url = window.location.href
+    try {
+      if (navigator.share) {
+        await navigator.share({ title: job?.title ?? 'Job', url })
+      } else {
+        await navigator.clipboard.writeText(url)
+        toast({ type: 'success', title: 'Link copied' })
+      }
+    } catch {
+      /* user cancelled */
+    }
+  }
+
+  if (loading) {
+    return (
+      <Container className="py-10" aria-live="polite" aria-busy="true">
+        <span className="sr-only">Loading job detail</span>
+        <CardSkeleton lines={5} />
+      </Container>
+    )
+  }
+
+  if (error || !job) {
+    return (
+      <Container className="py-16">
+        <Card>{error || 'Job not found.'}</Card>
+      </Container>
+    )
+  }
+
+  const skills = parseSkills(job.skills)
+  const salary = money(job.salaryMin, job.salaryMax, job.salaryCurrency)
+  const posted = relativeTime(job.createdAt)
 
   return (
-    <main className="mx-auto grid max-w-7xl gap-6 px-4 py-8 lg:grid-cols-[1fr_360px]">
-      <section className="grid gap-5">
-        <Card>
-          <div className="flex flex-wrap items-start justify-between gap-4">
-            <div>
-              <h1 className="text-3xl font-bold text-slate-950">{job.title}</h1>
-              <p className="mt-2 text-lg text-slate-700">{job.companyName}</p>
+    <>
+      {/* Top breadcrumb / back nav */}
+      <div className="border-b border-slate-200/70 bg-white/70">
+        <Container className="flex items-center justify-between py-4">
+          <Link
+            to="/jobs"
+            className="inline-flex items-center gap-1.5 text-sm font-medium text-slate-600 transition hover:text-slate-950"
+          >
+            <ArrowLeft size={16} /> Back to all roles
+          </Link>
+          <button
+            onClick={share}
+            className="inline-flex items-center gap-1.5 text-sm font-medium text-slate-600 transition hover:text-slate-950"
+          >
+            <Share2 size={16} /> Share
+          </button>
+        </Container>
+      </div>
+
+      <Container className="grid gap-8 py-10 lg:grid-cols-[1fr_380px]">
+        {/* Main column */}
+        <section className="grid gap-6">
+          {/* Hero panel */}
+          <article className="surface-panel overflow-hidden">
+            <div className="border-b border-slate-100 bg-gradient-to-br from-slate-50 to-white p-7 sm:p-9">
+              <div className="flex items-start gap-5">
+                <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-white text-lg font-bold tracking-tight text-slate-700 shadow-sm ring-1 ring-slate-200">
+                  {initials(job.companyName)}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs font-semibold uppercase tracking-[0.16em] text-teal-700">
+                    {job.companyName}
+                  </p>
+                  <h1 className="mt-2 text-3xl font-semibold tracking-tight text-slate-950 sm:text-4xl">
+                    {job.title}
+                  </h1>
+                  <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-2 text-sm text-slate-600">
+                    <span className="inline-flex items-center gap-1.5">
+                      <MapPin size={15} /> {job.locationUae || 'UAE'}
+                    </span>
+                    <span className="inline-flex items-center gap-1.5">
+                      <BriefcaseBusiness size={15} /> {labelize(job.jobType)}
+                    </span>
+                    <span className="inline-flex items-center gap-1.5">
+                      <Eye size={15} /> {job.viewCount ?? 0} views
+                    </span>
+                    <span className="inline-flex items-center gap-1.5">
+                      <CalendarDays size={15} /> {posted || dateLabel(job.createdAt)}
+                    </span>
+                  </div>
+                </div>
+                {job.source === 'linkedin' ? (
+                  <Badge tone="blue">LinkedIn import</Badge>
+                ) : null}
+              </div>
+
+              {/* Quick facts */}
+              <div className="mt-7 grid gap-3 sm:grid-cols-3">
+                <div className="rounded-xl border border-slate-200 bg-white p-4">
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500">
+                    Salary
+                  </p>
+                  <p className="mt-1.5 text-base font-semibold tracking-tight text-slate-950">
+                    {salary}
+                  </p>
+                </div>
+                <div className="rounded-xl border border-slate-200 bg-white p-4">
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500">
+                    Experience
+                  </p>
+                  <p className="mt-1.5 text-base font-semibold tracking-tight text-slate-950">
+                    {labelize(job.experienceLevel)}
+                  </p>
+                </div>
+                <div className="rounded-xl border border-slate-200 bg-white p-4">
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500">
+                    Job type
+                  </p>
+                  <p className="mt-1.5 text-base font-semibold tracking-tight text-slate-950">
+                    {labelize(job.jobType)}
+                  </p>
+                </div>
+              </div>
+
+              {skills.length ? (
+                <div className="mt-6 flex flex-wrap gap-2">
+                  {skills.map((skill) => (
+                    <span
+                      key={skill}
+                      className="rounded-md bg-white px-2.5 py-1 text-xs font-semibold text-slate-700 ring-1 ring-inset ring-slate-200"
+                    >
+                      {skill}
+                    </span>
+                  ))}
+                </div>
+              ) : null}
             </div>
-            {job.source === 'linkedin' ? <Badge tone="blue">LinkedIn import</Badge> : null}
-          </div>
-          <div className="mt-5 flex flex-wrap gap-3 text-sm text-slate-600">
-            <span className="inline-flex items-center gap-1"><MapPin size={16} /> {job.locationUae || 'UAE'}</span>
-            <span className="inline-flex items-center gap-1"><BriefcaseBusiness size={16} /> {labelize(job.jobType)}</span>
-            <span className="inline-flex items-center gap-1"><Eye size={16} /> {job.viewCount ?? 0} views</span>
-            <span className="inline-flex items-center gap-1"><CalendarDays size={16} /> {dateLabel(job.createdAt)}</span>
-          </div>
-          <p className="mt-5 text-xl font-semibold text-teal-800">{money(job.salaryMin, job.salaryMax, job.salaryCurrency)}</p>
-          <div className="mt-5 flex flex-wrap gap-2">{parseSkills(job.skills).map((skill) => <Badge key={skill}>{skill}</Badge>)}</div>
-        </Card>
+          </article>
 
-        <Card>
-          <h2 className="text-xl font-bold text-slate-950">Description</h2>
-          <p className="mt-3 whitespace-pre-line leading-7 text-slate-700">{job.description}</p>
-        </Card>
-        <Card>
-          <h2 className="text-xl font-bold text-slate-950">Requirements</h2>
-          <p className="mt-3 whitespace-pre-line leading-7 text-slate-700">{job.requirements || 'No specific requirements listed.'}</p>
-        </Card>
-      </section>
+          {/* Description */}
+          <article className="surface-panel p-7 sm:p-9">
+            <h2 className="text-xl font-semibold tracking-tight text-slate-950">About the role</h2>
+            <p className="prose-job mt-4">{job.description}</p>
+          </article>
 
-      <aside className="grid h-fit gap-4">
-        <Card>
-          <h2 className="text-lg font-bold text-slate-950">Apply for this role</h2>
-          <Field label="Cover letter">
-            <Textarea value={coverLetter} onChange={(event) => setCoverLetter(event.target.value)} placeholder="Briefly introduce yourself and your fit for this role." />
-          </Field>
-          <div className="mt-4 grid gap-2">
-            <Button onClick={apply} disabled={applying}><Send size={16} /> {applying ? 'Applying...' : 'Apply now'}</Button>
-            <Button variant="secondary" onClick={save}><Bookmark size={16} /> Save job</Button>
-          </div>
-        </Card>
-        <Link className="text-sm font-semibold text-teal-700" to="/jobs">Back to all jobs</Link>
-      </aside>
-    </main>
+          {/* Requirements */}
+          <article className="surface-panel p-7 sm:p-9">
+            <h2 className="text-xl font-semibold tracking-tight text-slate-950">Requirements</h2>
+            <p className="prose-job mt-4">
+              {job.requirements || 'No specific requirements listed for this role.'}
+            </p>
+          </article>
+        </section>
+
+        {/* Sticky sidebar */}
+        <aside className="grid h-fit gap-4 lg:sticky lg:top-24">
+          <Card>
+            <p className="eyebrow">Apply</p>
+            <h2 className="mt-1.5 text-lg font-semibold tracking-tight text-slate-950">
+              Submit your application
+            </h2>
+            <p className="mt-1 text-sm text-slate-600">
+              Add a short note explaining why you're a great fit.
+            </p>
+
+            <Field label="Cover letter" hint="Optional but recommended">
+              <Textarea
+                value={coverLetter}
+                onChange={(event) => setCoverLetter(event.target.value)}
+                placeholder="Briefly introduce yourself and your fit for this role."
+              />
+            </Field>
+
+            <div className="mt-4 grid gap-2">
+              <Button onClick={apply} disabled={applying}>
+                <Send size={16} /> {applying ? 'Applying…' : 'Apply now'}
+              </Button>
+              <Button variant="secondary" onClick={save}>
+                <Bookmark size={16} /> Save for later
+              </Button>
+            </div>
+
+            <ul className="mt-5 grid gap-2 border-t border-slate-100 pt-4 text-xs text-slate-600">
+              <li className="flex items-start gap-2">
+                <CheckCircle2 className="mt-0.5 h-3.5 w-3.5 shrink-0 text-teal-700" />
+                Apply with your saved profile
+              </li>
+              <li className="flex items-start gap-2">
+                <CheckCircle2 className="mt-0.5 h-3.5 w-3.5 shrink-0 text-teal-700" />
+                Track status from your dashboard
+              </li>
+              <li className="flex items-start gap-2">
+                <CheckCircle2 className="mt-0.5 h-3.5 w-3.5 shrink-0 text-teal-700" />
+                Withdraw anytime
+              </li>
+            </ul>
+          </Card>
+
+          <Card className="bg-slate-950 text-white">
+            <p className="eyebrow eyebrow-dark">Hiring company</p>
+            <h3 className="mt-1.5 text-lg font-semibold tracking-tight">{job.companyName}</h3>
+            <p className="mt-1 text-sm text-slate-300">
+              UAE-based, verified employer hiring across {job.locationUae || 'the UAE'}.
+            </p>
+            <Link
+              to={`/jobs?q=${encodeURIComponent(job.companyName ?? '')}`}
+              className="mt-4 inline-flex items-center gap-1.5 text-sm font-semibold text-teal-300 hover:text-teal-200"
+            >
+              See more roles from {job.companyName} →
+            </Link>
+          </Card>
+        </aside>
+      </Container>
+    </>
   )
 }
