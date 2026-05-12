@@ -1,5 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod'
-import { BadgeCheck, Briefcase, Sparkles, UserPlus } from 'lucide-react'
+import { AlertCircle, ArrowRight, BadgeCheck, BriefcaseBusiness, UsersRound } from 'lucide-react'
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { Link, useNavigate } from 'react-router-dom'
@@ -28,9 +28,9 @@ const schema = z.object({
 type FormValues = z.infer<typeof schema>
 
 const PERKS = [
-  { icon: Briefcase, label: 'Track every application in one place' },
-  { icon: BadgeCheck, label: 'Verified UAE-based employers only' },
-  { icon: Sparkles, label: 'AI-assisted CV parsing and skill matching' },
+  { icon: BriefcaseBusiness, label: 'Focused UAE IT roles and hiring workflows' },
+  { icon: BadgeCheck, label: 'Email verification and protected account access' },
+  { icon: UsersRound, label: 'Separate job seeker and HR dashboards' },
 ]
 
 export default function Register() {
@@ -71,35 +71,36 @@ export default function Register() {
       })
       navigate('/login')
     } catch (error) {
-      const serverFieldErrors = fieldErrors(error)
       const known: Array<keyof FormValues> = ['email', 'password', 'phone', 'country', 'userType']
-      Object.entries(serverFieldErrors).forEach(([field, message]) => {
-        if ((known as string[]).includes(field)) {
-          setError(field as keyof FormValues, { type: 'server', message })
+      const knownFieldErrors = Object.entries(fieldErrors(error)).filter(([field]) => (known as string[]).includes(field))
+      knownFieldErrors.forEach(([field, message]) => setError(field as keyof FormValues, { type: 'server', message }))
+
+      if (knownFieldErrors.length === 0) {
+        const message = errorMessage(error)
+        if (message.toLowerCase().includes('email')) {
+          setError('email', { type: 'server', message })
+        } else {
+          setServerError(message)
         }
-      })
-      if (Object.keys(serverFieldErrors).length === 0) {
-        setServerError(errorMessage(error))
       }
     }
   }
 
   return (
-    <main className="mx-auto grid max-w-6xl gap-10 px-4 py-12 lg:grid-cols-[1fr_500px] lg:py-16">
+    <main className="mx-auto grid max-w-6xl gap-8 px-4 py-10 lg:grid-cols-[1fr_500px] lg:py-16">
       <section className="hidden lg:block">
-        <div className="sticky top-24">
-          <p className="text-sm font-semibold uppercase tracking-wider text-blue-700">Create account</p>
-          <h1 className="mt-3 text-4xl font-bold tracking-tight text-slate-950">
-            Build your career in the UAE's IT sector.
+        <div className="sticky top-24 rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-teal-700">Create account</p>
+          <h1 className="mt-4 text-4xl font-semibold tracking-tight text-slate-950">
+            A focused workspace for UAE technology hiring.
           </h1>
           <p className="mt-4 max-w-xl text-base leading-7 text-slate-600">
-            Whether you're hunting for your next role or hiring top talent across Dubai and Abu Dhabi,
-            uaeitjobs gives you the tools to move faster.
+            Create an account to manage applications, saved jobs, job postings, and applicants without the clutter of a generic job board.
           </p>
-          <ul className="mt-8 grid gap-4">
+          <ul className="mt-8 grid gap-4 border-t border-slate-200 pt-6">
             {PERKS.map(({ icon: Icon, label }) => (
               <li key={label} className="flex items-start gap-3">
-                <span className="mt-0.5 inline-flex h-9 w-9 items-center justify-center rounded-lg bg-blue-50 text-blue-700 ring-1 ring-inset ring-blue-100">
+                <span className="mt-0.5 inline-flex h-9 w-9 items-center justify-center rounded-lg bg-teal-50 text-teal-700 ring-1 ring-inset ring-teal-100">
                   <Icon size={18} />
                 </span>
                 <span className="text-sm font-medium text-slate-700">{label}</span>
@@ -109,10 +110,11 @@ export default function Register() {
         </div>
       </section>
 
-      <Card className="animate-fade-in-up p-6 sm:p-8">
+      <Card className="animate-fade-in-up border-slate-200 p-6 shadow-lg shadow-slate-950/5 sm:p-8">
         <div className="mb-6">
-          <h2 className="text-2xl font-bold text-slate-950">Sign up</h2>
-          <p className="mt-1 text-sm text-slate-600">It takes less than a minute.</p>
+          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-teal-700">Join UAEITJOBS</p>
+          <h2 className="mt-2 text-3xl font-semibold text-slate-950">Create account</h2>
+          <p className="mt-2 text-sm text-slate-600">Choose your account type and continue.</p>
         </div>
 
         <div className="mb-6 grid grid-cols-2 gap-2 rounded-xl bg-slate-100 p-1.5">
@@ -123,7 +125,7 @@ export default function Register() {
               onClick={() => setValue('userType', type, { shouldValidate: true })}
               className={`min-h-10 rounded-lg text-sm font-semibold transition-all ${
                 userType === type
-                  ? 'bg-white text-blue-700 shadow-sm ring-1 ring-slate-200'
+                  ? 'bg-white text-teal-700 shadow-sm ring-1 ring-slate-200'
                   : 'text-slate-600 hover:text-slate-900'
               }`}
             >
@@ -136,13 +138,7 @@ export default function Register() {
           <input type="hidden" {...register('userType')} />
 
           <Field label="Email" required error={errors.email?.message}>
-            <Input
-              type="email"
-              autoComplete="email"
-              placeholder="you@example.com"
-              aria-invalid={Boolean(errors.email)}
-              {...register('email')}
-            />
+            <Input type="email" autoComplete="email" placeholder="you@example.com" aria-invalid={Boolean(errors.email)} {...register('email')} />
           </Field>
 
           <Field label="Phone" hint="Optional, used for shortlist notifications">
@@ -161,30 +157,26 @@ export default function Register() {
           </Field>
 
           <Field label="Password" required error={errors.password?.message}>
-            <PasswordInput
-              autoComplete="new-password"
-              placeholder="Create a strong password"
-              aria-invalid={Boolean(errors.password)}
-              {...register('password')}
-            />
+            <PasswordInput autoComplete="new-password" placeholder="Create a strong password" aria-invalid={Boolean(errors.password)} {...register('password')} />
           </Field>
 
           <PasswordStrength value={passwordValue} />
 
           {serverError ? (
-            <p className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
-              {serverError}
+            <p className="flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700" role="alert">
+              <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+              <span>{serverError}</span>
             </p>
           ) : null}
 
-          <Button size="lg" disabled={isSubmitting} className="mt-2">
-            <UserPlus size={18} />
-            {isSubmitting ? 'Creating your account…' : 'Create account'}
+          <Button size="lg" disabled={isSubmitting} className="mt-2 bg-slate-950 hover:bg-slate-800">
+            {isSubmitting ? 'Creating your account...' : 'Create account'}
+            <ArrowRight size={18} />
           </Button>
 
           <p className="text-center text-sm text-slate-600">
             Already have an account?{' '}
-            <Link className="font-semibold text-blue-700 hover:text-blue-800" to="/login">
+            <Link className="font-semibold text-teal-700 hover:text-teal-800" to="/login">
               Sign in
             </Link>
           </p>

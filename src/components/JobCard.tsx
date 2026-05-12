@@ -12,7 +12,7 @@ export function JobCard({ job, onSave }: { job: Job; onSave?: (job: Job) => void
         <div className="min-w-0">
           <Link
             to={`/jobs/${job.id}`}
-            className="line-clamp-2 text-lg font-bold leading-snug text-slate-950 transition group-hover:text-blue-700"
+            className="line-clamp-2 text-lg font-bold leading-snug text-slate-950 transition group-hover:text-teal-700"
           >
             {job.title}
           </Link>

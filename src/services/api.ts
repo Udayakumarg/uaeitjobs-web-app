@@ -46,8 +46,17 @@ api.interceptors.response.use(
 
 export function fieldErrors(error: unknown): Record<string, string> {
   if (!axios.isAxiosError(error)) return {}
-  const data = error.response?.data as { fieldErrors?: Record<string, string>; errors?: Record<string, string> } | undefined
-  return data?.fieldErrors ?? data?.errors ?? {}
+  const data = error.response?.data as { fieldErrors?: unknown; errors?: unknown } | undefined
+  const candidate = data?.fieldErrors ?? data?.errors
+  if (!candidate || typeof candidate !== 'object' || Array.isArray(candidate)) return {}
+  return Object.fromEntries(
+    Object.entries(candidate as Record<string, unknown>)
+      .filter((entry): entry is [string, string] => typeof entry[1] === 'string'),
+  )
+}
+
+export function statusCode(error: unknown) {
+  return axios.isAxiosError(error) ? error.response?.status : undefined
 }
 
 export function errorMessage(error: unknown) {

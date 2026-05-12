@@ -78,7 +78,7 @@ export default function JobDetail() {
             <span className="inline-flex items-center gap-1"><Eye size={16} /> {job.viewCount ?? 0} views</span>
             <span className="inline-flex items-center gap-1"><CalendarDays size={16} /> {dateLabel(job.createdAt)}</span>
           </div>
-          <p className="mt-5 text-xl font-semibold text-blue-800">{money(job.salaryMin, job.salaryMax, job.salaryCurrency)}</p>
+          <p className="mt-5 text-xl font-semibold text-teal-800">{money(job.salaryMin, job.salaryMax, job.salaryCurrency)}</p>
           <div className="mt-5 flex flex-wrap gap-2">{parseSkills(job.skills).map((skill) => <Badge key={skill}>{skill}</Badge>)}</div>
         </Card>
 
@@ -103,7 +103,7 @@ export default function JobDetail() {
             <Button variant="secondary" onClick={save}><Bookmark size={16} /> Save job</Button>
           </div>
         </Card>
-        <Link className="text-sm font-semibold text-blue-700" to="/jobs">Back to all jobs</Link>
+        <Link className="text-sm font-semibold text-teal-700" to="/jobs">Back to all jobs</Link>
       </aside>
     </main>
   )

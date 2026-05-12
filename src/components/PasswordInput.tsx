@@ -15,7 +15,7 @@ export const PasswordInput = forwardRef<HTMLInputElement, Props>(function Passwo
         className={cn(
           'min-h-11 w-full rounded-lg border border-slate-200 bg-white px-3.5 py-2 pr-12 text-sm text-slate-900 shadow-sm transition placeholder:text-slate-400',
           'hover:border-slate-300',
-          'focus:border-blue-500 focus:outline-none focus:ring-4 focus:ring-blue-500/15',
+          'focus:border-teal-600 focus:outline-none focus:ring-4 focus:ring-teal-600/15',
           props['aria-invalid'] && 'border-red-400 bg-red-50/40 focus:border-red-500 focus:ring-red-500/15',
           props.className,
         )}

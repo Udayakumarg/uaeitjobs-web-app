@@ -1,14 +1,14 @@
 import { zodResolver } from '@hookform/resolvers/zod'
-import { LogIn } from 'lucide-react'
+import { AlertCircle, ArrowRight, BriefcaseBusiness, ShieldCheck } from 'lucide-react'
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom'
 import { z } from 'zod'
 import { PasswordInput } from '../../components/PasswordInput'
-import { Button, Card, Field, Input } from '../../components/ui'
-import { authApi, errorMessage, fieldErrors } from '../../services/api'
-import { useAuthStore } from '../../store/authStore'
 import { useToastStore } from '../../components/Toast'
+import { Button, Card, Field, Input } from '../../components/ui'
+import { authApi, errorMessage, fieldErrors, statusCode } from '../../services/api'
+import { useAuthStore } from '../../store/authStore'
 
 const schema = z.object({
   email: z.string().min(1, 'Email is required').email('Enter a valid email address'),
@@ -45,36 +45,49 @@ export default function Login() {
       toast({ type: 'success', title: 'Welcome back', message: 'You are signed in.' })
       navigate((location.state as { from?: string } | null)?.from ?? (data.user.userType === 'hr' ? '/hr' : '/seeker'))
     } catch (error) {
-      const serverFieldErrors = fieldErrors(error)
-      Object.entries(serverFieldErrors).forEach(([field, message]) => {
-        if (field === 'email' || field === 'password') {
-          setError(field, { type: 'server', message })
-        }
-      })
-      if (Object.keys(serverFieldErrors).length === 0) {
+      if (statusCode(error) === 401) {
+        setServerError('Invalid email or password. Please check your details and try again.')
+        return
+      }
+
+      const knownFieldErrors = Object.entries(fieldErrors(error)).filter(([field]) => field === 'email' || field === 'password')
+      knownFieldErrors.forEach(([field, message]) => setError(field as 'email' | 'password', { type: 'server', message }))
+
+      if (knownFieldErrors.length === 0) {
         setServerError(errorMessage(error))
       }
     }
   }
 
   return (
-    <main className="mx-auto grid max-w-6xl gap-10 px-4 py-12 lg:grid-cols-[1fr_460px] lg:py-16">
+    <main className="mx-auto grid max-w-6xl gap-8 px-4 py-10 lg:grid-cols-[1fr_440px] lg:py-16">
       <section className="hidden lg:block">
-        <div className="sticky top-24">
-          <p className="text-sm font-semibold uppercase tracking-wider text-blue-700">Sign in</p>
-          <h1 className="mt-3 text-4xl font-bold tracking-tight text-slate-950">
-            Welcome back to uaeitjobs.
+        <div className="sticky top-24 rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-teal-700">Account access</p>
+          <h1 className="mt-4 text-4xl font-semibold tracking-tight text-slate-950">
+            Sign in to manage UAE technology hiring.
           </h1>
           <p className="mt-4 max-w-xl text-base leading-7 text-slate-600">
-            Pick up where you left off — applications, saved roles, job postings, and applicants.
+            Review applications, saved roles, job postings, and applicants from one secure workspace.
           </p>
+          <div className="mt-8 grid gap-3 border-t border-slate-200 pt-6">
+            <div className="flex items-center gap-3 text-sm font-medium text-slate-700">
+              <ShieldCheck className="h-5 w-5 text-teal-700" />
+              Protected JWT session with refresh token handling
+            </div>
+            <div className="flex items-center gap-3 text-sm font-medium text-slate-700">
+              <BriefcaseBusiness className="h-5 w-5 text-teal-700" />
+              Separate dashboards for job seekers and HR teams
+            </div>
+          </div>
         </div>
       </section>
 
-      <Card className="animate-fade-in-up p-6 sm:p-8">
+      <Card className="animate-fade-in-up border-slate-200 p-6 shadow-lg shadow-slate-950/5 sm:p-8">
         <div className="mb-6">
-          <h2 className="text-2xl font-bold text-slate-950">Sign in</h2>
-          <p className="mt-1 text-sm text-slate-600">Enter your email and password.</p>
+          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-teal-700">Welcome back</p>
+          <h2 className="mt-2 text-3xl font-semibold text-slate-950">Sign in</h2>
+          <p className="mt-2 text-sm text-slate-600">Use your registered email and password.</p>
         </div>
 
         <form className="grid gap-4" onSubmit={handleSubmit(onSubmit)} noValidate>
@@ -98,24 +111,25 @@ export default function Login() {
           </Field>
 
           <label className="inline-flex items-center gap-2 text-sm text-slate-700">
-            <input type="checkbox" className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500" {...register('remember')} />
+            <input type="checkbox" className="h-4 w-4 rounded border-slate-300 text-teal-700 focus:ring-teal-600" {...register('remember')} />
             Remember me
           </label>
 
           {serverError ? (
-            <p className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
-              {serverError}
+            <p className="flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700" role="alert">
+              <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+              <span>{serverError}</span>
             </p>
           ) : null}
 
-          <Button size="lg" disabled={isSubmitting} className="mt-2">
-            <LogIn size={18} />
-            {isSubmitting ? 'Signing in…' : 'Sign in'}
+          <Button size="lg" disabled={isSubmitting} className="mt-2 bg-slate-950 hover:bg-slate-800">
+            {isSubmitting ? 'Signing in...' : 'Sign in'}
+            <ArrowRight size={18} />
           </Button>
 
           <p className="text-center text-sm text-slate-600">
             New here?{' '}
-            <Link className="font-semibold text-blue-700 hover:text-blue-800" to="/register">
+            <Link className="font-semibold text-teal-700 hover:text-teal-800" to="/register">
               Create an account
             </Link>
           </p>
