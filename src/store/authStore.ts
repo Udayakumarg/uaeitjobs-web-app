@@ -9,16 +9,29 @@ interface AuthState {
   logout: () => void
 }
 
+function storedUser() {
+  const raw = localStorage.getItem('uaeitjobs.user')
+  if (!raw) return null
+  try {
+    return JSON.parse(raw) as User
+  } catch {
+    localStorage.removeItem('uaeitjobs.user')
+    localStorage.removeItem('uaeitjobs.accessToken')
+    localStorage.removeItem('uaeitjobs.refreshToken')
+    return null
+  }
+}
+
 const stored = {
   accessToken: localStorage.getItem('uaeitjobs.accessToken'),
   refreshToken: localStorage.getItem('uaeitjobs.refreshToken'),
-  user: localStorage.getItem('uaeitjobs.user'),
+  user: storedUser(),
 }
 
 export const useAuthStore = create<AuthState>((set) => ({
   accessToken: stored.accessToken,
   refreshToken: stored.refreshToken,
-  user: stored.user ? JSON.parse(stored.user) as User : null,
+  user: stored.user,
   setSession: (session) => {
     localStorage.setItem('uaeitjobs.accessToken', session.accessToken)
     localStorage.setItem('uaeitjobs.refreshToken', session.refreshToken)

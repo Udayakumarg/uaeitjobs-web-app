@@ -76,6 +76,11 @@ input,
 select,
 textarea {
   font: inherit;
+}
+
+input,
+select,
+textarea {
   color: inherit;
 }
 
