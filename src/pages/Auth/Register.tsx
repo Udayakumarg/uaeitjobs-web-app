@@ -4,27 +4,26 @@ import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { Link, useNavigate } from 'react-router-dom'
 import { z } from 'zod'
+import { PasswordInput } from '../../components/PasswordInput'
+import { PasswordStrength, passwordMeetsAllRules } from '../../components/PasswordStrength'
 import { useToastStore } from '../../components/Toast'
 import { Button, Card, Field, Input, Select } from '../../components/ui'
 import { authApi, errorMessage, fieldErrors } from '../../services/api'
 import type { UserType } from '../../types'
 
-const schema = z
-  .object({
-    userType: z.enum(['job_seeker', 'hr']),
-    email: z.string().min(1, 'Email is required').email('Enter a valid email address'),
-    password: z
-      .string()
-      .min(8, 'Password must be at least 8 characters')
-      .max(120, 'Password is too long'),
-    confirmPassword: z.string().min(1, 'Please confirm your password'),
-    phone: z.string().optional().or(z.literal('')),
-    country: z.string().optional().or(z.literal('')),
-  })
-  .refine((values) => values.password === values.confirmPassword, {
-    path: ['confirmPassword'],
-    message: 'Passwords do not match',
-  })
+const schema = z.object({
+  userType: z.enum(['job_seeker', 'hr']),
+  email: z.string().min(1, 'Email is required').email('Enter a valid email address'),
+  password: z
+    .string()
+    .min(8, 'Password must be at least 8 characters')
+    .max(120, 'Password is too long')
+    .refine(passwordMeetsAllRules, {
+      message: 'Password must include uppercase, lowercase, and a number',
+    }),
+  phone: z.string().optional().or(z.literal('')),
+  country: z.string().optional().or(z.literal('')),
+})
 
 type FormValues = z.infer<typeof schema>
 
@@ -45,7 +44,7 @@ export default function Register() {
     watch,
     setValue,
     setError,
-    formState: { errors, isSubmitting, isValid },
+    formState: { errors, isSubmitting },
   } = useForm<FormValues>({
     resolver: zodResolver(schema),
     mode: 'onBlur',
@@ -53,6 +52,7 @@ export default function Register() {
     defaultValues: { userType: 'job_seeker', country: 'United Arab Emirates' },
   })
   const userType = watch('userType')
+  const passwordValue = watch('password') ?? ''
 
   async function onSubmit(values: FormValues) {
     setServerError('')
@@ -72,7 +72,7 @@ export default function Register() {
       navigate('/login')
     } catch (error) {
       const serverFieldErrors = fieldErrors(error)
-      const known: Array<keyof FormValues> = ['email', 'password', 'confirmPassword', 'phone', 'country', 'userType']
+      const known: Array<keyof FormValues> = ['email', 'password', 'phone', 'country', 'userType']
       Object.entries(serverFieldErrors).forEach(([field, message]) => {
         if ((known as string[]).includes(field)) {
           setError(field as keyof FormValues, { type: 'server', message })
@@ -160,30 +160,16 @@ export default function Register() {
             </Select>
           </Field>
 
-          <Field
-            label="Password"
-            required
-            error={errors.password?.message}
-            hint={!errors.password ? 'Minimum 8 characters' : undefined}
-          >
-            <Input
-              type="password"
+          <Field label="Password" required error={errors.password?.message}>
+            <PasswordInput
               autoComplete="new-password"
-              placeholder="••••••••"
+              placeholder="Create a strong password"
               aria-invalid={Boolean(errors.password)}
               {...register('password')}
             />
           </Field>
 
-          <Field label="Confirm password" required error={errors.confirmPassword?.message}>
-            <Input
-              type="password"
-              autoComplete="new-password"
-              placeholder="••••••••"
-              aria-invalid={Boolean(errors.confirmPassword)}
-              {...register('confirmPassword')}
-            />
-          </Field>
+          <PasswordStrength value={passwordValue} />
 
           {serverError ? (
             <p className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
@@ -191,7 +177,7 @@ export default function Register() {
             </p>
           ) : null}
 
-          <Button size="lg" disabled={isSubmitting || !isValid} className="mt-2">
+          <Button size="lg" disabled={isSubmitting} className="mt-2">
             <UserPlus size={18} />
             {isSubmitting ? 'Creating your account…' : 'Create account'}
           </Button>
