@@ -61,7 +61,7 @@ export default function JobBrowse() {
     <main className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
       <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <p className="text-sm font-semibold uppercase tracking-wider text-blue-700">Jobs</p>
+          <p className="text-sm font-semibold uppercase tracking-wider text-teal-700">Jobs</p>
           <h1 className="mt-2 text-3xl font-bold tracking-tight text-slate-950 sm:text-4xl">
             Browse UAE IT roles
           </h1>
@@ -73,14 +73,14 @@ export default function JobBrowse() {
         </div>
         <div className="inline-flex rounded-lg border border-slate-200 bg-white p-1 shadow-sm">
           <button
-            className={`rounded-md p-2 transition ${view === 'grid' ? 'bg-blue-600 text-white shadow-sm' : 'text-slate-500 hover:bg-slate-100'}`}
+            className={`rounded-md p-2 transition ${view === 'grid' ? 'bg-slate-950 text-white shadow-sm' : 'text-slate-500 hover:bg-slate-100'}`}
             onClick={() => setView('grid')}
             aria-label="Grid view"
           >
             <Grid2X2 size={18} />
           </button>
           <button
-            className={`rounded-md p-2 transition ${view === 'list' ? 'bg-blue-600 text-white shadow-sm' : 'text-slate-500 hover:bg-slate-100'}`}
+            className={`rounded-md p-2 transition ${view === 'list' ? 'bg-slate-950 text-white shadow-sm' : 'text-slate-500 hover:bg-slate-100'}`}
             onClick={() => setView('list')}
             aria-label="List view"
           >

@@ -19,8 +19,8 @@ export default function JobSeekerDashboard() {
       <div className="mt-6 grid gap-4 md:grid-cols-3">
         {actions.map(([title, href, Icon, body]) => (
           <Link key={String(title)} to={String(href)}>
-            <Card className="h-full transition hover:border-blue-300 hover:shadow-md">
-              <Icon className="text-blue-700" size={24} />
+            <Card className="h-full transition hover:border-teal-300 hover:shadow-md">
+              <Icon className="text-teal-700" size={24} />
               <h2 className="mt-4 font-bold text-slate-950">{title}</h2>
               <p className="mt-2 text-sm leading-6 text-slate-600">{body}</p>
             </Card>
