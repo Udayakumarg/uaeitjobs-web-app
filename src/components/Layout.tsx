@@ -3,12 +3,12 @@ import { useState } from 'react'
 import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { useAuthStore } from '../store/authStore'
 import { Toasts } from './Toast'
-import { Button } from './ui'
+import { Button, Container } from './ui'
 
 const navClass = ({ isActive }: { isActive: boolean }) =>
-  `relative text-sm font-medium transition ${
+  `relative text-sm font-medium tracking-tight transition ${
     isActive
-      ? 'text-teal-700 after:absolute after:-bottom-[18px] after:left-0 after:right-0 after:h-0.5 after:bg-teal-700'
+      ? 'text-teal-700 after:absolute after:-bottom-[19px] after:left-0 after:right-0 after:h-0.5 after:bg-teal-700'
       : 'text-slate-600 hover:text-slate-950'
   }`
 
@@ -26,7 +26,7 @@ export function Layout() {
   const links = (
     <>
       <NavLink to="/jobs" className={navClass}>
-        Jobs
+        Browse jobs
       </NavLink>
       {user?.userType === 'job_seeker' ? (
         <NavLink to="/seeker" className={navClass}>
@@ -35,7 +35,7 @@ export function Layout() {
       ) : null}
       {user?.userType === 'hr' ? (
         <NavLink to="/hr" className={navClass}>
-          HR dashboard
+          HR workspace
         </NavLink>
       ) : null}
     </>
@@ -44,8 +44,9 @@ export function Layout() {
   return (
     <div className="flex min-h-screen flex-col">
       <Toasts />
-      <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/95 backdrop-blur-md">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3.5 sm:px-6 lg:px-8">
+
+      <header className="sticky top-0 z-40 border-b border-slate-200/70 bg-white/85 backdrop-blur-md">
+        <Container className="flex items-center justify-between py-3.5">
           <Link
             to="/"
             className="flex items-center gap-2.5 text-lg font-black tracking-tight text-slate-950"
@@ -77,7 +78,7 @@ export function Layout() {
                 <Button variant="ghost" size="sm" onClick={() => navigate('/login')}>
                   <LogIn className="h-4 w-4" /> Sign in
                 </Button>
-                <Button size="sm" className="bg-slate-950 hover:bg-slate-800" onClick={() => navigate('/register')}>
+                <Button size="sm" onClick={() => navigate('/register')}>
                   Get started
                 </Button>
               </>
@@ -93,7 +94,7 @@ export function Layout() {
           >
             {open ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
           </button>
-        </div>
+        </Container>
 
         {open ? (
           <div id="mobile-navigation" className="border-t border-slate-200 bg-white px-4 py-4 md:hidden">
@@ -110,7 +111,7 @@ export function Layout() {
                   <Button className="w-full" variant="secondary" onClick={() => navigate('/login')}>
                     Sign in
                   </Button>
-                  <Button className="w-full bg-slate-950 hover:bg-slate-800" onClick={() => navigate('/register')}>
+                  <Button className="w-full" onClick={() => navigate('/register')}>
                     Get started
                   </Button>
                 </>
@@ -124,19 +125,98 @@ export function Layout() {
         <Outlet />
       </main>
 
-      <footer className="mt-auto border-t border-slate-200 bg-white/70">
-        <div className="mx-auto flex max-w-7xl flex-col gap-3 px-4 py-8 text-sm text-slate-500 sm:px-6 md:flex-row md:items-center md:justify-between lg:px-8">
-          <div className="flex items-center gap-2">
-            <span className="flex h-7 w-7 items-center justify-center rounded-md bg-slate-950 text-white">
-              <BriefcaseBusiness className="h-3.5 w-3.5" />
-            </span>
-            <span className="font-semibold text-slate-700">uaeitjobs</span>
-            <span className="text-slate-400">- UAE tech hiring, focused.</span>
+      {/* ───── Footer ───────────────────────────────────────────── */}
+      <footer className="mt-auto border-t border-slate-200/70 bg-white/60">
+        <Container className="py-12">
+          <div className="grid gap-10 md:grid-cols-[1.5fr_1fr_1fr_1fr]">
+            <div>
+              <Link to="/" className="flex items-center gap-2.5 text-lg font-black tracking-tight text-slate-950">
+                <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-slate-950 text-white shadow-sm">
+                  <BriefcaseBusiness className="h-5 w-5" />
+                </span>
+                <span>
+                  uaeit<span className="text-teal-700">jobs</span>
+                </span>
+              </Link>
+              <p className="mt-4 max-w-sm text-sm leading-6 text-slate-600">
+                UAE-focused IT and technology hiring. Verified employers, curated roles, faster
+                shortlists.
+              </p>
+            </div>
+
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
+                For candidates
+              </p>
+              <ul className="mt-4 grid gap-2 text-sm">
+                <li>
+                  <Link to="/jobs" className="text-slate-700 hover:text-teal-700">
+                    Browse jobs
+                  </Link>
+                </li>
+                <li>
+                  <Link to="/register" className="text-slate-700 hover:text-teal-700">
+                    Create profile
+                  </Link>
+                </li>
+                <li>
+                  <Link to="/seeker" className="text-slate-700 hover:text-teal-700">
+                    My applications
+                  </Link>
+                </li>
+              </ul>
+            </div>
+
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
+                For employers
+              </p>
+              <ul className="mt-4 grid gap-2 text-sm">
+                <li>
+                  <Link to="/register?type=hr" className="text-slate-700 hover:text-teal-700">
+                    Post a job
+                  </Link>
+                </li>
+                <li>
+                  <Link to="/hr" className="text-slate-700 hover:text-teal-700">
+                    HR workspace
+                  </Link>
+                </li>
+                <li>
+                  <Link to="/register?type=hr" className="text-slate-700 hover:text-teal-700">
+                    LinkedIn import
+                  </Link>
+                </li>
+              </ul>
+            </div>
+
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
+                Company
+              </p>
+              <ul className="mt-4 grid gap-2 text-sm">
+                <li>
+                  <a href="mailto:hello@uaeitjobs.com" className="text-slate-700 hover:text-teal-700">
+                    Contact
+                  </a>
+                </li>
+                <li>
+                  <span className="text-slate-700">Privacy</span>
+                </li>
+                <li>
+                  <span className="text-slate-700">Terms</span>
+                </li>
+              </ul>
+            </div>
           </div>
-          <span className="text-xs uppercase tracking-wider text-slate-400">
-            Dubai | Abu Dhabi | Sharjah | Remote UAE
-          </span>
-        </div>
+
+          <div className="mt-10 flex flex-col gap-3 border-t border-slate-200/70 pt-6 text-xs text-slate-500 md:flex-row md:items-center md:justify-between">
+            <span>© {new Date().getFullYear()} uaeitjobs. All rights reserved.</span>
+            <span className="uppercase tracking-[0.18em]">
+              Dubai · Abu Dhabi · Sharjah · Remote UAE
+            </span>
+          </div>
+        </Container>
       </footer>
     </div>
   )
