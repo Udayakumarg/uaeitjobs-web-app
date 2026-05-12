@@ -10,8 +10,8 @@ import { useAuthStore } from '../../store/authStore'
 import { useToastStore } from '../../components/Toast'
 
 const schema = z.object({
-  email: z.string().email('Enter a valid email'),
-  password: z.string().min(8, 'Password must be at least 8 characters'),
+  email: z.string().min(1, 'Email is required').email('Enter a valid email address'),
+  password: z.string().min(1, 'Password is required'),
   remember: z.boolean().optional(),
 })
 
@@ -23,14 +23,23 @@ export default function Login() {
   const { user, setSession } = useAuthStore()
   const toast = useToastStore((state) => state.add)
   const [serverError, setServerError] = useState('')
-  const { register, handleSubmit, setError, formState: { errors, isSubmitting } } = useForm<FormValues>({ resolver: zodResolver(schema) })
+  const {
+    register,
+    handleSubmit,
+    setError,
+    formState: { errors, isSubmitting },
+  } = useForm<FormValues>({
+    resolver: zodResolver(schema),
+    mode: 'onBlur',
+    reValidateMode: 'onChange',
+  })
 
   if (user) return <Navigate to={user.userType === 'hr' ? '/hr' : '/seeker'} replace />
 
   async function onSubmit(values: FormValues) {
     setServerError('')
     try {
-      const { data } = await authApi.login({ email: values.email, password: values.password })
+      const { data } = await authApi.login({ email: values.email.trim(), password: values.password })
       setSession(data)
       toast({ type: 'success', title: 'Welcome back', message: 'You are signed in.' })
       navigate((location.state as { from?: string } | null)?.from ?? (data.user.userType === 'hr' ? '/hr' : '/seeker'))
@@ -42,29 +51,74 @@ export default function Login() {
         }
       })
       if (Object.keys(serverFieldErrors).length === 0) {
-        setError('email', { type: 'server', message: errorMessage(error) })
         setServerError(errorMessage(error))
       }
     }
   }
 
   return (
-    <main className="mx-auto grid max-w-6xl gap-8 px-4 py-12 lg:grid-cols-[1fr_420px]">
-      <section className="pt-8">
-        <p className="text-sm font-semibold uppercase text-blue-700">Sign in</p>
-        <h1 className="mt-3 text-3xl font-bold text-slate-950">Continue your UAE tech hiring journey.</h1>
-        <p className="mt-4 max-w-xl text-slate-600">Use your job seeker or HR account to manage applications, saved roles, job posts, and applicants.</p>
+    <main className="mx-auto grid max-w-6xl gap-10 px-4 py-12 lg:grid-cols-[1fr_460px] lg:py-16">
+      <section className="hidden lg:block">
+        <div className="sticky top-24">
+          <p className="text-sm font-semibold uppercase tracking-wider text-blue-700">Sign in</p>
+          <h1 className="mt-3 text-4xl font-bold tracking-tight text-slate-950">
+            Welcome back to uaeitjobs.
+          </h1>
+          <p className="mt-4 max-w-xl text-base leading-7 text-slate-600">
+            Pick up where you left off — applications, saved roles, job postings, and applicants.
+          </p>
+        </div>
       </section>
-      <Card>
-        <form className="grid gap-4" onSubmit={handleSubmit(onSubmit)}>
-          <Field label="Email" error={errors.email?.message}><Input type="email" autoComplete="email" aria-invalid={Boolean(errors.email)} {...register('email')} /></Field>
-          <Field label="Password" error={errors.password?.message}><Input type="password" autoComplete="current-password" aria-invalid={Boolean(errors.password)} {...register('password')} /></Field>
+
+      <Card className="animate-fade-in-up p-6 sm:p-8">
+        <div className="mb-6">
+          <h2 className="text-2xl font-bold text-slate-950">Sign in</h2>
+          <p className="mt-1 text-sm text-slate-600">Enter your email and password.</p>
+        </div>
+
+        <form className="grid gap-4" onSubmit={handleSubmit(onSubmit)} noValidate>
+          <Field label="Email" required error={errors.email?.message}>
+            <Input
+              type="email"
+              autoComplete="email"
+              placeholder="you@example.com"
+              aria-invalid={Boolean(errors.email)}
+              {...register('email')}
+            />
+          </Field>
+
+          <Field label="Password" required error={errors.password?.message}>
+            <Input
+              type="password"
+              autoComplete="current-password"
+              placeholder="••••••••"
+              aria-invalid={Boolean(errors.password)}
+              {...register('password')}
+            />
+          </Field>
+
           <label className="inline-flex items-center gap-2 text-sm text-slate-700">
-            <input type="checkbox" className="h-4 w-4 rounded border-slate-300" {...register('remember')} /> Remember me
+            <input type="checkbox" className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500" {...register('remember')} />
+            Remember me
           </label>
-          {serverError ? <p className="rounded-md bg-red-50 p-3 text-sm font-medium text-red-700">{serverError}</p> : null}
-          <Button disabled={isSubmitting}><LogIn size={18} /> {isSubmitting ? 'Signing in...' : 'Login'}</Button>
-          <p className="text-sm text-slate-600">New here? <Link className="font-semibold text-blue-700" to="/register">Create an account</Link></p>
+
+          {serverError ? (
+            <p className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
+              {serverError}
+            </p>
+          ) : null}
+
+          <Button size="lg" disabled={isSubmitting} className="mt-2">
+            <LogIn size={18} />
+            {isSubmitting ? 'Signing in…' : 'Sign in'}
+          </Button>
+
+          <p className="text-center text-sm text-slate-600">
+            New here?{' '}
+            <Link className="font-semibold text-blue-700 hover:text-blue-800" to="/register">
+              Create an account
+            </Link>
+          </p>
         </form>
       </Card>
     </main>
