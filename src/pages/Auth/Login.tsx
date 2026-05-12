@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom'
 import { z } from 'zod'
+import { PasswordInput } from '../../components/PasswordInput'
 import { Button, Card, Field, Input } from '../../components/ui'
 import { authApi, errorMessage, fieldErrors } from '../../services/api'
 import { useAuthStore } from '../../store/authStore'
@@ -88,10 +89,9 @@ export default function Login() {
           </Field>
 
           <Field label="Password" required error={errors.password?.message}>
-            <Input
-              type="password"
+            <PasswordInput
               autoComplete="current-password"
-              placeholder="••••••••"
+              placeholder="Enter your password"
               aria-invalid={Boolean(errors.password)}
               {...register('password')}
             />
