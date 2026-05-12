@@ -6,6 +6,7 @@ import type {
   SelectHTMLAttributes,
   TextareaHTMLAttributes,
 } from 'react'
+import { forwardRef } from 'react'
 import { twMerge } from 'tailwind-merge'
 import clsx from 'clsx'
 
@@ -65,10 +66,11 @@ export function IconButton({
 }
 
 /* ───────────────────────────── Inputs ─────────────────────────── */
-export function Input(props: InputHTMLAttributes<HTMLInputElement>) {
+export const Input = forwardRef<HTMLInputElement, InputHTMLAttributes<HTMLInputElement>>(function Input(props, ref) {
   return (
     <input
       {...props}
+      ref={ref}
       className={cn(
         'min-h-11 w-full rounded-lg border border-slate-200 bg-white px-3.5 py-2 text-sm text-slate-900 shadow-sm transition placeholder:text-slate-400',
         'hover:border-slate-300',
@@ -78,12 +80,13 @@ export function Input(props: InputHTMLAttributes<HTMLInputElement>) {
       )}
     />
   )
-}
+})
 
-export function Textarea(props: TextareaHTMLAttributes<HTMLTextAreaElement>) {
+export const Textarea = forwardRef<HTMLTextAreaElement, TextareaHTMLAttributes<HTMLTextAreaElement>>(function Textarea(props, ref) {
   return (
     <textarea
       {...props}
+      ref={ref}
       className={cn(
         'min-h-28 w-full rounded-lg border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 shadow-sm transition placeholder:text-slate-400',
         'hover:border-slate-300',
@@ -93,12 +96,13 @@ export function Textarea(props: TextareaHTMLAttributes<HTMLTextAreaElement>) {
       )}
     />
   )
-}
+})
 
-export function Select(props: SelectHTMLAttributes<HTMLSelectElement>) {
+export const Select = forwardRef<HTMLSelectElement, SelectHTMLAttributes<HTMLSelectElement>>(function Select(props, ref) {
   return (
     <select
       {...props}
+      ref={ref}
       className={cn(
         'min-h-11 w-full appearance-none rounded-lg border border-slate-200 bg-white px-3.5 py-2 pr-9 text-sm text-slate-900 shadow-sm transition',
         'hover:border-slate-300',
@@ -109,7 +113,7 @@ export function Select(props: SelectHTMLAttributes<HTMLSelectElement>) {
       )}
     />
   )
-}
+})
 
 export function Field({
   label,

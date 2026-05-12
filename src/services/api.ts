@@ -5,10 +5,20 @@ import type { Application, ApplicationStatus, AuthResponse, HRProfile, Job, JobR
 
 const configuredApiUrl = import.meta.env.VITE_API_URL
 
-export const API_URL = configuredApiUrl ?? ''
+function stripTrailingSlash(value: string) {
+  return value.replace(/\/+$/, '')
+}
+
+function apiBaseUrl(value: string) {
+  const normalized = stripTrailingSlash(value.trim())
+  return normalized.endsWith('/api/v1') ? normalized : `${normalized}/api/v1`
+}
+
+export const API_URL = configuredApiUrl ? stripTrailingSlash(configuredApiUrl.trim()) : ''
+export const API_BASE_URL = API_URL ? apiBaseUrl(API_URL) : ''
 
 export const api = axios.create({
-  baseURL: `${API_URL}/api/v1`,
+  baseURL: API_BASE_URL,
   headers: { 'Content-Type': 'application/json' },
 })
 
