@@ -15,7 +15,7 @@ function apiBaseUrl(value: string) {
 }
 
 export const API_URL = configuredApiUrl ? stripTrailingSlash(configuredApiUrl.trim()) : ''
-export const API_BASE_URL = API_URL ? apiBaseUrl(API_URL) : ''
+export const API_BASE_URL = API_URL ? apiBaseUrl(API_URL) : '/api/v1'
 
 export const api = axios.create({
   baseURL: API_BASE_URL,
