@@ -3,8 +3,9 @@ import { createRoot } from 'react-dom/client'
 import './index.css'
 import App from './App.tsx'
 
-const requiredEnv = ['VITE_API_URL']
-const missingEnv = requiredEnv.filter((env) => !import.meta.env[env])
+// VITE_API_URL is optional — empty string means "use relative /api/v1 URLs" (same-origin nginx proxy)
+const requiredEnv: string[] = []
+const missingEnv = requiredEnv.filter((env) => import.meta.env[env] === undefined)
 const root = createRoot(document.getElementById('root')!)
 
 if (missingEnv.length > 0) {
