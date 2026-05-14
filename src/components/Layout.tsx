@@ -1,4 +1,4 @@
-import { BriefcaseBusiness, LogIn, Menu, UserRound, X } from 'lucide-react'
+import { Bookmark, BriefcaseBusiness, LayoutDashboard, LogIn, Menu, Search, UserRound, Users2, X } from 'lucide-react'
 import { useState } from 'react'
 import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { useAuthStore } from '../store/authStore'
@@ -6,10 +6,10 @@ import { Toasts } from './Toast'
 import { Button, Container } from './ui'
 
 const navClass = ({ isActive }: { isActive: boolean }) =>
-  `relative text-sm font-medium tracking-tight transition ${
+  `inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium tracking-tight transition ${
     isActive
-      ? 'text-indigo-700 after:absolute after:-bottom-[19px] after:left-0 after:right-0 after:h-0.5 after:bg-indigo-700'
-      : 'text-slate-600 hover:text-slate-950'
+      ? 'bg-indigo-50 text-indigo-700 ring-1 ring-inset ring-indigo-100'
+      : 'text-slate-600 hover:bg-slate-100 hover:text-slate-950'
   }`
 
 export function Layout() {
@@ -26,15 +26,24 @@ export function Layout() {
   const links = (
     <>
       <NavLink to="/jobs" className={navClass}>
+        <Search className="h-4 w-4" />
         Browse jobs
       </NavLink>
       {user?.userType === 'job_seeker' ? (
-        <NavLink to="/seeker" className={navClass}>
-          My dashboard
-        </NavLink>
+        <>
+          <NavLink to="/seeker" className={navClass} end>
+            <LayoutDashboard className="h-4 w-4" />
+            Dashboard
+          </NavLink>
+          <NavLink to="/seeker/saved" className={navClass}>
+            <Bookmark className="h-4 w-4" />
+            Saved jobs
+          </NavLink>
+        </>
       ) : null}
       {user?.userType === 'hr' ? (
         <NavLink to="/hr" className={navClass}>
+          <Users2 className="h-4 w-4" />
           HR workspace
         </NavLink>
       ) : null}
@@ -60,7 +69,7 @@ export function Layout() {
             </span>
           </Link>
 
-          <nav className="hidden items-center gap-8 md:flex">{links}</nav>
+          <nav className="hidden items-center gap-1 md:flex">{links}</nav>
 
           <div className="hidden items-center gap-2 md:flex">
             {user ? (
@@ -162,6 +171,11 @@ export function Layout() {
                 <li>
                   <Link to="/seeker" className="text-slate-700 hover:text-indigo-700">
                     My applications
+                  </Link>
+                </li>
+                <li>
+                  <Link to="/seeker/saved" className="text-slate-700 hover:text-indigo-700">
+                    Saved jobs
                   </Link>
                 </li>
               </ul>
