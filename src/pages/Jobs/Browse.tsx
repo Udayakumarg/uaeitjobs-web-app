@@ -1,4 +1,4 @@
-import { ChevronLeft, ChevronRight, Grid2X2, List, RefreshCw, SearchX } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Clock, Grid2X2, List, RefreshCw, SearchX, X } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { JobCard } from '../../components/JobCard'
@@ -7,6 +7,12 @@ import { CardSkeleton } from '../../components/Skeleton'
 import { Button, Container, EmptyState } from '../../components/ui'
 import { errorMessage, jobsApi } from '../../services/api'
 import type { Job, Page } from '../../types'
+import {
+  addRecentSearch,
+  clearRecentSearches,
+  getRecentSearches,
+  removeRecentSearch,
+} from '../../utils/recentSearches'
 
 const emptyPage: Page<Job> = { content: [], totalElements: 0, totalPages: 0, number: 0, size: 20 }
 
@@ -16,6 +22,7 @@ export default function JobBrowse() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [view, setView] = useState<'grid' | 'list'>('grid')
+  const [recent, setRecent] = useState<string[]>(() => getRecentSearches())
 
   const filters = useMemo<JobFilterValues>(() => ({
     q: params.get('q') ?? '',
@@ -39,6 +46,12 @@ export default function JobBrowse() {
     request.then(({ data }) => mounted && setPage(data))
       .catch((err) => mounted && setError(errorMessage(err)))
       .finally(() => mounted && setLoading(false))
+
+    // Record successful queries so visitors get a quick-recall list
+    if (filters.q) {
+      addRecentSearch(filters.q)
+      setRecent(getRecentSearches())
+    }
 
     return () => { mounted = false }
   }, [filters, params])
@@ -68,6 +81,22 @@ export default function JobBrowse() {
   function removeChip(key: string) {
     applyFilters({ ...filters, [key]: '' })
   }
+
+  function pickRecent(query: string) {
+    applyFilters({ q: query, type: '', level: '', location: '', skills: '' })
+  }
+
+  function dismissRecent(query: string) {
+    removeRecentSearch(query)
+    setRecent(getRecentSearches())
+  }
+
+  function clearRecent() {
+    clearRecentSearches()
+    setRecent([])
+  }
+
+  const showRecent = !filters.q && recent.length > 0
 
   return (
     <Container className="py-10 sm:py-14">
@@ -107,6 +136,46 @@ export default function JobBrowse() {
           </button>
         </div>
       </div>
+
+      {/* Recent searches (localStorage — visible for both logged-in and anonymous visitors) */}
+      {showRecent ? (
+        <div className="mb-3 flex flex-wrap items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2.5 shadow-sm">
+          <span className="inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
+            <Clock className="h-3.5 w-3.5" />
+            Recent
+          </span>
+          {recent.map((query) => (
+            <span
+              key={query}
+              className="group inline-flex items-center gap-1 rounded-full bg-slate-100 py-1 pl-3 pr-1 text-xs font-semibold text-slate-700 ring-1 ring-inset ring-slate-200 transition hover:bg-indigo-50 hover:text-indigo-700 hover:ring-indigo-100"
+            >
+              <button
+                type="button"
+                onClick={() => pickRecent(query)}
+                className="max-w-[200px] truncate"
+                title={`Search for "${query}"`}
+              >
+                {query}
+              </button>
+              <button
+                type="button"
+                onClick={() => dismissRecent(query)}
+                className="grid h-5 w-5 place-items-center rounded-full text-slate-400 transition hover:bg-slate-200 hover:text-slate-700"
+                aria-label={`Remove "${query}" from recent searches`}
+              >
+                <X className="h-3 w-3" />
+              </button>
+            </span>
+          ))}
+          <button
+            type="button"
+            onClick={clearRecent}
+            className="ml-auto text-xs font-medium text-slate-500 hover:text-slate-700"
+          >
+            Clear all
+          </button>
+        </div>
+      ) : null}
 
       {/* Sticky filter bar */}
       <div className="sticky top-[68px] z-30 -mx-4 bg-gradient-to-b from-[#f7f8fa] via-[#f7f8fa] to-transparent px-4 pb-3 pt-1 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
