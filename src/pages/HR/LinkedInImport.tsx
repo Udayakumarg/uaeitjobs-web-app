@@ -35,7 +35,7 @@ export default function LinkedInImport() {
       </Card>
       {job ? (
         <Card className="mt-6">
-          <p className="text-sm font-semibold uppercase text-teal-700">Imported</p>
+          <p className="text-sm font-semibold uppercase text-indigo-700">Imported</p>
           <h2 className="mt-2 text-2xl font-bold text-slate-950">{job.title}</h2>
           <p className="mt-1 text-slate-600">{job.companyName}</p>
           <p className="mt-4 line-clamp-3 text-slate-700">{job.description}</p>

@@ -76,7 +76,7 @@ export function JobFilters({
             <SlidersHorizontal className="h-4 w-4" />
             Filters
             {activeCount > 0 ? (
-              <span className="ml-1 rounded-full bg-teal-100 px-1.5 py-0.5 text-[10px] font-bold text-teal-800">
+              <span className="ml-1 rounded-full bg-indigo-100 px-1.5 py-0.5 text-[10px] font-bold text-indigo-800">
                 {activeCount}
               </span>
             ) : null}
