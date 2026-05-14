@@ -139,7 +139,7 @@ export default function JobDetail() {
                   {initials(job.companyName)}
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="text-xs font-semibold uppercase tracking-[0.16em] text-teal-700">
+                  <p className="text-xs font-semibold uppercase tracking-[0.16em] text-indigo-700">
                     {job.companyName}
                   </p>
                   <h1 className="mt-2 text-3xl font-semibold tracking-tight text-slate-950 sm:text-4xl">
@@ -253,15 +253,15 @@ export default function JobDetail() {
 
             <ul className="mt-5 grid gap-2 border-t border-slate-100 pt-4 text-xs text-slate-600">
               <li className="flex items-start gap-2">
-                <CheckCircle2 className="mt-0.5 h-3.5 w-3.5 shrink-0 text-teal-700" />
+                <CheckCircle2 className="mt-0.5 h-3.5 w-3.5 shrink-0 text-indigo-700" />
                 Apply with your saved profile
               </li>
               <li className="flex items-start gap-2">
-                <CheckCircle2 className="mt-0.5 h-3.5 w-3.5 shrink-0 text-teal-700" />
+                <CheckCircle2 className="mt-0.5 h-3.5 w-3.5 shrink-0 text-indigo-700" />
                 Track status from your dashboard
               </li>
               <li className="flex items-start gap-2">
-                <CheckCircle2 className="mt-0.5 h-3.5 w-3.5 shrink-0 text-teal-700" />
+                <CheckCircle2 className="mt-0.5 h-3.5 w-3.5 shrink-0 text-indigo-700" />
                 Withdraw anytime
               </li>
             </ul>
@@ -275,7 +275,7 @@ export default function JobDetail() {
             </p>
             <Link
               to={`/jobs?q=${encodeURIComponent(job.companyName ?? '')}`}
-              className="mt-4 inline-flex items-center gap-1.5 text-sm font-semibold text-teal-300 hover:text-teal-200"
+              className="mt-4 inline-flex items-center gap-1.5 text-sm font-semibold text-indigo-300 hover:text-indigo-200"
             >
               See more roles from {job.companyName} →
             </Link>

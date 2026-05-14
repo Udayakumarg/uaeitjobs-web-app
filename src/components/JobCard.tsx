@@ -27,7 +27,7 @@ export function JobCard({ job, onSave }: { job: Job; onSave?: (job: Job) => void
           </p>
           <Link
             to={`/jobs/${job.id}`}
-            className="mt-1 line-clamp-2 block text-base font-semibold leading-snug tracking-tight text-slate-950 transition group-hover:text-teal-800"
+            className="mt-1 line-clamp-2 block text-base font-semibold leading-snug tracking-tight text-slate-950 transition group-hover:text-indigo-800"
           >
             {job.title}
           </Link>

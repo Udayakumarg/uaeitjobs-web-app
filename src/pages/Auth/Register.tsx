@@ -92,7 +92,7 @@ export default function Register() {
     <main className="mx-auto grid max-w-6xl gap-8 px-4 py-10 lg:grid-cols-[1fr_500px] lg:py-16">
       <section className="hidden lg:block">
         <div className="sticky top-24 rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
-          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-teal-700">Create account</p>
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-indigo-700">Create account</p>
           <h1 className="mt-4 text-4xl font-semibold tracking-tight text-slate-950">
             A focused workspace for UAE technology hiring.
           </h1>
@@ -102,7 +102,7 @@ export default function Register() {
           <ul className="mt-8 grid gap-4 border-t border-slate-200 pt-6">
             {PERKS.map(({ icon: Icon, label }) => (
               <li key={label} className="flex items-start gap-3">
-                <span className="mt-0.5 inline-flex h-9 w-9 items-center justify-center rounded-lg bg-teal-50 text-teal-700 ring-1 ring-inset ring-teal-100">
+                <span className="mt-0.5 inline-flex h-9 w-9 items-center justify-center rounded-lg bg-indigo-50 text-indigo-700 ring-1 ring-inset ring-indigo-100">
                   <Icon size={18} />
                 </span>
                 <span className="text-sm font-medium text-slate-700">{label}</span>
@@ -114,7 +114,7 @@ export default function Register() {
 
       <Card className="animate-fade-in-up border-slate-200 p-6 shadow-lg shadow-slate-950/5 sm:p-8">
         <div className="mb-6">
-          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-teal-700">Join UAEITJOBS</p>
+          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-indigo-700">Join UAEITJOBS</p>
           <h2 className="mt-2 text-3xl font-semibold text-slate-950">Create account</h2>
           <p className="mt-2 text-sm text-slate-600">Choose your account type and continue.</p>
         </div>
@@ -127,7 +127,7 @@ export default function Register() {
               onClick={() => setValue('userType', type, { shouldValidate: true })}
               className={`min-h-10 rounded-lg text-sm font-semibold transition-all ${
                 userType === type
-                  ? 'bg-white text-teal-700 shadow-sm ring-1 ring-slate-200'
+                  ? 'bg-white text-indigo-700 shadow-sm ring-1 ring-slate-200'
                   : 'text-slate-600 hover:text-slate-900'
               }`}
             >
@@ -178,7 +178,7 @@ export default function Register() {
 
           <p className="text-center text-sm text-slate-600">
             Already have an account?{' '}
-            <Link className="font-semibold text-teal-700 hover:text-teal-800" to="/login">
+            <Link className="font-semibold text-indigo-700 hover:text-indigo-800" to="/login">
               Sign in
             </Link>
           </p>

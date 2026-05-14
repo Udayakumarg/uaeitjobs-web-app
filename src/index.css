@@ -1,15 +1,15 @@
 @import "tailwindcss";
 
 :root {
-  /* Brand — Teal as accent, slate-950 as primary surface ink */
-  --color-brand-50: #ecfdf5;
-  --color-brand-100: #d1fae5;
-  --color-brand-200: #99f6e4;
-  --color-brand-500: #14b8a6;
-  --color-brand-600: #0d9488;
-  --color-brand-700: #0f766e;
-  --color-brand-800: #115e59;
-  --color-brand-900: #134e4a;
+  /* Brand — Indigo as accent, slate-950 as primary surface ink */
+  --color-brand-50: #eef2ff;
+  --color-brand-100: #e0e7ff;
+  --color-brand-200: #c7d2fe;
+  --color-brand-500: #6366f1;
+  --color-brand-600: #4f46e5;
+  --color-brand-700: #4338ca;
+  --color-brand-800: #3730a3;
+  --color-brand-900: #312e81;
 
   /* Surface */
   --color-bg: #f7f8fa;
@@ -66,7 +66,7 @@ body {
   min-width: 320px;
   min-height: 100vh;
   background:
-    radial-gradient(1200px 600px at 100% -10%, rgba(20, 184, 166, 0.06), transparent 60%),
+    radial-gradient(1200px 600px at 100% -10%, rgba(99, 102, 241, 0.06), transparent 60%),
     radial-gradient(900px 500px at -10% 5%, rgba(15, 23, 42, 0.04), transparent 55%),
     linear-gradient(180deg, #f9fafb 0%, var(--color-bg) 100%);
 }
@@ -120,9 +120,9 @@ textarea:focus-visible {
 .hero-stage {
   position: relative;
   background:
-    radial-gradient(800px 400px at 80% 20%, rgba(20, 184, 166, 0.25), transparent 60%),
-    radial-gradient(700px 360px at 10% 80%, rgba(56, 189, 248, 0.18), transparent 60%),
-    linear-gradient(140deg, #050a18 0%, #0b1220 45%, #0a1f1c 100%);
+    radial-gradient(800px 400px at 80% 20%, rgba(99, 102, 241, 0.28), transparent 60%),
+    radial-gradient(700px 360px at 10% 80%, rgba(129, 140, 248, 0.18), transparent 60%),
+    linear-gradient(140deg, #050a18 0%, #0b1020 45%, #0d0b2a 100%);
   overflow: hidden;
   isolation: isolate;
 }
@@ -144,8 +144,8 @@ textarea:focus-visible {
   position: absolute;
   inset: 0;
   background:
-    radial-gradient(220px 220px at 88% 30%, rgba(20, 184, 166, 0.4), transparent 70%),
-    radial-gradient(280px 280px at 12% 78%, rgba(99, 102, 241, 0.18), transparent 70%);
+    radial-gradient(220px 220px at 88% 30%, rgba(99, 102, 241, 0.45), transparent 70%),
+    radial-gradient(280px 280px at 12% 78%, rgba(129, 140, 248, 0.25), transparent 70%);
   filter: blur(40px);
   opacity: 0.55;
   pointer-events: none;
@@ -154,7 +154,7 @@ textarea:focus-visible {
 
 /* Decorative gradient text */
 .gradient-text {
-  background: linear-gradient(120deg, #5eead4 0%, #ffffff 55%, #a5f3fc 100%);
+  background: linear-gradient(120deg, #818cf8 0%, #ffffff 55%, #c7d2fe 100%);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
@@ -199,7 +199,7 @@ textarea:focus-visible {
 }
 
 .eyebrow-dark {
-  color: #5eead4;
+  color: #a5b4fc;
 }
 
 /* Line clamps */
@@ -279,9 +279,9 @@ textarea:focus-visible {
 }
 
 .chip-dark {
-  background: rgba(94, 234, 212, 0.1);
-  color: #5eead4;
-  border-color: rgba(94, 234, 212, 0.25);
+  background: rgba(99, 102, 241, 0.12);
+  color: #a5b4fc;
+  border-color: rgba(99, 102, 241, 0.3);
 }
 
 /* Logo grayscale marquee */

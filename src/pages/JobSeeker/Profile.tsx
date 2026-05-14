@@ -68,7 +68,7 @@ export default function JobSeekerProfilePage() {
               <Upload size={16} /> Upload CV
               <input type="file" accept=".pdf,.doc,.docx" className="hidden" onChange={(event) => upload(event.target.files?.[0])} />
             </label>
-            {profile.cvUrl ? <a className="text-sm font-semibold text-teal-700" href={profile.cvUrl} target="_blank" rel="noreferrer">View current CV</a> : null}
+            {profile.cvUrl ? <a className="text-sm font-semibold text-indigo-700" href={profile.cvUrl} target="_blank" rel="noreferrer">View current CV</a> : null}
           </div>
         </Card>
       )}

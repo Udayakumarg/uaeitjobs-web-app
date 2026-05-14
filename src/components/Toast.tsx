@@ -42,7 +42,7 @@ export function Toasts() {
         const Icon = toast.tone === 'success' ? CheckCircle2 : toast.tone === 'error' ? XCircle : Info
         return (
           <div key={toast.id} className="flex items-start gap-3 rounded-lg border border-slate-200 bg-white p-4 text-sm text-slate-800 shadow-lg">
-            <Icon className={toast.tone === 'success' ? 'mt-0.5 h-5 w-5 text-green-600' : toast.tone === 'error' ? 'mt-0.5 h-5 w-5 text-red-600' : 'mt-0.5 h-5 w-5 text-teal-700'} />
+            <Icon className={toast.tone === 'success' ? 'mt-0.5 h-5 w-5 text-green-600' : toast.tone === 'error' ? 'mt-0.5 h-5 w-5 text-red-600' : 'mt-0.5 h-5 w-5 text-indigo-700'} />
             <div className="flex-1">
               {toast.title ? <p className="font-semibold text-slate-950">{toast.title}</p> : null}
               {toast.message ? <p className={toast.title ? 'mt-0.5 text-slate-600' : ''}>{toast.message}</p> : null}
