@@ -1,4 +1,4 @@
-import { RotateCcw, Search, SlidersHorizontal } from 'lucide-react'
+import { Flag, RotateCcw, Search, SlidersHorizontal, Sparkles } from 'lucide-react'
 import { useEffect, useState, type FormEvent } from 'react'
 import { Button, Field, Input, Select } from './ui'
 
@@ -8,9 +8,24 @@ export interface JobFilterValues {
   level: string
   location: string
   skills: string
+  /** UAE-specific filters */
+  visaType: string
+  emirate: string
+  immediateJoiner: boolean
+  remoteUae: boolean
 }
 
-const EMPTY: JobFilterValues = { q: '', type: '', level: '', location: '', skills: '' }
+const EMPTY: JobFilterValues = {
+  q: '',
+  type: '',
+  level: '',
+  location: '',
+  skills: '',
+  visaType: '',
+  emirate: '',
+  immediateJoiner: false,
+  remoteUae: false,
+}
 
 export function JobFilters({
   value,
@@ -21,14 +36,23 @@ export function JobFilters({
 }) {
   const [draft, setDraft] = useState<JobFilterValues>(value)
   const [advanced, setAdvanced] = useState(
-    Boolean(value.type || value.level || value.location || value.skills),
+    Boolean(
+      value.type ||
+        value.level ||
+        value.location ||
+        value.skills ||
+        value.visaType ||
+        value.emirate ||
+        value.immediateJoiner ||
+        value.remoteUae,
+    ),
   )
 
   useEffect(() => {
     setDraft(value)
   }, [value])
 
-  const update = (key: keyof JobFilterValues, fieldValue: string) =>
+  const update = <K extends keyof JobFilterValues>(key: K, fieldValue: JobFilterValues[K]) =>
     setDraft((current) => ({ ...current, [key]: fieldValue }))
 
   const handleSubmit = (event: FormEvent) => {
@@ -45,10 +69,24 @@ export function JobFilters({
     (draft.type ? 1 : 0) +
     (draft.level ? 1 : 0) +
     (draft.location ? 1 : 0) +
-    (draft.skills ? 1 : 0)
+    (draft.skills ? 1 : 0) +
+    (draft.visaType ? 1 : 0) +
+    (draft.emirate ? 1 : 0) +
+    (draft.immediateJoiner ? 1 : 0) +
+    (draft.remoteUae ? 1 : 0)
 
   const hasFilters =
-    Boolean(draft.q || draft.type || draft.level || draft.location || draft.skills)
+    Boolean(
+      draft.q ||
+        draft.type ||
+        draft.level ||
+        draft.location ||
+        draft.skills ||
+        draft.visaType ||
+        draft.emirate ||
+        draft.immediateJoiner ||
+        draft.remoteUae,
+    )
 
   return (
     <form
@@ -89,39 +127,98 @@ export function JobFilters({
 
       {/* Advanced filters — collapsible */}
       {advanced ? (
-        <div className="mt-4 grid gap-3 border-t border-slate-100 pt-4 md:grid-cols-2 lg:grid-cols-4">
-          <Field label="Job type">
-            <Select value={draft.type} onChange={(event) => update('type', event.target.value)}>
-              <option value="">Any type</option>
-              <option value="full_time">Full-time</option>
-              <option value="contract">Contract</option>
-              <option value="part_time">Part-time</option>
-            </Select>
-          </Field>
-          <Field label="Experience">
-            <Select value={draft.level} onChange={(event) => update('level', event.target.value)}>
-              <option value="">Any level</option>
-              <option value="junior">Junior</option>
-              <option value="mid">Mid-level</option>
-              <option value="senior">Senior</option>
-              <option value="lead">Lead / Principal</option>
-            </Select>
-          </Field>
-          <Field label="Location">
-            <Input
-              placeholder="Dubai, Abu Dhabi…"
-              value={draft.location}
-              onChange={(event) => update('location', event.target.value)}
-            />
-          </Field>
-          <Field label="Skill">
-            <Input
-              placeholder="AWS, Java, React…"
-              value={draft.skills}
-              onChange={(event) => update('skills', event.target.value)}
-            />
-          </Field>
-        </div>
+        <>
+          <div className="mt-4 grid gap-3 border-t border-slate-100 pt-4 md:grid-cols-2 lg:grid-cols-4">
+            <Field label="Job type">
+              <Select value={draft.type} onChange={(event) => update('type', event.target.value)}>
+                <option value="">Any type</option>
+                <option value="full_time">Full-time</option>
+                <option value="contract">Contract</option>
+                <option value="part_time">Part-time</option>
+              </Select>
+            </Field>
+            <Field label="Experience">
+              <Select value={draft.level} onChange={(event) => update('level', event.target.value)}>
+                <option value="">Any level</option>
+                <option value="junior">Junior</option>
+                <option value="mid">Mid-level</option>
+                <option value="senior">Senior</option>
+                <option value="lead">Lead / Principal</option>
+              </Select>
+            </Field>
+            <Field label="Location">
+              <Input
+                placeholder="Dubai, Abu Dhabi…"
+                value={draft.location}
+                onChange={(event) => update('location', event.target.value)}
+              />
+            </Field>
+            <Field label="Skill">
+              <Input
+                placeholder="AWS, Java, React…"
+                value={draft.skills}
+                onChange={(event) => update('skills', event.target.value)}
+              />
+            </Field>
+          </div>
+
+          {/* UAE essentials — only here, not on other portals */}
+          <div className="mt-4 rounded-xl border border-indigo-100 bg-indigo-50/40 p-4">
+            <p className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-[0.14em] text-indigo-700">
+              <Flag className="h-3.5 w-3.5" />
+              UAE essentials
+            </p>
+            <div className="mt-3 grid gap-3 md:grid-cols-2 lg:grid-cols-4">
+              <Field label="Visa requirement">
+                <Select
+                  value={draft.visaType}
+                  onChange={(event) => update('visaType', event.target.value)}
+                >
+                  <option value="">Any</option>
+                  <option value="free_visa">Free visa (employer-provided)</option>
+                  <option value="employment_visa">Will sponsor visa</option>
+                  <option value="own_visa">Own visa required</option>
+                  <option value="visit_visa_accepted">Visit visa accepted</option>
+                </Select>
+              </Field>
+              <Field label="Emirate">
+                <Select
+                  value={draft.emirate}
+                  onChange={(event) => update('emirate', event.target.value)}
+                >
+                  <option value="">Any emirate</option>
+                  <option value="dubai">Dubai</option>
+                  <option value="abu_dhabi">Abu Dhabi</option>
+                  <option value="sharjah">Sharjah</option>
+                  <option value="ajman">Ajman</option>
+                  <option value="ras_al_khaimah">Ras Al Khaimah</option>
+                  <option value="fujairah">Fujairah</option>
+                  <option value="umm_al_quwain">Umm Al Quwain</option>
+                </Select>
+              </Field>
+              <label className="flex cursor-pointer items-center gap-2 self-end rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm font-medium text-slate-700 transition hover:border-indigo-300">
+                <input
+                  type="checkbox"
+                  className="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                  checked={draft.immediateJoiner}
+                  onChange={(event) => update('immediateJoiner', event.target.checked)}
+                />
+                <Sparkles className="h-3.5 w-3.5 text-indigo-500" />
+                Immediate joiner
+              </label>
+              <label className="flex cursor-pointer items-center gap-2 self-end rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm font-medium text-slate-700 transition hover:border-indigo-300">
+                <input
+                  type="checkbox"
+                  className="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                  checked={draft.remoteUae}
+                  onChange={(event) => update('remoteUae', event.target.checked)}
+                />
+                <Sparkles className="h-3.5 w-3.5 text-indigo-500" />
+                Remote within UAE
+              </label>
+            </div>
+          </div>
+        </>
       ) : null}
 
       {hasFilters ? (

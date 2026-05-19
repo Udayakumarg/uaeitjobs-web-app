@@ -165,6 +165,23 @@ export default function JobDetail() {
                 ) : null}
               </div>
 
+              {/* UAE essentials badges */}
+              {job.visaType || job.emirate || job.immediateJoiner || job.remoteUae ? (
+                <div className="mt-4 flex flex-wrap items-center gap-2">
+                  {job.visaType ? (
+                    <Badge tone="teal">
+                      {job.visaType === 'free_visa' && 'Free visa'}
+                      {job.visaType === 'employment_visa' && 'Visa sponsored'}
+                      {job.visaType === 'own_visa' && 'Own visa required'}
+                      {job.visaType === 'visit_visa_accepted' && 'Visit visa accepted'}
+                    </Badge>
+                  ) : null}
+                  {job.emirate ? <Badge tone="slate">{labelize(job.emirate)}</Badge> : null}
+                  {job.immediateJoiner ? <Badge tone="amber">Immediate joiner</Badge> : null}
+                  {job.remoteUae ? <Badge tone="green">Remote in UAE</Badge> : null}
+                </div>
+              ) : null}
+
               {/* Quick facts */}
               <div className="mt-7 grid gap-3 sm:grid-cols-3">
                 <div className="rounded-xl border border-slate-200 bg-white p-4">
