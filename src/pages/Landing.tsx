@@ -24,6 +24,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { useEffect, useState, type FormEvent } from 'react'
 import { jobsApi } from '../services/api'
 import { Button, Container, Section, SectionHeading, Stat } from '../components/ui'
+import { useDocumentMeta } from '../hooks/useDocumentMeta'
 import type { Job } from '../types'
 
 const CATEGORIES = [
@@ -106,6 +107,25 @@ export default function Landing() {
   const [stats, setStats] = useState({ totalJobs: 0, companies: 0, countriesRepresented: 0 })
   const [featured, setFeatured] = useState<Job[]>([])
   const [search, setSearch] = useState('')
+
+  useDocumentMeta({
+    title: 'UAEITJOBS — Tech & IT jobs in Dubai, Abu Dhabi, Sharjah',
+    raw: true,
+    description:
+      'UAE-focused IT and technology hiring. Verified employers, curated software, DevOps, data, security, QA and product roles. Filter by visa, emirate, immediate joiner and remote-UAE.',
+    canonical: 'https://www.uaeitjobs.com/',
+    jsonLd: {
+      '@context': 'https://schema.org',
+      '@type': 'WebSite',
+      name: 'UAEITJOBS',
+      url: 'https://www.uaeitjobs.com',
+      potentialAction: {
+        '@type': 'SearchAction',
+        target: 'https://www.uaeitjobs.com/jobs?q={search_term_string}',
+        'query-input': 'required name=search_term_string',
+      },
+    },
+  })
 
   useEffect(() => {
     jobsApi.stats().then(({ data }) => setStats(data)).catch(() => undefined)

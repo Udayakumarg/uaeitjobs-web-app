@@ -14,10 +14,84 @@ import { Link, useNavigate, useParams } from 'react-router-dom'
 import { CardSkeleton } from '../../components/Skeleton'
 import { useToastStore } from '../../components/Toast'
 import { Badge, Button, Card, Container, Field, Textarea } from '../../components/ui'
+import { useDocumentMeta } from '../../hooks/useDocumentMeta'
 import { errorMessage, jobsApi, seekerApi } from '../../services/api'
 import { useAuthStore } from '../../store/authStore'
 import type { Job } from '../../types'
 import { dateLabel, initials, labelize, money, parseSkills, relativeTime } from '../../utils/format'
+
+/** Build a schema.org/JobPosting payload for Google rich-results. */
+function buildJobPostingJsonLd(job: Job): Record<string, unknown> {
+  const emirateAddress: Record<string, string> = {
+    dubai: 'Dubai',
+    abu_dhabi: 'Abu Dhabi',
+    sharjah: 'Sharjah',
+    ajman: 'Ajman',
+    fujairah: 'Fujairah',
+    ras_al_khaimah: 'Ras Al Khaimah',
+    umm_al_quwain: 'Umm Al Quwain',
+  }
+  const locality = job.emirate ? emirateAddress[job.emirate] : job.locationUae || 'United Arab Emirates'
+  const employmentMap: Record<string, string> = {
+    full_time: 'FULL_TIME',
+    part_time: 'PART_TIME',
+    contract: 'CONTRACTOR',
+    internship: 'INTERN',
+    temporary: 'TEMPORARY',
+  }
+
+  const payload: Record<string, unknown> = {
+    '@context': 'https://schema.org/',
+    '@type': 'JobPosting',
+    title: job.title,
+    description: `<p>${(job.description ?? '').replace(/</g, '&lt;')}</p>${job.requirements ? `<h3>Requirements</h3><p>${job.requirements.replace(/</g, '&lt;')}</p>` : ''}`,
+    datePosted: job.createdAt,
+    validThrough: job.expiresAt,
+    employmentType: job.jobType ? employmentMap[job.jobType] ?? job.jobType.toUpperCase() : undefined,
+    directApply: true,
+    hiringOrganization: {
+      '@type': 'Organization',
+      name: job.companyName,
+      sameAs: 'https://www.uaeitjobs.com',
+    },
+    jobLocation: {
+      '@type': 'Place',
+      address: {
+        '@type': 'PostalAddress',
+        addressLocality: locality,
+        addressCountry: 'AE',
+      },
+    },
+    identifier: {
+      '@type': 'PropertyValue',
+      name: 'UAEITJOBS',
+      value: String(job.id),
+    },
+  }
+
+  if (job.remoteUae) {
+    payload.jobLocationType = 'TELECOMMUTE'
+    payload.applicantLocationRequirements = {
+      '@type': 'Country',
+      name: 'United Arab Emirates',
+    }
+  }
+
+  if (job.salaryMin || job.salaryMax) {
+    payload.baseSalary = {
+      '@type': 'MonetaryAmount',
+      currency: job.salaryCurrency || 'AED',
+      value: {
+        '@type': 'QuantitativeValue',
+        minValue: job.salaryMin ?? undefined,
+        maxValue: job.salaryMax ?? undefined,
+        unitText: 'MONTH',
+      },
+    }
+  }
+
+  return payload
+}
 
 export default function JobDetail() {
   const { id } = useParams()
@@ -29,6 +103,19 @@ export default function JobDetail() {
   const [loading, setLoading] = useState(true)
   const [applying, setApplying] = useState(false)
   const [error, setError] = useState('')
+
+  // SEO — title, description and JobPosting JSON-LD. The hook handles
+  // tag insertion + cleanup; empty values mean we skip until the job loads.
+  useDocumentMeta(
+    job
+      ? {
+          title: `${job.title} at ${job.companyName}`,
+          description: (job.description ?? '').slice(0, 160) || `${job.title} role at ${job.companyName} in ${job.locationUae || 'UAE'}.`,
+          canonical: `https://www.uaeitjobs.com/jobs/${job.id}`,
+          jsonLd: buildJobPostingJsonLd(job),
+        }
+      : { title: 'Job detail', description: 'Loading role…' },
+  )
 
   useEffect(() => {
     if (!id) return
