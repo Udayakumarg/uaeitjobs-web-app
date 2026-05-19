@@ -4,16 +4,16 @@ import {
   BriefcaseBusiness,
   CalendarDays,
   CheckCircle2,
+  ExternalLink,
   Eye,
   MapPin,
-  Send,
   Share2,
 } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { CardSkeleton } from '../../components/Skeleton'
 import { useToastStore } from '../../components/Toast'
-import { Badge, Button, Card, Container, Field, Textarea } from '../../components/ui'
+import { Badge, Button, Card, Container } from '../../components/ui'
 import { useDocumentMeta } from '../../hooks/useDocumentMeta'
 import { errorMessage, jobsApi, seekerApi } from '../../services/api'
 import { useAuthStore } from '../../store/authStore'
@@ -99,9 +99,7 @@ export default function JobDetail() {
   const { user } = useAuthStore()
   const toast = useToastStore((state) => state.add)
   const [job, setJob] = useState<Job | null>(null)
-  const [coverLetter, setCoverLetter] = useState('')
   const [loading, setLoading] = useState(true)
-  const [applying, setApplying] = useState(false)
   const [error, setError] = useState('')
 
   // SEO — title, description and JobPosting JSON-LD. The hook handles
@@ -125,30 +123,6 @@ export default function JobDetail() {
       .catch((err) => setError(errorMessage(err)))
       .finally(() => setLoading(false))
   }, [id])
-
-  async function apply() {
-    if (!user) {
-      navigate('/login', { state: { from: `/jobs/${id}` } })
-      return
-    }
-    if (user.userType !== 'job_seeker') {
-      navigate('/access-denied')
-      return
-    }
-    setApplying(true)
-    try {
-      await seekerApi.apply({ jobId: Number(id), coverLetter })
-      toast({
-        type: 'success',
-        title: 'Application submitted',
-        message: 'You can track it from your dashboard.',
-      })
-    } catch (err) {
-      toast({ type: 'error', title: 'Could not apply', message: errorMessage(err) })
-    } finally {
-      setApplying(false)
-    }
-  }
 
   async function save() {
     if (!user) return navigate('/login', { state: { from: `/jobs/${id}` } })
@@ -332,41 +306,46 @@ export default function JobDetail() {
           <Card>
             <p className="eyebrow">Apply</p>
             <h2 className="mt-1.5 text-lg font-semibold tracking-tight text-slate-950">
-              Submit your application
+              Apply on the original posting
             </h2>
             <p className="mt-1 text-sm text-slate-600">
-              Add a short note explaining why you're a great fit.
+              UAEITJOBS is a curated discovery layer — your application goes directly to the
+              recruiter on the source platform.
             </p>
 
-            <Field label="Cover letter" hint="Optional but recommended">
-              <Textarea
-                value={coverLetter}
-                onChange={(event) => setCoverLetter(event.target.value)}
-                placeholder="Briefly introduce yourself and your fit for this role."
-              />
-            </Field>
-
             <div className="mt-4 grid gap-2">
-              <Button onClick={apply} disabled={applying}>
-                <Send size={16} /> {applying ? 'Applying…' : 'Apply now'}
-              </Button>
+              <a
+                href={job.applyUrl || job.linkedinUrl || `https://www.linkedin.com/jobs/search/?keywords=${encodeURIComponent((job.title ?? '') + ' ' + (job.companyName ?? ''))}&location=United%20Arab%20Emirates`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-slate-950 px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-800"
+              >
+                <ExternalLink size={16} /> Apply on company website
+              </a>
               <Button variant="secondary" onClick={save}>
                 <Bookmark size={16} /> Save for later
               </Button>
+              <button
+                type="button"
+                onClick={share}
+                className="inline-flex h-10 items-center justify-center gap-2 rounded-lg border border-slate-200 px-4 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+              >
+                <Share2 size={16} /> Share role
+              </button>
             </div>
 
             <ul className="mt-5 grid gap-2 border-t border-slate-100 pt-4 text-xs text-slate-600">
               <li className="flex items-start gap-2">
                 <CheckCircle2 className="mt-0.5 h-3.5 w-3.5 shrink-0 text-indigo-700" />
-                Apply with your saved profile
+                100% free — no signup needed to apply
               </li>
               <li className="flex items-start gap-2">
                 <CheckCircle2 className="mt-0.5 h-3.5 w-3.5 shrink-0 text-indigo-700" />
-                Track status from your dashboard
+                Save roles to your shortlist (login)
               </li>
               <li className="flex items-start gap-2">
                 <CheckCircle2 className="mt-0.5 h-3.5 w-3.5 shrink-0 text-indigo-700" />
-                Withdraw anytime
+                Filter by stack, visa, emirate and more
               </li>
             </ul>
           </Card>

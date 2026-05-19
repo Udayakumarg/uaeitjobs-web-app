@@ -1,5 +1,6 @@
 import { Flag, RotateCcw, Search, SlidersHorizontal, Sparkles } from 'lucide-react'
 import { useEffect, useState, type FormEvent } from 'react'
+import { JOB_CATEGORIES } from '../types'
 import { Button, Field, Input, Select } from './ui'
 
 export interface JobFilterValues {
@@ -13,6 +14,8 @@ export interface JobFilterValues {
   emirate: string
   immediateJoiner: boolean
   remoteUae: boolean
+  /** Job role category — backend/frontend/qa/devops/etc. */
+  category: string
 }
 
 const EMPTY: JobFilterValues = {
@@ -25,6 +28,7 @@ const EMPTY: JobFilterValues = {
   emirate: '',
   immediateJoiner: false,
   remoteUae: false,
+  category: '',
 }
 
 export function JobFilters({
@@ -47,6 +51,8 @@ export function JobFilters({
         value.remoteUae,
     ),
   )
+  // Category is shown as pills (always visible), so it does NOT auto-open
+  // the advanced panel — keeps the UI calm when users just want one click.
 
   useEffect(() => {
     setDraft(value)
@@ -73,7 +79,8 @@ export function JobFilters({
     (draft.visaType ? 1 : 0) +
     (draft.emirate ? 1 : 0) +
     (draft.immediateJoiner ? 1 : 0) +
-    (draft.remoteUae ? 1 : 0)
+    (draft.remoteUae ? 1 : 0) +
+    (draft.category ? 1 : 0)
 
   const hasFilters =
     Boolean(
@@ -85,14 +92,46 @@ export function JobFilters({
         draft.visaType ||
         draft.emirate ||
         draft.immediateJoiner ||
-        draft.remoteUae,
+        draft.remoteUae ||
+        draft.category,
     )
+
+  /** Selecting a category pill applies it immediately — this is the marquee
+   *  interaction users like the most, so we don't make them press Search. */
+  const pickCategory = (next: string) => {
+    const value = draft.category === next ? '' : next
+    setDraft((current) => ({ ...current, category: value }))
+    onApply({ ...draft, category: value })
+  }
 
   return (
     <form
       onSubmit={handleSubmit}
       className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-[0_1px_2px_rgba(15,23,42,0.04),0_8px_24px_-8px_rgba(15,23,42,0.08)]"
     >
+      {/* Category pills — one-click filter for "I'm a tester / frontend dev / devops…" */}
+      <div className="-mx-1 mb-3 flex flex-wrap gap-1.5 px-1">
+        {JOB_CATEGORIES.map((category) => {
+          const active = draft.category === category.value
+          return (
+            <button
+              key={category.value}
+              type="button"
+              onClick={() => pickCategory(category.value)}
+              className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold transition ${
+                active
+                  ? 'bg-indigo-600 text-white shadow-sm ring-1 ring-inset ring-indigo-600'
+                  : 'bg-slate-100 text-slate-700 ring-1 ring-inset ring-slate-200 hover:bg-indigo-50 hover:text-indigo-700 hover:ring-indigo-100'
+              }`}
+              aria-pressed={active}
+            >
+              <span aria-hidden="true">{category.emoji}</span>
+              {category.label}
+            </button>
+          )
+        })}
+      </div>
+
       {/* Primary row — search + advanced toggle + submit */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
         <div className="relative flex-1">

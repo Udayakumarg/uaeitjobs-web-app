@@ -35,6 +35,7 @@ export default function JobBrowse() {
     emirate: params.get('emirate') ?? '',
     immediateJoiner: params.get('immediateJoiner') === 'true',
     remoteUae: params.get('remoteUae') === 'true',
+    category: params.get('category') ?? '',
   }), [params])
 
   useEffect(() => {
@@ -50,7 +51,8 @@ export default function JobBrowse() {
       filters.visaType ||
       filters.emirate ||
       filters.immediateJoiner ||
-      filters.remoteUae
+      filters.remoteUae ||
+      filters.category
     const request = filters.q
       ? jobsApi.search(filters.q, currentPage, 20)
       : hasStructured
@@ -63,6 +65,7 @@ export default function JobBrowse() {
             emirate: filters.emirate || undefined,
             immediateJoiner: filters.immediateJoiner ? true : undefined,
             remoteUae: filters.remoteUae ? true : undefined,
+            category: filters.category || undefined,
             page: currentPage,
             size: 20,
           })
@@ -112,8 +115,23 @@ export default function JobBrowse() {
     umm_al_quwain: 'Umm Al Quwain',
   }
 
+  const CATEGORY_LABELS: Record<string, string> = {
+    backend: 'Backend',
+    frontend: 'Frontend',
+    fullstack: 'Full-stack',
+    mobile: 'Mobile',
+    qa: 'QA & Testing',
+    devops: 'DevOps & SRE',
+    data_ml: 'Data & ML',
+    security: 'Security',
+    product_design: 'Product & Design',
+    it_support: 'IT & Infra',
+    other: 'Other',
+  }
+
   const activeChips = [
     filters.q && { key: 'q', label: `"${filters.q}"` },
+    filters.category && { key: 'category', label: CATEGORY_LABELS[filters.category] ?? filters.category },
     filters.type && { key: 'type', label: filters.type.replace('_', ' ') },
     filters.level && { key: 'level', label: filters.level },
     filters.location && { key: 'location', label: filters.location },
@@ -140,6 +158,7 @@ export default function JobBrowse() {
       emirate: '',
       immediateJoiner: false,
       remoteUae: false,
+      category: '',
     })
   }
 
@@ -299,7 +318,7 @@ export default function JobBrowse() {
             title="No matching roles found"
             description="Try removing a filter or searching for a related skill or company."
             action={
-              <Button variant="secondary" onClick={() => applyFilters({ q: '', type: '', level: '', location: '', skills: '', visaType: '', emirate: '', immediateJoiner: false, remoteUae: false })}>
+              <Button variant="secondary" onClick={() => applyFilters({ q: '', type: '', level: '', location: '', skills: '', visaType: '', emirate: '', immediateJoiner: false, remoteUae: false, category: '' })}>
                 Clear filters
               </Button>
             }
