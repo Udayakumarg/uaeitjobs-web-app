@@ -26,6 +26,20 @@ export interface Page<T> {
   size: number
 }
 
+export type VisaType =
+  | 'free_visa'
+  | 'own_visa'
+  | 'visit_visa_accepted'
+  | 'employment_visa'
+export type Emirate =
+  | 'dubai'
+  | 'abu_dhabi'
+  | 'sharjah'
+  | 'ajman'
+  | 'fujairah'
+  | 'ras_al_khaimah'
+  | 'umm_al_quwain'
+
 export interface Job {
   id: number
   slug?: string
@@ -48,6 +62,10 @@ export interface Job {
   featured?: boolean
   active?: boolean
   viewCount?: number
+  visaType?: VisaType | null
+  emirate?: Emirate | null
+  immediateJoiner?: boolean
+  remoteUae?: boolean
 }
 
 export interface JobRequest {
@@ -65,6 +83,10 @@ export interface JobRequest {
   linkedinUrl?: string
   featured?: boolean
   expiresAt?: string
+  visaType?: VisaType | null
+  emirate?: Emirate | null
+  immediateJoiner?: boolean
+  remoteUae?: boolean
 }
 
 export interface Application {

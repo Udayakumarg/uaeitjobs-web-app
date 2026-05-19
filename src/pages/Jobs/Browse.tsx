@@ -30,6 +30,10 @@ export default function JobBrowse() {
     level: params.get('level') ?? '',
     location: params.get('location') ?? '',
     skills: params.get('skills') ?? '',
+    visaType: params.get('visaType') ?? '',
+    emirate: params.get('emirate') ?? '',
+    immediateJoiner: params.get('immediateJoiner') === 'true',
+    remoteUae: params.get('remoteUae') === 'true',
   }), [params])
 
   useEffect(() => {
@@ -37,10 +41,30 @@ export default function JobBrowse() {
     setLoading(true)
     setError('')
     const currentPage = Number(params.get('page') ?? 0)
+    const hasStructured =
+      filters.type ||
+      filters.level ||
+      filters.location ||
+      filters.skills ||
+      filters.visaType ||
+      filters.emirate ||
+      filters.immediateJoiner ||
+      filters.remoteUae
     const request = filters.q
       ? jobsApi.search(filters.q, currentPage, 20)
-      : (filters.type || filters.level || filters.location || filters.skills)
-        ? jobsApi.filter({ type: filters.type, level: filters.level, location: filters.location, skills: filters.skills, page: currentPage, size: 20 })
+      : hasStructured
+        ? jobsApi.filter({
+            type: filters.type || undefined,
+            level: filters.level || undefined,
+            location: filters.location || undefined,
+            skills: filters.skills || undefined,
+            visaType: filters.visaType || undefined,
+            emirate: filters.emirate || undefined,
+            immediateJoiner: filters.immediateJoiner ? true : undefined,
+            remoteUae: filters.remoteUae ? true : undefined,
+            page: currentPage,
+            size: 20,
+          })
         : jobsApi.list({ page: currentPage, size: 20 })
 
     request.then(({ data }) => mounted && setPage(data))
@@ -59,7 +83,8 @@ export default function JobBrowse() {
   function applyFilters(values: JobFilterValues) {
     const next = new URLSearchParams()
     Object.entries(values).forEach(([key, value]) => {
-      if (value) next.set(key, value)
+      if (value === '' || value === false || value === null || value === undefined) return
+      next.set(key, typeof value === 'boolean' ? 'true' : String(value))
     })
     setParams(next)
   }
@@ -70,20 +95,51 @@ export default function JobBrowse() {
     setParams(next)
   }
 
+  const VISA_LABELS: Record<string, string> = {
+    free_visa: 'Free visa',
+    employment_visa: 'Sponsored visa',
+    own_visa: 'Own visa',
+    visit_visa_accepted: 'Visit visa OK',
+  }
+  const EMIRATE_LABELS: Record<string, string> = {
+    dubai: 'Dubai',
+    abu_dhabi: 'Abu Dhabi',
+    sharjah: 'Sharjah',
+    ajman: 'Ajman',
+    fujairah: 'Fujairah',
+    ras_al_khaimah: 'Ras Al Khaimah',
+    umm_al_quwain: 'Umm Al Quwain',
+  }
+
   const activeChips = [
-    filters.q && { key: 'q', label: `“${filters.q}”` },
+    filters.q && { key: 'q', label: `"${filters.q}"` },
     filters.type && { key: 'type', label: filters.type.replace('_', ' ') },
     filters.level && { key: 'level', label: filters.level },
     filters.location && { key: 'location', label: filters.location },
     filters.skills && { key: 'skills', label: filters.skills },
+    filters.visaType && { key: 'visaType', label: VISA_LABELS[filters.visaType] ?? filters.visaType },
+    filters.emirate && { key: 'emirate', label: EMIRATE_LABELS[filters.emirate] ?? filters.emirate },
+    filters.immediateJoiner && { key: 'immediateJoiner', label: 'Immediate joiner' },
+    filters.remoteUae && { key: 'remoteUae', label: 'Remote UAE' },
   ].filter(Boolean) as Array<{ key: string; label: string }>
 
   function removeChip(key: string) {
-    applyFilters({ ...filters, [key]: '' })
+    const reset = key === 'immediateJoiner' || key === 'remoteUae' ? false : ''
+    applyFilters({ ...filters, [key]: reset } as JobFilterValues)
   }
 
   function pickRecent(query: string) {
-    applyFilters({ q: query, type: '', level: '', location: '', skills: '' })
+    applyFilters({
+      q: query,
+      type: '',
+      level: '',
+      location: '',
+      skills: '',
+      visaType: '',
+      emirate: '',
+      immediateJoiner: false,
+      remoteUae: false,
+    })
   }
 
   function dismissRecent(query: string) {
@@ -230,7 +286,7 @@ export default function JobBrowse() {
             title="No matching roles found"
             description="Try removing a filter or searching for a related skill or company."
             action={
-              <Button variant="secondary" onClick={() => applyFilters({ q: '', type: '', level: '', location: '', skills: '' })}>
+              <Button variant="secondary" onClick={() => applyFilters({ q: '', type: '', level: '', location: '', skills: '', visaType: '', emirate: '', immediateJoiner: false, remoteUae: false })}>
                 Clear filters
               </Button>
             }

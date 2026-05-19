@@ -22,6 +22,10 @@ const schema = z.object({
   locationUae: z.string().min(1, 'Select a location'),
   skills: z.string().optional(),
   expiresAt: z.string().optional(),
+  visaType: z.string().optional(),
+  emirate: z.string().optional(),
+  immediateJoiner: z.boolean().default(false),
+  remoteUae: z.boolean().default(false),
 })
 
 export type JobFormValues = z.infer<typeof schema>
@@ -39,6 +43,10 @@ const defaults: JobFormValues = {
   locationUae: 'Dubai',
   skills: '',
   expiresAt: '',
+  visaType: '',
+  emirate: '',
+  immediateJoiner: false,
+  remoteUae: false,
 }
 
 export default function PostJob() {
@@ -63,12 +71,22 @@ export default function PostJob() {
       locationUae: data.locationUae ?? 'Dubai',
       skills: data.skills ?? '',
       expiresAt: data.expiresAt?.slice(0, 10) ?? '',
+      visaType: data.visaType ?? '',
+      emirate: data.emirate ?? '',
+      immediateJoiner: Boolean(data.immediateJoiner),
+      remoteUae: Boolean(data.remoteUae),
     })).catch((error) => setServerError(errorMessage(error)))
   }, [id, reset])
 
   async function onSubmit(values: JobFormValues) {
     setServerError('')
-    const payload: JobRequest = { ...values, salaryMin: values.salaryMin || null, salaryMax: values.salaryMax || null }
+    const payload: JobRequest = {
+      ...values,
+      salaryMin: values.salaryMin || null,
+      salaryMax: values.salaryMax || null,
+      visaType: (values.visaType || null) as JobRequest['visaType'],
+      emirate: (values.emirate || null) as JobRequest['emirate'],
+    }
     try {
       const response = id ? await hrApi.updateJob(Number(id), payload) : await hrApi.createJob(payload)
       toast({ type: 'success', title: id ? 'Job updated' : 'Job posted', message: response.data.title })
@@ -93,6 +111,52 @@ export default function PostJob() {
             <Field label="Salary min"><Input type="number" {...register('salaryMin')} /></Field>
             <Field label="Salary max"><Input type="number" {...register('salaryMax')} /></Field>
           </div>
+
+          {/* UAE essentials — competitive differentiator vs other portals */}
+          <div className="rounded-xl border border-indigo-100 bg-indigo-50/40 p-4">
+            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-indigo-700">UAE essentials</p>
+            <p className="mt-1 text-xs text-slate-600">These fields help candidates filter relevant roles quickly.</p>
+            <div className="mt-3 grid gap-4 md:grid-cols-2">
+              <Field label="Visa requirement">
+                <Select {...register('visaType')}>
+                  <option value="">Not specified</option>
+                  <option value="free_visa">Free visa (employer-provided)</option>
+                  <option value="employment_visa">Will sponsor employment visa</option>
+                  <option value="own_visa">Own visa required</option>
+                  <option value="visit_visa_accepted">Visit visa accepted</option>
+                </Select>
+              </Field>
+              <Field label="Emirate">
+                <Select {...register('emirate')}>
+                  <option value="">Not specified</option>
+                  <option value="dubai">Dubai</option>
+                  <option value="abu_dhabi">Abu Dhabi</option>
+                  <option value="sharjah">Sharjah</option>
+                  <option value="ajman">Ajman</option>
+                  <option value="ras_al_khaimah">Ras Al Khaimah</option>
+                  <option value="fujairah">Fujairah</option>
+                  <option value="umm_al_quwain">Umm Al Quwain</option>
+                </Select>
+              </Field>
+              <label className="flex cursor-pointer items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm font-medium text-slate-700">
+                <input
+                  type="checkbox"
+                  className="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                  {...register('immediateJoiner')}
+                />
+                Immediate joiner preferred
+              </label>
+              <label className="flex cursor-pointer items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm font-medium text-slate-700">
+                <input
+                  type="checkbox"
+                  className="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                  {...register('remoteUae')}
+                />
+                Remote within UAE allowed
+              </label>
+            </div>
+          </div>
+
           <Field label="Description" error={errors.description?.message}><Textarea {...register('description')} /></Field>
           <Field label="Requirements"><Textarea {...register('requirements')} /></Field>
           {serverError ? <p className="rounded-md bg-red-50 p-3 text-sm font-medium text-red-700">{serverError}</p> : null}

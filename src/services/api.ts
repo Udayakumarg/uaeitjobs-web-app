@@ -87,10 +87,10 @@ export const authApi = {
 }
 
 export const jobsApi = {
-  list: (params?: Record<string, string | number | undefined>) => api.get<Page<Job>>('/jobs', { params }),
+  list: (params?: Record<string, string | number | boolean | undefined>) => api.get<Page<Job>>('/jobs', { params }),
   detail: (id: string | number) => api.get<Job>(`/jobs/${id}`),
   search: (q: string, page = 0, size = 20) => api.get<Page<Job>>('/jobs/search', { params: { q, page, size } }),
-  filter: (params: Record<string, string | number | undefined>) => api.get<Page<Job>>('/jobs/filter', { params }),
+  filter: (params: Record<string, string | number | boolean | undefined>) => api.get<Page<Job>>('/jobs/filter', { params }),
   locations: () => api.get<string[]>('/locations'),
   skills: (q: string) => api.get<string[]>('/skills/autocomplete', { params: { q } }),
   stats: () => api.get<{ totalJobs: number; countriesRepresented: number; companies: number }>('/stats'),

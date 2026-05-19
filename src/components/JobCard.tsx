@@ -40,6 +40,11 @@ export function JobCard({ job, onSave }: { job: Job; onSave?: (job: Job) => void
         <Badge tone="teal">{labelize(job.jobType)}</Badge>
         <Badge>{labelize(job.experienceLevel)}</Badge>
         {salary ? <Badge tone="green">{salary}</Badge> : null}
+        {job.visaType === 'free_visa' || job.visaType === 'employment_visa' ? (
+          <Badge tone="blue">Visa provided</Badge>
+        ) : null}
+        {job.immediateJoiner ? <Badge tone="amber">Immediate</Badge> : null}
+        {job.remoteUae ? <Badge tone="green">Remote UAE</Badge> : null}
       </div>
 
       {skills.length ? (
