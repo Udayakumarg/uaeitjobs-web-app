@@ -1,6 +1,6 @@
 import { Bookmark, Clock3, MapPin } from 'lucide-react'
 import { Link } from 'react-router-dom'
-import type { Job } from '../types'
+import { JOB_CATEGORIES, type Job } from '../types'
 import { initials, labelize, money, parseSkills, relativeTime } from '../utils/format'
 import { Badge, IconButton } from './ui'
 
@@ -8,6 +8,7 @@ export function JobCard({ job, onSave }: { job: Job; onSave?: (job: Job) => void
   const skills = parseSkills(job.skills).slice(0, 4)
   const salary = job.salaryMin || job.salaryMax ? money(job.salaryMin, job.salaryMax, job.salaryCurrency) : null
   const posted = relativeTime(job.createdAt)
+  const category = JOB_CATEGORIES.find((entry) => entry.value === job.jobCategory)
 
   return (
     <article className="card-glow group relative flex h-full flex-col gap-4 p-5">
@@ -37,6 +38,12 @@ export function JobCard({ job, onSave }: { job: Job; onSave?: (job: Job) => void
       <p className="line-clamp-2 text-sm leading-6 text-slate-600">{job.description}</p>
 
       <div className="flex flex-wrap gap-2">
+        {category ? (
+          <span className="inline-flex items-center gap-1 rounded-md bg-indigo-50 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-indigo-700 ring-1 ring-inset ring-indigo-100">
+            <span aria-hidden="true">{category.emoji}</span>
+            {category.label}
+          </span>
+        ) : null}
         <Badge tone="teal">{labelize(job.jobType)}</Badge>
         <Badge>{labelize(job.experienceLevel)}</Badge>
         {salary ? <Badge tone="green">{salary}</Badge> : null}

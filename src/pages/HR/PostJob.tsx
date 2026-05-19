@@ -7,7 +7,7 @@ import { z } from 'zod'
 import { useToastStore } from '../../components/Toast'
 import { Button, Card, Field, Input, Select, Textarea } from '../../components/ui'
 import { errorMessage, hrApi, jobsApi } from '../../services/api'
-import type { JobRequest } from '../../types'
+import { JOB_CATEGORIES, type JobRequest } from '../../types'
 
 const schema = z.object({
   title: z.string().min(3, 'Enter a job title'),
@@ -26,6 +26,8 @@ const schema = z.object({
   emirate: z.string().optional(),
   immediateJoiner: z.boolean().default(false),
   remoteUae: z.boolean().default(false),
+  jobCategory: z.string().optional(),
+  applyUrl: z.string().url('Enter a valid Apply URL').or(z.literal('')).optional(),
 })
 
 export type JobFormValues = z.infer<typeof schema>
@@ -47,6 +49,8 @@ const defaults: JobFormValues = {
   emirate: '',
   immediateJoiner: false,
   remoteUae: false,
+  jobCategory: '',
+  applyUrl: '',
 }
 
 export default function PostJob() {
@@ -75,6 +79,8 @@ export default function PostJob() {
       emirate: data.emirate ?? '',
       immediateJoiner: Boolean(data.immediateJoiner),
       remoteUae: Boolean(data.remoteUae),
+      jobCategory: data.jobCategory ?? '',
+      applyUrl: data.applyUrl ?? '',
     })).catch((error) => setServerError(errorMessage(error)))
   }, [id, reset])
 
@@ -86,6 +92,8 @@ export default function PostJob() {
       salaryMax: values.salaryMax || null,
       visaType: (values.visaType || null) as JobRequest['visaType'],
       emirate: (values.emirate || null) as JobRequest['emirate'],
+      jobCategory: (values.jobCategory || null) as JobRequest['jobCategory'],
+      applyUrl: values.applyUrl || null,
     }
     try {
       const response = id ? await hrApi.updateJob(Number(id), payload) : await hrApi.createJob(payload)
@@ -108,9 +116,27 @@ export default function PostJob() {
             <Field label="Experience" error={errors.experienceLevel?.message}><Select {...register('experienceLevel')}><option value="fresher">Fresher</option><option value="junior_1_2_yrs">1-2 yrs</option><option value="mid_3_5_yrs">3-5 yrs</option><option value="senior_5_plus">5+ yrs</option></Select></Field>
             <Field label="Location" error={errors.locationUae?.message}><Select {...register('locationUae')}><option>Dubai</option><option>Abu Dhabi</option><option>Sharjah</option><option>Ajman</option><option>Ras Al Khaimah</option><option>Remote</option></Select></Field>
             <Field label="Skills"><Input {...register('skills')} placeholder="Java, Spring Boot, PostgreSQL" /></Field>
+            <Field label="Job category" hint="Helps the right candidates discover this role">
+              <Select {...register('jobCategory')}>
+                <option value="">Auto-detect from title</option>
+                {JOB_CATEGORIES.map((category) => (
+                  <option key={category.value} value={category.value}>
+                    {category.emoji} {category.label}
+                  </option>
+                ))}
+              </Select>
+            </Field>
             <Field label="Salary min"><Input type="number" {...register('salaryMin')} /></Field>
             <Field label="Salary max"><Input type="number" {...register('salaryMax')} /></Field>
           </div>
+
+          <Field label="Apply URL" hint="Where applicants land when they click Apply — LinkedIn / careers page / ATS" error={errors.applyUrl?.message}>
+            <Input
+              type="url"
+              {...register('applyUrl')}
+              placeholder="https://www.linkedin.com/jobs/view/..."
+            />
+          </Field>
 
           {/* UAE essentials — competitive differentiator vs other portals */}
           <div className="rounded-xl border border-indigo-100 bg-indigo-50/40 p-4">

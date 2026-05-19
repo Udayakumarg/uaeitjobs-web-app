@@ -39,6 +39,34 @@ export type Emirate =
   | 'fujairah'
   | 'ras_al_khaimah'
   | 'umm_al_quwain'
+export type JobCategory =
+  | 'backend'
+  | 'frontend'
+  | 'fullstack'
+  | 'mobile'
+  | 'qa'
+  | 'devops'
+  | 'data_ml'
+  | 'security'
+  | 'product_design'
+  | 'it_support'
+  | 'other'
+
+/** Render-ready definitions used by filter chips and badges. Order
+ *  matters: this is the order pills appear in the UI. */
+export const JOB_CATEGORIES: ReadonlyArray<{ value: JobCategory; label: string; emoji: string }> = [
+  { value: 'backend', label: 'Backend', emoji: '🧱' },
+  { value: 'frontend', label: 'Frontend', emoji: '🎨' },
+  { value: 'fullstack', label: 'Full-stack', emoji: '🧩' },
+  { value: 'mobile', label: 'Mobile', emoji: '📱' },
+  { value: 'qa', label: 'QA & Testing', emoji: '🧪' },
+  { value: 'devops', label: 'DevOps & SRE', emoji: '⚙️' },
+  { value: 'data_ml', label: 'Data & ML', emoji: '📊' },
+  { value: 'security', label: 'Security', emoji: '🔒' },
+  { value: 'product_design', label: 'Product & Design', emoji: '🪄' },
+  { value: 'it_support', label: 'IT & Infra', emoji: '🖥️' },
+  { value: 'other', label: 'Other', emoji: '✨' },
+]
 
 export interface Job {
   id: number
@@ -66,6 +94,8 @@ export interface Job {
   emirate?: Emirate | null
   immediateJoiner?: boolean
   remoteUae?: boolean
+  jobCategory?: JobCategory | null
+  applyUrl?: string | null
 }
 
 export interface JobRequest {
@@ -87,6 +117,8 @@ export interface JobRequest {
   emirate?: Emirate | null
   immediateJoiner?: boolean
   remoteUae?: boolean
+  jobCategory?: JobCategory | null
+  applyUrl?: string | null
 }
 
 export interface Application {
