@@ -1,0 +1,10 @@
+# UAEITJOBS — allow indexing of public job pages
+User-agent: *
+Allow: /
+Disallow: /hr/
+Disallow: /seeker/
+Disallow: /login
+Disallow: /register
+Disallow: /access-denied
+
+Sitemap: https://www.uaeitjobs.com/sitemap.xml

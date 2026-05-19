@@ -5,6 +5,7 @@ import { JobCard } from '../../components/JobCard'
 import { JobFilters, type JobFilterValues } from '../../components/JobFilters'
 import { CardSkeleton } from '../../components/Skeleton'
 import { Button, Container, EmptyState } from '../../components/ui'
+import { useDocumentMeta } from '../../hooks/useDocumentMeta'
 import { errorMessage, jobsApi } from '../../services/api'
 import type { Job, Page } from '../../types'
 import {
@@ -153,6 +154,18 @@ export default function JobBrowse() {
   }
 
   const showRecent = !filters.q && recent.length > 0
+
+  // Dynamic, query-aware page metadata
+  const metaTitle = filters.q
+    ? `${filters.q} jobs in UAE`
+    : filters.emirate
+      ? `IT jobs in ${EMIRATE_LABELS[filters.emirate] ?? 'UAE'}`
+      : 'Browse UAE IT roles'
+  useDocumentMeta({
+    title: metaTitle,
+    description: `${page.totalElements.toLocaleString()} ${page.totalElements === 1 ? 'role' : 'roles'} matching ${filters.q || 'UAE IT'} — filter by visa type, emirate, immediate joiner and remote-UAE.`,
+    canonical: `https://www.uaeitjobs.com/jobs${typeof window !== 'undefined' ? window.location.search : ''}`,
+  })
 
   return (
     <Container className="py-10 sm:py-14">
