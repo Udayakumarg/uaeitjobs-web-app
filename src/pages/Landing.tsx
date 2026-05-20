@@ -23,6 +23,7 @@ import {
 import { Link, useNavigate } from 'react-router-dom'
 import { useEffect, useState, type FormEvent } from 'react'
 import { jobsApi } from '../services/api'
+import { CompanyLogo } from '../components/CompanyLogo'
 import { Button, Container, Section, SectionHeading, Stat } from '../components/ui'
 import { useDocumentMeta } from '../hooks/useDocumentMeta'
 import type { Job } from '../types'
@@ -444,9 +445,7 @@ export default function Landing() {
                   className="card-glow group flex flex-col gap-3 p-6"
                 >
                   <div className="flex items-center gap-3">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-slate-100 text-slate-700 ring-1 ring-inset ring-slate-200">
-                      <Building2 size={18} />
-                    </div>
+                    <CompanyLogo logoUrl={job.companyLogoUrl} companyName={job.companyName} size="sm" />
                     <p className="line-clamp-1 text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
                       {job.companyName}
                     </p>

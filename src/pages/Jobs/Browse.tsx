@@ -332,11 +332,11 @@ export default function JobBrowse() {
               className={
                 view === 'grid'
                   ? 'grid gap-4 md:grid-cols-2 xl:grid-cols-3'
-                  : 'grid gap-4'
+                  : 'grid gap-3'
               }
             >
               {page.content.map((job) => (
-                <JobCard key={job.id} job={job} />
+                <JobCard key={job.id} job={job} variant={view} />
               ))}
             </div>
 
