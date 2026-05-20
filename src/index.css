@@ -298,9 +298,47 @@ textarea:focus-visible {
   color: var(--color-text-muted);
   line-height: 1.75;
   font-size: 0.9375rem;
-  white-space: pre-line;
 }
 .prose-job strong {
   color: var(--color-text);
   font-weight: 600;
+}
+/* Vendor-formatter HTML — h3 sections, paragraphs, and bullet lists */
+.prose-job h3 {
+  color: var(--color-text);
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  margin-top: 1.5rem;
+  margin-bottom: 0.5rem;
+}
+.prose-job h3:first-child {
+  margin-top: 0;
+}
+.prose-job p {
+  margin-bottom: 0.75rem;
+}
+.prose-job p:last-child {
+  margin-bottom: 0;
+}
+.prose-job ul {
+  margin: 0.25rem 0 0.75rem 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 0.4rem;
+}
+.prose-job li {
+  position: relative;
+  padding-left: 1.25rem;
+}
+.prose-job li::before {
+  content: "";
+  position: absolute;
+  left: 0.25rem;
+  top: 0.7rem;
+  width: 0.375rem;
+  height: 0.375rem;
+  border-radius: 9999px;
+  background: var(--color-brand-600);
 }
