@@ -286,19 +286,61 @@ export default function JobDetail() {
             </div>
           </article>
 
-          {/* Description */}
-          <article className="surface-panel p-7 sm:p-9">
-            <h2 className="text-xl font-semibold tracking-tight text-slate-950">About the role</h2>
-            <p className="prose-job mt-4">{job.description}</p>
-          </article>
+          {/* Description — prefers structured sections, falls back to plain text */}
+          {(() => {
+            // Parse the structured JSON, gracefully degrading on malformed data
+            let sections: { heading: string; items: string[] }[] = []
+            if (job.descriptionSections) {
+              try {
+                const parsed = JSON.parse(job.descriptionSections)
+                if (Array.isArray(parsed)) {
+                  sections = parsed.filter(
+                    (s) => s && typeof s.heading === 'string' && Array.isArray(s.items),
+                  )
+                }
+              } catch {
+                /* fall through to plain-text */
+              }
+            }
 
-          {/* Requirements */}
-          <article className="surface-panel p-7 sm:p-9">
-            <h2 className="text-xl font-semibold tracking-tight text-slate-950">Requirements</h2>
-            <p className="prose-job mt-4">
-              {job.requirements || 'No specific requirements listed for this role.'}
-            </p>
-          </article>
+            if (sections.length > 0) {
+              return sections.map((section) => (
+                <article key={section.heading} className="surface-panel p-7 sm:p-9">
+                  <h2 className="text-xl font-semibold tracking-tight text-slate-950">
+                    {section.heading}
+                  </h2>
+                  {section.items.length === 1 ? (
+                    <p className="prose-job mt-4">{section.items[0]}</p>
+                  ) : (
+                    <ul className="mt-4 grid gap-2.5 text-[15px] leading-7 text-slate-700">
+                      {section.items.map((item, idx) => (
+                        <li key={idx} className="flex items-start gap-3">
+                          <span className="mt-2 inline-block h-1.5 w-1.5 shrink-0 rounded-full bg-indigo-600" />
+                          <span>{item}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </article>
+              ))
+            }
+
+            // Fallback: original plain-text layout
+            return (
+              <>
+                <article className="surface-panel p-7 sm:p-9">
+                  <h2 className="text-xl font-semibold tracking-tight text-slate-950">About the role</h2>
+                  <p className="prose-job mt-4">{job.description}</p>
+                </article>
+                {job.requirements ? (
+                  <article className="surface-panel p-7 sm:p-9">
+                    <h2 className="text-xl font-semibold tracking-tight text-slate-950">Requirements</h2>
+                    <p className="prose-job mt-4">{job.requirements}</p>
+                  </article>
+                ) : null}
+              </>
+            )
+          })()}
         </section>
 
         {/* Sticky sidebar */}
