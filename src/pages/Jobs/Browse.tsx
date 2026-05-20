@@ -22,7 +22,7 @@ export default function JobBrowse() {
   const [page, setPage] = useState<Page<Job>>(emptyPage)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
-  const [view, setView] = useState<'grid' | 'list'>('grid')
+  const [view, setView] = useState<'grid' | 'list'>('list')
   const [recent, setRecent] = useState<string[]>(() => getRecentSearches())
 
   const filters = useMemo<JobFilterValues>(() => ({
