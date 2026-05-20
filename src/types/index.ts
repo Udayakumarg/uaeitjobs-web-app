@@ -99,6 +99,8 @@ export interface Job {
   /** Structured description sections — JSON string of `[{heading, items[]}]`.
    *  Parse with `JSON.parse(job.descriptionSections)` when rendering. */
   descriptionSections?: string | null
+  /** Pre-rendered, sanitised HTML — preferred renderer for descriptions. */
+  descriptionHtml?: string | null
 }
 
 export interface DescriptionSection {

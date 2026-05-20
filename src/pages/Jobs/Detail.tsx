@@ -286,9 +286,23 @@ export default function JobDetail() {
             </div>
           </article>
 
-          {/* Description — prefers structured sections, falls back to plain text */}
+          {/* Description — prefers sanitised HTML, then structured JSON, then plain text */}
           {(() => {
-            // Parse the structured JSON, gracefully degrading on malformed data
+            // 1. Best: pre-rendered HTML from the per-vendor formatter
+            if (job.descriptionHtml && job.descriptionHtml.trim().length > 0) {
+              return (
+                <article className="surface-panel p-7 sm:p-9">
+                  <div
+                    className="prose-job"
+                    // Backend sanitises and escapes user content before emission,
+                    // and only emits a strict whitelist (h3/p/ul/li). Safe to inject.
+                    dangerouslySetInnerHTML={{ __html: job.descriptionHtml }}
+                  />
+                </article>
+              )
+            }
+
+            // 2. Older jobs: structured sections array
             let sections: { heading: string; items: string[] }[] = []
             if (job.descriptionSections) {
               try {
