@@ -13,12 +13,13 @@ import { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { CardSkeleton } from '../../components/Skeleton'
 import { useToastStore } from '../../components/Toast'
+import { CompanyLogo } from '../../components/CompanyLogo'
 import { Badge, Button, Card, Container } from '../../components/ui'
 import { useDocumentMeta } from '../../hooks/useDocumentMeta'
 import { errorMessage, jobsApi, seekerApi } from '../../services/api'
 import { useAuthStore } from '../../store/authStore'
 import type { Job } from '../../types'
-import { dateLabel, initials, labelize, money, parseSkills, relativeTime } from '../../utils/format'
+import { dateLabel, labelize, money, parseSkills, relativeTime } from '../../utils/format'
 
 /** Build a schema.org/JobPosting payload for Google rich-results. */
 function buildJobPostingJsonLd(job: Job): Record<string, unknown> {
@@ -196,9 +197,7 @@ export default function JobDetail() {
           <article className="surface-panel overflow-hidden">
             <div className="border-b border-slate-100 bg-gradient-to-br from-slate-50 to-white p-7 sm:p-9">
               <div className="flex items-start gap-5">
-                <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-white text-lg font-bold tracking-tight text-slate-700 shadow-sm ring-1 ring-slate-200">
-                  {initials(job.companyName)}
-                </div>
+                <CompanyLogo logoUrl={job.companyLogoUrl} companyName={job.companyName} size="lg" />
                 <div className="min-w-0 flex-1">
                   <p className="text-xs font-semibold uppercase tracking-[0.16em] text-indigo-700">
                     {job.companyName}
@@ -407,8 +406,12 @@ export default function JobDetail() {
           </Card>
 
           <Card className="bg-slate-950 text-white">
-            <p className="eyebrow eyebrow-dark">Hiring company</p>
-            <h3 className="mt-1.5 text-lg font-semibold tracking-tight">{job.companyName}</h3>
+            <div className="flex items-center gap-3">
+              <CompanyLogo logoUrl={job.companyLogoUrl} companyName={job.companyName} size="sm"
+                className="ring-white/20 bg-white/10" />
+              <p className="eyebrow eyebrow-dark">Hiring company</p>
+            </div>
+            <h3 className="mt-2 text-lg font-semibold tracking-tight">{job.companyName}</h3>
             <p className="mt-1 text-sm text-slate-300">
               UAE-based, verified employer hiring across {job.locationUae || 'the UAE'}.
             </p>

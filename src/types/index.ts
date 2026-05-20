@@ -101,6 +101,8 @@ export interface Job {
   descriptionSections?: string | null
   /** Pre-rendered, sanitised HTML — preferred renderer for descriptions. */
   descriptionHtml?: string | null
+  /** Clearbit logo URL derived from the apply URL domain. May 404 for unknown companies — UI falls back to initials. */
+  companyLogoUrl?: string | null
 }
 
 export interface DescriptionSection {
