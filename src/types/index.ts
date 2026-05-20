@@ -96,6 +96,14 @@ export interface Job {
   remoteUae?: boolean
   jobCategory?: JobCategory | null
   applyUrl?: string | null
+  /** Structured description sections — JSON string of `[{heading, items[]}]`.
+   *  Parse with `JSON.parse(job.descriptionSections)` when rendering. */
+  descriptionSections?: string | null
+}
+
+export interface DescriptionSection {
+  heading: string
+  items: string[]
 }
 
 export interface JobRequest {
