@@ -11,11 +11,28 @@ interface JobCardProps {
   variant?: 'grid' | 'list'
 }
 
+/** Map an external apply URL to a readable platform name. */
+function detectApplySource(applyUrl?: string | null): string | null {
+  if (!applyUrl) return null
+  try {
+    const host = new URL(applyUrl).hostname.replace(/^www\./, '').toLowerCase()
+    if (host.includes('linkedin.com'))     return 'LinkedIn'
+    if (host.includes('indeed.com'))       return 'Indeed'
+    if (host.includes('bayt.com'))         return 'Bayt'
+    if (host.includes('naukrigulf.com'))   return 'Naukrigulf'
+    if (host.includes('gulftalent.com'))   return 'GulfTalent'
+    if (host.includes('glassdoor.com'))    return 'Glassdoor'
+    if (host.includes('ziprecruiter.com')) return 'ZipRecruiter'
+    return null
+  } catch { return null }
+}
+
 export function JobCard({ job, onSave, variant = 'list' }: JobCardProps) {
   const skills = parseSkills(job.skills).slice(0, 4)
   const salary = job.salaryMin || job.salaryMax ? money(job.salaryMin, job.salaryMax, job.salaryCurrency) : null
   const posted = relativeTime(job.createdAt)
   const category = JOB_CATEGORIES.find((e) => e.value === job.jobCategory)
+  const applySource = detectApplySource(job.applyUrl ?? job.linkedinUrl)
 
   /* ── List variant — compact horizontal row ──────────────────── */
   if (variant === 'list') {
@@ -56,6 +73,11 @@ export function JobCard({ job, onSave, variant = 'list' }: JobCardProps) {
             {job.immediateJoiner ? <Badge tone="amber">Immediate</Badge> : null}
             {job.visaType === 'free_visa' || job.visaType === 'employment_visa' ? (
               <Badge tone="blue">Visa</Badge>
+            ) : null}
+            {applySource ? (
+              <span className="rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-500">
+                via {applySource}
+              </span>
             ) : null}
           </div>
         </div>
@@ -122,6 +144,11 @@ export function JobCard({ job, onSave, variant = 'list' }: JobCardProps) {
         ) : null}
         {job.jobType ? <Badge tone="teal">{labelize(job.jobType)}</Badge> : null}
         {salary ? <Badge tone="green">{salary}</Badge> : null}
+        {applySource ? (
+          <span className="rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-500">
+            via {applySource}
+          </span>
+        ) : null}
       </div>
 
       {/* Skills */}

@@ -88,6 +88,23 @@ export default function JobDetail() {
   const applyUrl = job?.applyUrl || job?.linkedinUrl
     || `https://www.linkedin.com/jobs/search/?keywords=${encodeURIComponent((job?.title ?? '') + ' ' + (job?.companyName ?? ''))}&location=United%20Arab%20Emirates`
 
+  // Detect the external platform from the apply URL so we can label the
+  // CTA ("Apply on LinkedIn", "Apply on Bayt", …) and show a source badge.
+  const applySource = ((): { name: string; host: string } | null => {
+    if (!applyUrl) return null
+    try {
+      const host = new URL(applyUrl).hostname.replace(/^www\./, '').toLowerCase()
+      if (host.includes('linkedin.com'))       return { name: 'LinkedIn',       host }
+      if (host.includes('indeed.com'))         return { name: 'Indeed',         host }
+      if (host.includes('bayt.com'))           return { name: 'Bayt',           host }
+      if (host.includes('naukrigulf.com'))     return { name: 'Naukrigulf',     host }
+      if (host.includes('gulftalent.com'))     return { name: 'GulfTalent',     host }
+      if (host.includes('glassdoor.com'))      return { name: 'Glassdoor',      host }
+      if (host.includes('ziprecruiter.com'))   return { name: 'ZipRecruiter',   host }
+      return null
+    } catch { return null }
+  })()
+
   // ── Loading ──────────────────────────────────────────────────
   if (loading) {
     return (
@@ -135,6 +152,14 @@ export default function JobDetail() {
         <div className="flex items-center gap-3">
           <CompanyLogo logoUrl={job.companyLogoUrl} companyName={job.companyName} size="sm" />
           <span className="text-sm font-semibold text-slate-600">{job.companyName}</span>
+          {applySource ? (
+            <span
+              className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-600 ring-1 ring-inset ring-slate-200"
+              title={`Sourced from ${applySource.name}`}
+            >
+              <ExternalLink size={11} /> via {applySource.name}
+            </span>
+          ) : null}
         </div>
 
         {/* Title */}
@@ -334,7 +359,7 @@ export default function JobDetail() {
               rel="noopener noreferrer"
               className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl bg-slate-950 px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-800 sm:flex-none"
             >
-              <ExternalLink size={15} /> Apply now
+              <ExternalLink size={15} /> {applySource ? `Apply on ${applySource.name}` : 'Apply now'}
             </a>
             <button
               onClick={save}
