@@ -237,7 +237,7 @@ export default function JobBrowse() {
       <FilterBar {...fp} onMobileOpen={() => setMobileOpen(true)} />
 
       {/* ── Panels (centered on wide screens) ──────────────────── */}
-      <div className="flex flex-1 overflow-hidden min-h-0 justify-center">
+      <div className="flex flex-1 overflow-hidden min-h-0 justify-center md:px-10 xl:px-16 2xl:px-24">
         <div className="flex w-full max-w-[1400px] overflow-hidden min-h-0">
 
           {/* Job list */}
