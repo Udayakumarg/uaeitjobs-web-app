@@ -275,16 +275,33 @@ export default function JobDetail() {
               )
             }
 
+            // Detect raw HTML in description/requirements (e.g. legacy rows where
+            // the LLM-formatted HTML was stored on `description` instead of
+            // `descriptionHtml`). If it looks like HTML, render via DOMPurify;
+            // otherwise fall back to plain-text rendering inside <p>.
+            const looksLikeHtml = (s: string | null | undefined) =>
+              !!s && /<(h3|p|ul|li|strong|em|br)\b/i.test(s)
+
+            const renderBody = (text: string | null | undefined) =>
+              looksLikeHtml(text) ? (
+                <div
+                  className="prose-job mt-3"
+                  dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(text!) }}
+                />
+              ) : (
+                <p className="prose-job mt-3 whitespace-pre-line">{text}</p>
+              )
+
             return (
               <div className="grid gap-8">
                 <div>
                   <h2 className="text-lg font-semibold tracking-tight text-slate-950">About the role</h2>
-                  <p className="prose-job mt-3">{job.description}</p>
+                  {renderBody(job.description)}
                 </div>
                 {job.requirements ? (
                   <div>
                     <h2 className="text-lg font-semibold tracking-tight text-slate-950">Requirements</h2>
-                    <p className="prose-job mt-3">{job.requirements}</p>
+                    {renderBody(job.requirements)}
                   </div>
                 ) : null}
               </div>
