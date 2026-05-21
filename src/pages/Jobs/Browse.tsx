@@ -237,7 +237,7 @@ export default function JobBrowse() {
       <FilterBar {...fp} onMobileOpen={() => setMobileOpen(true)} />
 
       {/* ── Panels (centered on wide screens) ──────────────────── */}
-      <div className="flex flex-1 overflow-hidden min-h-0 justify-center md:px-10 xl:px-16 2xl:px-24">
+      <div className="flex flex-1 overflow-hidden min-h-0 md:pl-14 xl:pl-20 2xl:pl-28">
         <div className="flex w-full max-w-[1400px] overflow-hidden min-h-0">
 
           {/* Job list */}
@@ -793,7 +793,7 @@ function DetailPanel({ job, onSave }: { job: Job; onSave: (id: number, e: React.
   const emirateLabel = EMIRATES.find(e => e.value === job.emirate)?.label
 
   return (
-    <div className="p-8 xl:p-10 max-w-3xl">
+    <div className="p-8 xl:p-10">
       <div className="flex items-start justify-between gap-4 mb-6">
         <div className="min-w-0">
           <div className="flex items-center gap-2 mb-3">
