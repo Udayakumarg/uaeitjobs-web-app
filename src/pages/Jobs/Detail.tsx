@@ -164,15 +164,35 @@ export default function JobDetail() {
         </div>
 
         {/* Key facts row */}
-        {(salary || job.visaType || job.remoteUae || job.immediateJoiner) ? (
+        {(job.emirate || job.locationUae || job.experienceLevel || job.jobType || salary || job.visaType || job.remoteUae || job.immediateJoiner) ? (
           <div className="mt-6 flex flex-wrap gap-2">
+            {/* Primary — location */}
+            {(job.emirate || job.locationUae) ? (
+              <span className="flex items-center gap-1.5 rounded-full bg-slate-100 px-4 py-1.5 text-sm font-semibold text-slate-700 ring-1 ring-inset ring-slate-200">
+                <MapPin size={13} className="shrink-0" />
+                {job.emirate ? labelize(job.emirate) : job.locationUae}
+              </span>
+            ) : null}
+            {/* Primary — experience level */}
+            {job.experienceLevel ? (
+              <span className="rounded-full bg-pink-50 px-4 py-1.5 text-sm font-semibold text-pink-700 ring-1 ring-inset ring-pink-100">
+                {labelize(job.experienceLevel)}
+              </span>
+            ) : null}
+            {/* Job type */}
+            {job.jobType ? (
+              <span className="rounded-full bg-slate-100 px-4 py-1.5 text-sm font-semibold text-slate-700 ring-1 ring-inset ring-slate-200">
+                {labelize(job.jobType)}
+              </span>
+            ) : null}
+            {/* Salary — only if present */}
             {salary ? (
               <span className="rounded-full bg-emerald-50 px-4 py-1.5 text-sm font-semibold text-emerald-800 ring-1 ring-inset ring-emerald-200">
                 {salary}
               </span>
             ) : null}
             {job.remoteUae ? (
-              <span className="rounded-full bg-indigo-50 px-4 py-1.5 text-sm font-semibold text-indigo-700 ring-1 ring-inset ring-indigo-100">
+              <span className="rounded-full bg-pink-50 px-4 py-1.5 text-sm font-semibold text-pink-700 ring-1 ring-inset ring-pink-100">
                 Remote UAE
               </span>
             ) : null}
@@ -242,7 +262,7 @@ export default function JobDetail() {
                         <ul className="mt-3 grid gap-2">
                           {section.items.map((item, i) => (
                             <li key={i} className="flex items-start gap-3 text-[15px] leading-7 text-slate-700">
-                              <span className="mt-2.5 h-1.5 w-1.5 shrink-0 rounded-full bg-indigo-500" />
+                              <span className="mt-2.5 h-1.5 w-1.5 shrink-0 rounded-full bg-pink-500" />
                               {item}
                             </li>
                           ))}
@@ -275,7 +295,7 @@ export default function JobDetail() {
         <div className="mt-12 border-t border-slate-200 pt-8 text-sm text-slate-500">
           <Link
             to={`/jobs?q=${encodeURIComponent(job.companyName ?? '')}`}
-            className="font-semibold text-indigo-700 hover:text-indigo-800"
+            className="font-semibold text-pink-700 hover:text-pink-800"
           >
             See all roles from {job.companyName} →
           </Link>

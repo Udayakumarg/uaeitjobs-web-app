@@ -76,6 +76,12 @@ const SORT_OPTIONS = [
 
 type PanelId = 'emirate' | 'stack' | 'level' | 'type' | 'posted' | 'salary' | 'sort'
 
+// Brand colours
+const PINK      = '#BE185D'
+const PINK_HOV  = '#9D174D'
+const PINK_BG   = '#FDF2F8'
+const PINK_RING = '#FBCFE8'
+
 function toggleSet<T>(set: Set<T>, v: T): Set<T> {
   const n = new Set(set); n.has(v) ? n.delete(v) : n.add(v); return n
 }
@@ -192,12 +198,11 @@ export default function JobBrowse() {
   }
 
   function handleJobClick(job: Job) {
-    // On small screens navigate to the full detail page; on desktop show inline panel
     if (window.innerWidth < 768) { navigate(`/jobs/${job.id}`) }
     else { setSelectedId(job.id) }
   }
 
-  // build active chips
+  // active chips
   const chips: { key: string; label: string; onRemove: () => void }[] = [
     ...Array.from(emirates).map(v => ({ key: `e-${v}`, label: EMIRATES.find(x => x.value === v)?.label ?? v, onRemove: () => setEmirates(toggleSet(emirates, v)) })),
     ...Array.from(jobCats).map(v  => ({ key: `c-${v}`, label: JOB_CATEGORIES.find(x => x.value === v)?.label ?? v, onRemove: () => setJobCats(toggleSet(jobCats, v)) })),
@@ -211,7 +216,6 @@ export default function JobBrowse() {
   const activeCount = chips.length
   const hasFilters  = activeCount > 0
 
-  // shared filter props
   const fp = {
     query, onQueryChange: setQuery,
     emirates, onEmiratesChange: setEmirates,
@@ -232,92 +236,110 @@ export default function JobBrowse() {
       {/* ── Filter bar ─────────────────────────────────────────── */}
       <FilterBar {...fp} onMobileOpen={() => setMobileOpen(true)} />
 
-      {/* ── Panels ─────────────────────────────────────────────── */}
-      <div className="flex flex-1 overflow-hidden min-h-0">
+      {/* ── Panels (centered on wide screens) ──────────────────── */}
+      <div className="flex flex-1 overflow-hidden min-h-0 justify-center">
+        <div className="flex w-full max-w-[1400px] overflow-hidden min-h-0">
 
-        {/* Job list */}
-        <aside className="w-full md:w-[360px] xl:w-[400px] shrink-0 flex flex-col border-r border-[#E5E7EB]">
-          <div className="px-4 py-2.5 border-b border-[#E5E7EB] shrink-0 flex items-center justify-between">
-            <span className="font-mono text-xs font-bold text-black">
-              {jobsLoading ? '…' : `${total.toLocaleString()} roles`}
-            </span>
-            {!jobsLoading && hasFilters && (
-              <span className="font-mono text-[10px] text-[#2563EB] uppercase tracking-wider">filtered</span>
-            )}
-          </div>
+          {/* Job list */}
+          <aside className="w-full md:w-[380px] xl:w-[420px] shrink-0 flex flex-col border-r border-[#E5E7EB]">
+            <div className="px-4 py-2.5 border-b border-[#E5E7EB] shrink-0 flex items-center justify-between">
+              <span className="font-mono text-xs font-bold text-black">
+                {jobsLoading ? '…' : `${total.toLocaleString()} roles`}
+              </span>
+              {!jobsLoading && hasFilters && (
+                <span className="font-mono text-[10px] uppercase tracking-wider" style={{ color: PINK }}>filtered</span>
+              )}
+            </div>
 
-          <div className="flex-1 overflow-y-auto">
-            <div className="h-2" />
-            {jobsLoading ? (
-              <div className="divide-y divide-[#E5E7EB]">
-                {Array.from({ length: 10 }).map((_, i) => (
-                  <div key={i} className="px-4 py-5 space-y-2.5">
-                    <div className="h-2 w-20 shimmer" />
-                    <div className="h-4 w-3/4 shimmer" />
-                    <div className="h-2 w-1/2 shimmer" />
-                  </div>
-                ))}
-              </div>
-            ) : jobs.length === 0 ? (
-              <div className="p-10 text-center">
-                <div className="font-mono text-[10px] uppercase tracking-widest text-gray-300 mb-2">No results</div>
-                <button onClick={clearAll} className="text-xs text-[#2563EB] hover:underline font-mono">Clear filters</button>
-              </div>
-            ) : (
-              <div className="divide-y divide-[#E5E7EB]">
-                {jobs.map(job => {
-                  const active = job.id === selectedId
-                  const sal    = money(job.salaryMin, job.salaryMax, job.salaryCurrency)
-                  const skills = parseSkills(job.skills).slice(0, 3)
-                  return (
-                    <button
-                      key={job.id}
-                      onClick={() => handleJobClick(job)}
-                      className={`relative w-full text-left px-4 py-5 transition-colors ${active ? 'bg-[#EFF6FF]' : 'hover:bg-[#FAFAFA]'}`}
-                    >
-                      {active && <span className="absolute left-0 top-0 bottom-0 w-[3px] bg-[#2563EB]" />}
-                      <div className="flex items-center gap-2 mb-2">
-                        <CompanyLogo logoUrl={job.companyLogoUrl} companyName={job.companyName} size="sm" className="shrink-0" />
-                        <span className={`font-mono text-[10px] font-bold uppercase tracking-widest truncate ${active ? 'text-[#2563EB]' : 'text-gray-400'}`}>
-                          {job.companyName}
-                        </span>
-                        <span className="ml-auto font-mono text-[10px] text-gray-400 shrink-0">{relativeTime(job.createdAt)}</span>
-                      </div>
-                      <p className="font-bold text-sm text-black leading-snug mb-2.5">{job.title}</p>
-                      <div className="flex items-center justify-between gap-2">
-                        <span className="font-mono text-[10px] text-gray-500 truncate">
-                          {skills.length ? skills.join(', ') : (job.locationUae ?? 'UAE')}
-                        </span>
-                        <div className="flex items-center gap-1.5 shrink-0">
-                          {job.remoteUae && <span className="font-mono text-[9px] uppercase tracking-wider text-indigo-500 font-bold">Remote</span>}
-                          {job.immediateJoiner && <span className="font-mono text-[9px] uppercase tracking-wider text-amber-600 font-bold">Now</span>}
-                          {sal && <span className={`font-mono text-[11px] font-bold ${active ? 'text-[#2563EB]' : 'text-black'}`}>{sal}</span>}
+            <div className="flex-1 overflow-y-auto">
+              <div className="h-2" />
+              {jobsLoading ? (
+                <div className="divide-y divide-[#E5E7EB]">
+                  {Array.from({ length: 10 }).map((_, i) => (
+                    <div key={i} className="px-4 py-5 space-y-2.5">
+                      <div className="h-2 w-20 shimmer" />
+                      <div className="h-4 w-3/4 shimmer" />
+                      <div className="h-2 w-1/2 shimmer" />
+                    </div>
+                  ))}
+                </div>
+              ) : jobs.length === 0 ? (
+                <div className="p-10 text-center">
+                  <div className="font-mono text-[10px] uppercase tracking-widest text-gray-300 mb-2">No results</div>
+                  <button onClick={clearAll} className="text-xs hover:underline font-mono" style={{ color: PINK }}>Clear filters</button>
+                </div>
+              ) : (
+                <div className="divide-y divide-[#E5E7EB]">
+                  {jobs.map(job => {
+                    const active = job.id === selectedId
+                    const sal    = money(job.salaryMin, job.salaryMax, job.salaryCurrency)
+                    const skills = parseSkills(job.skills).slice(0, 3)
+                    // fallback meta: emirate + level when no salary
+                    const emirateLabel = EMIRATES.find(e => e.value === job.emirate)?.label
+                    const metaFallback = [emirateLabel, job.experienceLevel ? labelize(job.experienceLevel) : null].filter(Boolean).join(' · ')
+                    return (
+                      <button
+                        key={job.id}
+                        onClick={() => handleJobClick(job)}
+                        className="relative w-full text-left px-4 py-5 transition-colors"
+                        style={{ background: active ? PINK_BG : undefined }}
+                        onMouseEnter={e => { if (!active) (e.currentTarget as HTMLButtonElement).style.background = '#FAFAFA' }}
+                        onMouseLeave={e => { if (!active) (e.currentTarget as HTMLButtonElement).style.background = '' }}
+                      >
+                        {active && <span className="absolute left-0 top-0 bottom-0 w-[3px]" style={{ background: PINK }} />}
+                        <div className="flex items-center gap-2 mb-2">
+                          <CompanyLogo logoUrl={job.companyLogoUrl} companyName={job.companyName} size="sm" className="shrink-0" />
+                          <span className="font-mono text-[10px] font-bold uppercase tracking-widest truncate" style={{ color: active ? PINK : '#9CA3AF' }}>
+                            {job.companyName}
+                          </span>
+                          <span className="ml-auto font-mono text-[10px] text-gray-400 shrink-0">{relativeTime(job.createdAt)}</span>
                         </div>
-                      </div>
-                    </button>
-                  )
-                })}
-              </div>
-            )}
-          </div>
-        </aside>
+                        <p className="font-bold text-sm text-black leading-snug mb-2.5">{job.title}</p>
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="font-mono text-[10px] text-gray-500 truncate">
+                            {skills.length ? skills.join(', ') : (job.locationUae ?? 'UAE')}
+                          </span>
+                          <div className="flex items-center gap-1.5 shrink-0">
+                            {job.remoteUae && (
+                              <span className="font-mono text-[9px] uppercase tracking-wider font-bold" style={{ color: PINK }}>Remote</span>
+                            )}
+                            {job.immediateJoiner && (
+                              <span className="font-mono text-[9px] uppercase tracking-wider text-amber-600 font-bold">Now</span>
+                            )}
+                            {sal
+                              ? <span className="font-mono text-[11px] font-bold" style={{ color: active ? PINK : '#000' }}>{sal}</span>
+                              : metaFallback
+                                ? <span className="font-mono text-[10px] text-gray-400 truncate max-w-[130px]">{metaFallback}</span>
+                                : null
+                            }
+                          </div>
+                        </div>
+                      </button>
+                    )
+                  })}
+                </div>
+              )}
+            </div>
+          </aside>
 
-        {/* Detail (desktop only) */}
-        <main ref={detailRef} className="hidden md:block flex-1 overflow-y-auto bg-white">
-          {!selectedId ? (
-            <div className="h-full flex flex-col items-center justify-center text-center p-10">
-              <div className="font-mono text-[10px] uppercase tracking-[0.2em] text-gray-300 mb-2">No role selected</div>
-              <p className="text-sm text-gray-400">Select a role from the list to view details.</p>
-            </div>
-          ) : detailLoading ? (
-            <div className="p-10 space-y-4">
-              <div className="h-3 w-32 shimmer" /><div className="h-8 w-3/4 shimmer" />
-              <div className="h-3 w-1/2 shimmer" /><div className="h-24 shimmer mt-6" />
-            </div>
-          ) : detail ? (
-            <DetailPanel job={detail} onSave={saveJob} />
-          ) : null}
-        </main>
+          {/* Detail (desktop only) */}
+          <main ref={detailRef} className="hidden md:block flex-1 overflow-y-auto bg-white">
+            {!selectedId ? (
+              <div className="h-full flex flex-col items-center justify-center text-center p-10">
+                <div className="font-mono text-[10px] uppercase tracking-[0.2em] text-gray-300 mb-2">No role selected</div>
+                <p className="text-sm text-gray-400">Select a role from the list to view details.</p>
+              </div>
+            ) : detailLoading ? (
+              <div className="p-10 space-y-4">
+                <div className="h-3 w-32 shimmer" /><div className="h-8 w-3/4 shimmer" />
+                <div className="h-3 w-1/2 shimmer" /><div className="h-24 shimmer mt-6" />
+              </div>
+            ) : detail ? (
+              <DetailPanel job={detail} onSave={saveJob} />
+            ) : null}
+          </main>
+
+        </div>
       </div>
 
       {/* ── Mobile filter sheet ─────────────────────────────────── */}
@@ -370,17 +392,19 @@ function FilterBar(props: SharedFilterProps & { onMobileOpen: () => void }) {
   return (
     <div className="shrink-0 bg-white border-b border-[#E5E7EB] z-20">
 
-      {/* ── Row 1: search ─────────────────────────────────────── */}
-      <div className="flex items-center gap-2 px-4 pt-3 pb-2">
-        {/* Search — full width on desktop, flex-1 on mobile */}
-        <div className="relative flex-1">
+      {/* ── Row 1: search (centered, constrained width) ───────── */}
+      <div className="flex items-center gap-2 px-4 pt-3.5 pb-2 md:justify-center">
+        <div className="relative flex-1 md:max-w-[600px]">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
           <input
             type="text"
             value={query}
             onChange={(e) => onQueryChange(e.target.value)}
             placeholder="Search roles, skills, companies…"
-            className="w-full border border-[#E5E7EB] bg-[#FAFAFA] pl-10 pr-9 py-2.5 text-sm focus:outline-none focus:border-[#2563EB] focus:bg-white transition-colors"
+            className="w-full rounded-lg border border-[#E5E7EB] bg-[#FAFAFA] pl-10 pr-9 py-2.5 text-sm focus:outline-none focus:bg-white transition-colors"
+            style={{ '--tw-ring-color': PINK } as React.CSSProperties}
+            onFocus={e => (e.currentTarget.style.borderColor = PINK)}
+            onBlur={e => (e.currentTarget.style.borderColor = '#E5E7EB')}
           />
           {query && (
             <button onClick={() => onQueryChange('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-black">
@@ -392,26 +416,24 @@ function FilterBar(props: SharedFilterProps & { onMobileOpen: () => void }) {
         {/* Mobile: Filters button */}
         <button
           onClick={onMobileOpen}
-          className={`md:hidden inline-flex items-center gap-1.5 border px-3 py-2.5 font-mono text-xs font-bold transition-colors shrink-0 ${
-            activeCount > 0
-              ? 'bg-[#EFF6FF] border-[#93C5FD] text-[#2563EB]'
-              : 'border-[#E5E7EB] text-gray-700'
-          }`}
+          className="md:hidden inline-flex items-center gap-1.5 border rounded-lg px-3 py-2.5 font-sans text-xs font-medium transition-colors shrink-0"
+          style={activeCount > 0
+            ? { background: PINK_BG, borderColor: PINK_RING, color: PINK }
+            : { borderColor: '#E5E7EB', color: '#374151' }}
         >
           <SlidersHorizontal size={14} />
           Filters
           {activeCount > 0 && (
-            <span className="inline-flex items-center justify-center h-4 w-4 rounded-full bg-[#2563EB] text-white text-[9px] font-bold leading-none">
+            <span className="inline-flex items-center justify-center h-4 w-4 rounded-full text-white text-[9px] font-bold leading-none" style={{ background: PINK }}>
               {activeCount}
             </span>
           )}
         </button>
       </div>
 
-      {/* ── Row 2: filter buttons (desktop only) ──────────────── */}
-      <div className="hidden md:flex items-center px-4 pb-2.5">
-        {/* Scrollable pills */}
-        <div className="flex items-center gap-1 overflow-x-auto flex-1 min-w-0">
+      {/* ── Row 2: filter buttons (desktop, centered) ─────────── */}
+      <div className="hidden md:flex items-center justify-center px-4 pb-3">
+        <div className="flex items-center gap-1.5 flex-wrap">
 
           <FilterDropdown label="Emirate"  count={emirates.size}     open={openPanel === 'emirate'} onToggle={() => tog('emirate')} onClose={close}>
             <CheckboxPanel options={EMIRATES} selected={emirates as Set<string>} onToggle={v => onEmiratesChange(toggleSet(emirates, v as Emirate))} />
@@ -450,35 +472,37 @@ function FilterBar(props: SharedFilterProps & { onMobileOpen: () => void }) {
           >
             <RadioPanel options={SORT_OPTIONS} selected={sortBy} onSelect={v => { onSortChange(v); close() }} />
           </FilterDropdown>
-        </div>
 
-        {/* Pinned clear all */}
-        {hasFilters && (
-          <button
-            onClick={onClearAll}
-            className="ml-3 shrink-0 font-mono text-[11px] font-bold text-gray-400 hover:text-black transition-colors underline"
-          >
-            Clear all
-          </button>
-        )}
+          {hasFilters && (
+            <button
+              onClick={onClearAll}
+              className="ml-1 shrink-0 font-sans text-xs text-gray-400 hover:text-black transition-colors underline"
+            >
+              Clear all
+            </button>
+          )}
+        </div>
       </div>
 
       {/* ── Row 3: active chips ────────────────────────────────── */}
       {chips.length > 0 && (
-        <div className="flex items-center gap-2 px-4 py-2 border-t border-[#E5E7EB] bg-[#FAFAFA] overflow-x-auto">
-          <span className="font-mono text-[9px] font-bold uppercase tracking-[0.18em] text-gray-400 shrink-0">Active</span>
-          {chips.map(chip => (
-            <button
-              key={chip.key}
-              onClick={chip.onRemove}
-              className="inline-flex items-center gap-1 bg-white border border-[#2563EB] text-[#2563EB] font-mono text-[10px] font-bold px-2.5 py-1 hover:bg-[#EFF6FF] transition-colors shrink-0"
-            >
-              {chip.label} <X size={9} />
-            </button>
-          ))}
-          {!loading && (
-            <span className="font-mono text-[10px] text-gray-500 ml-1 shrink-0">{total.toLocaleString()} roles</span>
-          )}
+        <div className="flex items-center justify-center border-t border-[#E5E7EB] bg-[#FAFAFA] px-4 py-2 overflow-x-auto">
+          <div className="flex items-center gap-2 min-w-0">
+            <span className="font-mono text-[9px] font-bold uppercase tracking-[0.18em] text-gray-400 shrink-0">Active</span>
+            {chips.map(chip => (
+              <button
+                key={chip.key}
+                onClick={chip.onRemove}
+                className="inline-flex items-center gap-1 bg-white font-mono text-[10px] font-bold px-2.5 py-1 hover:opacity-80 transition-opacity shrink-0"
+                style={{ border: `1px solid ${PINK}`, color: PINK }}
+              >
+                {chip.label} <X size={9} />
+              </button>
+            ))}
+            {!loading && (
+              <span className="font-mono text-[10px] text-gray-500 ml-1 shrink-0">{total.toLocaleString()} roles</span>
+            )}
+          </div>
         </div>
       )}
     </div>
@@ -501,29 +525,24 @@ function MobileFilterSheet(props: SharedFilterProps & { open: boolean; onClose: 
 
   return (
     <div className="fixed inset-0 z-50 md:hidden">
-      {/* Backdrop */}
       <div className="absolute inset-0 bg-black/50" onClick={onClose} />
-
-      {/* Sheet */}
       <div className="absolute bottom-0 left-0 right-0 bg-white rounded-t-2xl max-h-[90vh] flex flex-col shadow-2xl">
 
-        {/* Sheet header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-[#E5E7EB] shrink-0">
-          <span className="font-mono text-xs font-bold uppercase tracking-[0.16em]">Filters</span>
-          <button onClick={onClose} className="text-gray-400 hover:text-black transition-colors">
-            <X size={20} />
-          </button>
+          <span className="font-sans text-sm font-semibold">Filters</span>
+          <button onClick={onClose} className="text-gray-400 hover:text-black transition-colors"><X size={20} /></button>
         </div>
 
-        {/* Scrollable filter sections */}
         <div className="flex-1 overflow-y-auto px-5 py-4 space-y-7">
 
           <SheetSection label="Emirate">
             <div className="grid grid-cols-2 gap-2">
               {EMIRATES.map(({ value, label }) => (
-                <label key={value} className={`flex items-center gap-2.5 p-2.5 border cursor-pointer transition-colors ${emirates.has(value) ? 'border-[#2563EB] bg-[#EFF6FF]' : 'border-[#E5E7EB] hover:bg-[#FAFAFA]'}`}>
+                <label key={value}
+                  className="flex items-center gap-2.5 p-2.5 border cursor-pointer transition-colors rounded"
+                  style={emirates.has(value) ? { borderColor: PINK, background: PINK_BG } : { borderColor: '#E5E7EB' }}>
                   <input type="checkbox" checked={emirates.has(value)} onChange={() => onEmiratesChange(toggleSet(emirates, value))} />
-                  <span className={`text-sm font-medium ${emirates.has(value) ? 'text-[#2563EB]' : 'text-gray-700'}`}>{label}</span>
+                  <span className="text-sm font-medium" style={{ color: emirates.has(value) ? PINK : '#374151' }}>{label}</span>
                 </label>
               ))}
             </div>
@@ -532,9 +551,11 @@ function MobileFilterSheet(props: SharedFilterProps & { open: boolean; onClose: 
           <SheetSection label="Specialization">
             <div className="grid grid-cols-2 gap-2">
               {JOB_CATEGORIES.map(({ value, label }) => (
-                <label key={value} className={`flex items-center gap-2.5 p-2.5 border cursor-pointer transition-colors ${jobCats.has(value) ? 'border-[#2563EB] bg-[#EFF6FF]' : 'border-[#E5E7EB] hover:bg-[#FAFAFA]'}`}>
+                <label key={value}
+                  className="flex items-center gap-2.5 p-2.5 border cursor-pointer transition-colors rounded"
+                  style={jobCats.has(value) ? { borderColor: PINK, background: PINK_BG } : { borderColor: '#E5E7EB' }}>
                   <input type="checkbox" checked={jobCats.has(value)} onChange={() => onJobCatsChange(toggleSet(jobCats, value as JobCategory))} />
-                  <span className={`text-sm font-medium ${jobCats.has(value) ? 'text-[#2563EB]' : 'text-gray-700'}`}>{label}</span>
+                  <span className="text-sm font-medium" style={{ color: jobCats.has(value) ? PINK : '#374151' }}>{label}</span>
                 </label>
               ))}
             </div>
@@ -544,7 +565,8 @@ function MobileFilterSheet(props: SharedFilterProps & { open: boolean; onClose: 
             <div className="flex flex-wrap gap-2">
               {LEVELS.map(({ value, label }) => (
                 <button key={value} onClick={() => onLevelsChange(toggleSet(levels, value))}
-                  className={`px-4 py-2 border text-sm font-medium transition-colors ${levels.has(value) ? 'bg-[#2563EB] text-white border-[#2563EB]' : 'border-[#E5E7EB] text-gray-700 hover:border-[#2563EB]'}`}>
+                  className="px-4 py-2 border rounded text-sm font-medium transition-colors"
+                  style={levels.has(value) ? { background: PINK, color: '#fff', borderColor: PINK } : { borderColor: '#E5E7EB', color: '#374151' }}>
                   {label}
                 </button>
               ))}
@@ -555,7 +577,8 @@ function MobileFilterSheet(props: SharedFilterProps & { open: boolean; onClose: 
             <div className="flex flex-wrap gap-2">
               {JOB_TYPES.map(({ value, label }) => (
                 <button key={value} onClick={() => onJobTypesChange(toggleSet(jobTypes, value))}
-                  className={`px-4 py-2 border text-sm font-medium transition-colors ${jobTypes.has(value) ? 'bg-[#2563EB] text-white border-[#2563EB]' : 'border-[#E5E7EB] text-gray-700 hover:border-[#2563EB]'}`}>
+                  className="px-4 py-2 border rounded text-sm font-medium transition-colors"
+                  style={jobTypes.has(value) ? { background: PINK, color: '#fff', borderColor: PINK } : { borderColor: '#E5E7EB', color: '#374151' }}>
                   {label}
                 </button>
               ))}
@@ -566,7 +589,8 @@ function MobileFilterSheet(props: SharedFilterProps & { open: boolean; onClose: 
             <div className="flex flex-wrap gap-2">
               {POSTED_OPTIONS.map(({ value, label }) => (
                 <button key={value} onClick={() => onPostedChange(posted === value ? '' : value)}
-                  className={`px-4 py-2 border text-sm font-medium transition-colors ${posted === value ? 'bg-[#2563EB] text-white border-[#2563EB]' : 'border-[#E5E7EB] text-gray-700 hover:border-[#2563EB]'}`}>
+                  className="px-4 py-2 border rounded text-sm font-medium transition-colors"
+                  style={posted === value ? { background: PINK, color: '#fff', borderColor: PINK } : { borderColor: '#E5E7EB', color: '#374151' }}>
                   {label}
                 </button>
               ))}
@@ -577,7 +601,8 @@ function MobileFilterSheet(props: SharedFilterProps & { open: boolean; onClose: 
             <div className="flex flex-wrap gap-2">
               {SALARY_OPTIONS.map(({ value, label }) => (
                 <button key={value} onClick={() => onSalaryChange(salaryBucket === value ? '' : value)}
-                  className={`px-4 py-2 border text-sm font-medium transition-colors ${salaryBucket === value ? 'bg-[#2563EB] text-white border-[#2563EB]' : 'border-[#E5E7EB] text-gray-700 hover:border-[#2563EB]'}`}>
+                  className="px-4 py-2 border rounded text-sm font-medium transition-colors"
+                  style={salaryBucket === value ? { background: PINK, color: '#fff', borderColor: PINK } : { borderColor: '#E5E7EB', color: '#374151' }}>
                   {label}
                 </button>
               ))}
@@ -587,10 +612,11 @@ function MobileFilterSheet(props: SharedFilterProps & { open: boolean; onClose: 
           <SheetSection label="Work Mode">
             <button
               onClick={() => onRemoteChange(!remoteOnly)}
-              className={`flex items-center gap-2 px-4 py-2.5 border text-sm font-medium transition-colors w-full ${remoteOnly ? 'bg-[#EFF6FF] border-[#2563EB] text-[#2563EB]' : 'border-[#E5E7EB] text-gray-700'}`}
+              className="flex items-center gap-2 px-4 py-2.5 border rounded text-sm font-medium transition-colors w-full"
+              style={remoteOnly ? { background: PINK_BG, borderColor: PINK, color: PINK } : { borderColor: '#E5E7EB', color: '#374151' }}
             >
               🌐 <span>Remote UAE only</span>
-              {remoteOnly && <span className="ml-auto text-[#2563EB]">✓</span>}
+              {remoteOnly && <span className="ml-auto">✓</span>}
             </button>
           </SheetSection>
 
@@ -598,7 +624,8 @@ function MobileFilterSheet(props: SharedFilterProps & { open: boolean; onClose: 
             <div className="flex flex-wrap gap-2">
               {SORT_OPTIONS.map(({ value, label }) => (
                 <button key={value} onClick={() => onSortChange(value)}
-                  className={`px-4 py-2 border text-sm font-medium transition-colors ${sortBy === value ? 'bg-[#2563EB] text-white border-[#2563EB]' : 'border-[#E5E7EB] text-gray-700 hover:border-[#2563EB]'}`}>
+                  className="px-4 py-2 border rounded text-sm font-medium transition-colors"
+                  style={sortBy === value ? { background: PINK, color: '#fff', borderColor: PINK } : { borderColor: '#E5E7EB', color: '#374151' }}>
                   {label}
                 </button>
               ))}
@@ -606,16 +633,15 @@ function MobileFilterSheet(props: SharedFilterProps & { open: boolean; onClose: 
           </SheetSection>
         </div>
 
-        {/* Sheet footer */}
         <div className="shrink-0 px-5 py-4 border-t border-[#E5E7EB] bg-white flex items-center gap-3">
           {activeCount > 0 && (
-            <button onClick={onClearAll} className="font-mono text-sm text-gray-400 hover:text-black transition-colors underline">
+            <button onClick={onClearAll} className="font-sans text-sm text-gray-400 hover:text-black transition-colors underline">
               Clear all
             </button>
           )}
           <button
             onClick={onClose}
-            className="flex-1 bg-black text-white font-sans text-sm font-bold py-3 hover:bg-gray-900 transition-colors"
+            className="flex-1 bg-slate-950 text-white font-sans text-sm font-bold py-3 rounded-lg hover:bg-slate-800 transition-colors"
           >
             {loading ? '…' : `Show ${total.toLocaleString()} roles`}
           </button>
@@ -643,22 +669,23 @@ function FilterDropdown({ label, count, open, onToggle, onClose, children, noHig
     <div ref={ref} className="relative shrink-0">
       <button
         onClick={onToggle}
-        className={`inline-flex items-center gap-1.5 border px-3 py-1.5 font-mono text-[11px] font-bold transition-colors ${
-          isActive
-            ? 'bg-[#EFF6FF] border-[#93C5FD] text-[#2563EB]'
-            : 'bg-white border-[#E5E7EB] text-gray-700 hover:border-gray-400 hover:text-black'
-        }`}
+        className="inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 font-sans text-[13px] font-medium transition-colors"
+        style={isActive
+          ? { background: PINK_BG, borderColor: PINK_RING, color: PINK }
+          : { background: '#fff', borderColor: '#E5E7EB', color: '#374151' }}
+        onMouseEnter={e => { if (!isActive) { (e.currentTarget as HTMLButtonElement).style.borderColor = '#9CA3AF'; (e.currentTarget as HTMLButtonElement).style.color = '#000' } }}
+        onMouseLeave={e => { if (!isActive) { (e.currentTarget as HTMLButtonElement).style.borderColor = '#E5E7EB'; (e.currentTarget as HTMLButtonElement).style.color = '#374151' } }}
       >
         {label}
         {isActive && (
-          <span className="inline-flex items-center justify-center h-4 w-4 rounded-full bg-[#2563EB] text-white text-[9px] font-bold leading-none">
+          <span className="inline-flex items-center justify-center h-4 w-4 rounded-full text-white text-[9px] font-bold leading-none" style={{ background: PINK }}>
             {count}
           </span>
         )}
-        <ChevronDown size={11} className={`transition-transform duration-150 ${open ? 'rotate-180' : ''}`} />
+        <ChevronDown size={12} className={`transition-transform duration-150 ${open ? 'rotate-180' : ''}`} />
       </button>
       {open && (
-        <div className="absolute top-full left-0 mt-1.5 z-50 bg-white border border-[#E5E7EB] shadow-[0_4px_20px_rgba(15,23,42,0.1)] min-w-[160px]">
+        <div className="absolute top-full left-0 mt-1.5 z-50 bg-white border border-[#E5E7EB] rounded-lg shadow-[0_4px_20px_rgba(15,23,42,0.1)] min-w-[160px]">
           {children}
         </div>
       )}
@@ -675,7 +702,7 @@ function CheckboxPanel({ options, selected, onToggle }: {
       {options.map(({ value, label }) => (
         <label key={value} className="flex items-center gap-2.5 px-4 py-2.5 cursor-pointer hover:bg-[#FAFAFA] transition-colors group">
           <input type="checkbox" checked={selected.has(value)} onChange={() => onToggle(value)} />
-          <span className={`text-xs transition-colors ${selected.has(value) ? 'text-[#2563EB] font-bold' : 'text-gray-700 group-hover:text-black'}`}>{label}</span>
+          <span className="text-xs transition-colors" style={{ color: selected.has(value) ? PINK : '#374151', fontWeight: selected.has(value) ? 600 : 400 }}>{label}</span>
         </label>
       ))}
     </div>
@@ -692,11 +719,12 @@ function PillPanel({ options, selected, onToggle }: {
         <button
           key={value}
           onClick={() => onToggle(value)}
-          className={`px-3.5 py-2 text-xs font-semibold border transition-colors ${
-            selected.has(value)
-              ? 'bg-[#2563EB] text-white border-[#2563EB]'
-              : 'bg-white text-gray-700 border-[#E5E7EB] hover:border-[#2563EB] hover:text-[#2563EB]'
-          }`}
+          className="px-3.5 py-2 text-xs font-semibold border rounded-md transition-colors"
+          style={selected.has(value)
+            ? { background: PINK, color: '#fff', borderColor: PINK }
+            : { background: '#fff', color: '#374151', borderColor: '#E5E7EB' }}
+          onMouseEnter={e => { if (!selected.has(value)) { (e.currentTarget as HTMLButtonElement).style.borderColor = PINK; (e.currentTarget as HTMLButtonElement).style.color = PINK } }}
+          onMouseLeave={e => { if (!selected.has(value)) { (e.currentTarget as HTMLButtonElement).style.borderColor = '#E5E7EB'; (e.currentTarget as HTMLButtonElement).style.color = '#374151' } }}
         >
           {label}
         </button>
@@ -715,11 +743,12 @@ function RadioPanel({ options, selected, onSelect }: {
         <button
           key={value}
           onClick={() => onSelect(selected === value ? '' : value)}
-          className={`px-3.5 py-2 text-xs font-semibold border transition-colors ${
-            selected === value
-              ? 'bg-[#2563EB] text-white border-[#2563EB]'
-              : 'bg-white text-gray-700 border-[#E5E7EB] hover:border-[#2563EB] hover:text-[#2563EB]'
-          }`}
+          className="px-3.5 py-2 text-xs font-semibold border rounded-md transition-colors"
+          style={selected === value
+            ? { background: PINK, color: '#fff', borderColor: PINK }
+            : { background: '#fff', color: '#374151', borderColor: '#E5E7EB' }}
+          onMouseEnter={e => { if (selected !== value) { (e.currentTarget as HTMLButtonElement).style.borderColor = PINK; (e.currentTarget as HTMLButtonElement).style.color = PINK } }}
+          onMouseLeave={e => { if (selected !== value) { (e.currentTarget as HTMLButtonElement).style.borderColor = '#E5E7EB'; (e.currentTarget as HTMLButtonElement).style.color = '#374151' } }}
         >
           {label}
         </button>
@@ -733,21 +762,22 @@ function QuickToggle({ active, onToggle, children }: { active: boolean; onToggle
   return (
     <button
       onClick={onToggle}
-      className={`inline-flex items-center gap-1 border px-3 py-1.5 font-mono text-[11px] font-bold transition-colors shrink-0 ${
-        active ? 'bg-[#2563EB] text-white border-[#2563EB]' : 'bg-white text-gray-700 border-[#E5E7EB] hover:border-gray-400 hover:text-black'
-      }`}
+      className="inline-flex items-center gap-1 rounded-lg border px-3 py-1.5 font-sans text-[13px] font-medium transition-colors shrink-0"
+      style={active
+        ? { background: PINK, color: '#fff', borderColor: PINK }
+        : { background: '#fff', color: '#374151', borderColor: '#E5E7EB' }}
     >
       {children}
     </button>
   )
 }
 
-function Sep() { return <span className="h-5 w-px bg-[#E5E7EB] shrink-0 mx-1" /> }
+function Sep() { return <span className="h-5 w-px bg-[#E5E7EB] shrink-0" /> }
 
 function SheetSection({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div>
-      <h3 className="font-mono text-[10px] font-bold uppercase tracking-[0.18em] text-gray-500 mb-3">{label}</h3>
+      <h3 className="font-sans text-xs font-semibold uppercase tracking-[0.14em] text-gray-400 mb-3">{label}</h3>
       {children}
     </div>
   )
@@ -755,11 +785,12 @@ function SheetSection({ label, children }: { label: string; children: React.Reac
 
 // ── Detail panel ──────────────────────────────────────────────────────────────
 function DetailPanel({ job, onSave }: { job: Job; onSave: (id: number, e: React.MouseEvent) => void }) {
-  const skills  = parseSkills(job.skills)
-  const salary  = money(job.salaryMin, job.salaryMax, job.salaryCurrency)
+  const skills   = parseSkills(job.skills)
+  const salary   = money(job.salaryMin, job.salaryMax, job.salaryCurrency)
   const applyUrl = job.applyUrl ?? job.linkedinUrl
     ?? `https://www.linkedin.com/jobs/search/?keywords=${encodeURIComponent(`${job.title} ${job.companyName}`)}&location=United%20Arab%20Emirates`
   const half = Math.ceil(skills.length / 2)
+  const emirateLabel = EMIRATES.find(e => e.value === job.emirate)?.label
 
   return (
     <div className="p-8 xl:p-10 max-w-3xl">
@@ -767,32 +798,48 @@ function DetailPanel({ job, onSave }: { job: Job; onSave: (id: number, e: React.
         <div className="min-w-0">
           <div className="flex items-center gap-2 mb-3">
             <CompanyLogo logoUrl={job.companyLogoUrl} companyName={job.companyName} size="sm" />
-            <span className="font-mono text-[10px] font-bold uppercase tracking-[0.16em] text-[#2563EB] truncate">
+            <span className="font-mono text-[10px] font-bold uppercase tracking-[0.16em] truncate" style={{ color: PINK }}>
               {job.companyName}{job.locationUae ? ` · ${job.locationUae}` : ''}{job.remoteUae ? ' · Remote' : ''}
             </span>
           </div>
           <h1 className="text-3xl font-bold tracking-tight text-black leading-tight">{job.title}</h1>
-          {job.experienceLevel && <p className="mt-1 text-base font-normal text-gray-400">{labelize(job.experienceLevel)}</p>}
         </div>
         <div className="flex gap-2 shrink-0 mt-1">
           <a href={applyUrl} target="_blank" rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 bg-[#2563EB] text-white font-sans text-sm font-bold px-5 py-2.5 hover:bg-[#1d4ed8] transition-colors">
+            className="inline-flex items-center gap-2 text-white font-sans text-sm font-bold px-5 py-2.5 rounded-lg transition-colors"
+            style={{ background: PINK }}
+            onMouseEnter={e => (e.currentTarget as HTMLAnchorElement).style.background = PINK_HOV}
+            onMouseLeave={e => (e.currentTarget as HTMLAnchorElement).style.background = PINK}
+          >
             <ExternalLink size={14} /> Apply Now
           </a>
           <button onClick={(e) => onSave(job.id, e)}
-            className="border border-[#E5E7EB] p-2.5 hover:bg-gray-50 transition-colors" aria-label="Save job">
+            className="border border-[#E5E7EB] rounded-lg p-2.5 hover:bg-gray-50 transition-colors" aria-label="Save job">
             <Bookmark size={16} />
           </button>
         </div>
       </div>
 
+      {/* Pills — location + level first, salary only if present */}
       <div className="flex flex-wrap gap-2 mb-8">
-        {salary && <InfoPill>{salary}</InfoPill>}
+        {/* Location */}
+        {(emirateLabel || job.locationUae) && (
+          <InfoPill loc>
+            <MapPin size={11} />
+            {emirateLabel ?? job.locationUae}
+          </InfoPill>
+        )}
+        {/* Experience level */}
+        {job.experienceLevel && <InfoPill accent>{labelize(job.experienceLevel)}</InfoPill>}
+        {/* Job type */}
         {job.jobType && <InfoPill>{labelize(job.jobType)}</InfoPill>}
-        {(job.visaType === 'free_visa' || job.visaType === 'employment_visa') && <InfoPill accent>Visa Provided</InfoPill>}
+        {/* Salary — secondary */}
+        {salary && <InfoPill sal>{salary}</InfoPill>}
+        {/* Badges */}
+        {(job.visaType === 'free_visa' || job.visaType === 'employment_visa') && <InfoPill>Visa Provided</InfoPill>}
         {job.visaType === 'own_visa' && <InfoPill>Own Visa Required</InfoPill>}
         {job.visaType === 'visit_visa_accepted' && <InfoPill>Visit Visa OK</InfoPill>}
-        {job.immediateJoiner && <InfoPill accent><Zap size={10} /> Immediate Joiner</InfoPill>}
+        {job.immediateJoiner && <InfoPill><Zap size={10} /> Immediate Joiner</InfoPill>}
         {job.remoteUae && <InfoPill>Remote UAE</InfoPill>}
       </div>
 
@@ -822,7 +869,7 @@ function DetailPanel({ job, onSave }: { job: Job; onSave: (id: number, e: React.
           {job.locationUae && <span className="flex items-center gap-1.5"><MapPin size={12} />{job.locationUae}</span>}
           {job.jobType && <span className="flex items-center gap-1.5"><BriefcaseBusiness size={12} />{labelize(job.jobType)}</span>}
         </div>
-        <Link to={`/jobs?q=${encodeURIComponent(job.companyName ?? '')}`} className="text-[#2563EB] hover:underline">
+        <Link to={`/jobs?q=${encodeURIComponent(job.companyName ?? '')}`} className="hover:underline" style={{ color: PINK }}>
           More from {job.companyName} →
         </Link>
       </div>
@@ -830,9 +877,16 @@ function DetailPanel({ job, onSave }: { job: Job; onSave: (id: number, e: React.
   )
 }
 
-function InfoPill({ children, accent }: { children: React.ReactNode; accent?: boolean }) {
+function InfoPill({ children, accent, loc, sal }: { children: React.ReactNode; accent?: boolean; loc?: boolean; sal?: boolean }) {
+  const cls = accent
+    ? { background: PINK_BG, borderColor: PINK_RING, color: PINK }
+    : loc
+      ? { background: '#F1F5F9', borderColor: '#E2E8F0', color: '#475569' }
+      : sal
+        ? { background: '#ECFDF5', borderColor: '#A7F3D0', color: '#065F46' }
+        : { background: '#F3F4F6', borderColor: '#E5E7EB', color: '#000' }
   return (
-    <span className={`inline-flex items-center gap-1.5 border px-3 py-1.5 font-mono text-xs font-semibold ${accent ? 'bg-blue-50 border-blue-200 text-[#2563EB]' : 'bg-[#F3F4F6] border-[#E5E7EB] text-black'}`}>
+    <span className="inline-flex items-center gap-1.5 border px-3 py-1.5 font-mono text-xs font-semibold rounded-md" style={cls}>
       {children}
     </span>
   )
@@ -861,7 +915,7 @@ function JobDescriptionBlock({ job }: { job: Job }) {
               <ul className="space-y-3">
                 {s.items.map((item, i) => (
                   <li key={i} className="flex items-start gap-3 text-sm text-gray-700 leading-relaxed">
-                    <span className="font-mono text-[#2563EB] font-bold mt-0.5 shrink-0">→</span>{item}
+                    <span className="font-mono font-bold mt-0.5 shrink-0" style={{ color: PINK }}>→</span>{item}
                   </li>
                 ))}
               </ul>
