@@ -5,6 +5,7 @@ import {
   BriefcaseBusiness,
   CalendarDays,
   ExternalLink,
+  Linkedin,
   MapPin,
   Share2,
   Zap,
@@ -150,9 +151,16 @@ export default function JobDetail() {
 
         {/* Company */}
         <div className="flex items-center gap-3">
-          <CompanyLogo logoUrl={job.companyLogoUrl} companyName={job.companyName} size="sm" />
-          <span className="text-sm font-semibold text-slate-600">{job.companyName}</span>
-          {applySource ? (
+          <CompanyLogo logoUrl={job.companyLogoUrl} companyName={job.companyName} size="lg" />
+          <span className="text-base font-semibold text-slate-700">{job.companyName}</span>
+          {applySource?.name === 'LinkedIn' ? (
+            <span
+              className="inline-flex items-center gap-1 rounded-full bg-[#0a66c2]/10 px-2.5 py-0.5 text-xs font-medium text-[#0a66c2]"
+              title="Apply on LinkedIn"
+            >
+              <Linkedin size={12} /> LinkedIn
+            </span>
+          ) : applySource ? (
             <span
               className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-600 ring-1 ring-inset ring-slate-200"
               title={`Sourced from ${applySource.name}`}

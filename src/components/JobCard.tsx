@@ -1,4 +1,4 @@
-import { Bookmark, Clock3, MapPin } from 'lucide-react'
+import { Bookmark, Clock3, Linkedin, MapPin } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { JOB_CATEGORIES, type Job } from '../types'
 import { labelize, money, parseSkills, relativeTime } from '../utils/format'
@@ -74,7 +74,14 @@ export function JobCard({ job, onSave, variant = 'list' }: JobCardProps) {
             {job.visaType === 'free_visa' || job.visaType === 'employment_visa' ? (
               <Badge tone="blue">Visa</Badge>
             ) : null}
-            {applySource ? (
+            {applySource === 'LinkedIn' ? (
+              <span
+                className="inline-flex items-center gap-1 rounded bg-[#0a66c2]/10 px-1.5 py-0.5 text-[10px] font-semibold text-[#0a66c2]"
+                title="Apply on LinkedIn"
+              >
+                <Linkedin className="h-3 w-3" /> LinkedIn
+              </span>
+            ) : applySource ? (
               <span className="rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-500">
                 via {applySource}
               </span>
