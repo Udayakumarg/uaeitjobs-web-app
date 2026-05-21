@@ -1,3 +1,4 @@
+import DOMPurify from 'dompurify'
 import {
   ArrowLeft,
   Bookmark,
@@ -238,7 +239,7 @@ export default function JobDetail() {
           {(() => {
             if (job.descriptionHtml?.trim()) {
               return (
-                <div className="prose-job" dangerouslySetInnerHTML={{ __html: job.descriptionHtml }} />
+                <div className="prose-job" dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(job.descriptionHtml) }} />
               )
             }
 

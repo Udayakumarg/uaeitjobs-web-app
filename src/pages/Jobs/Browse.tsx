@@ -1,3 +1,4 @@
+import DOMPurify from 'dompurify'
 import {
   Bookmark,
   BriefcaseBusiness,
@@ -10,7 +11,7 @@ import {
   X,
   Zap,
 } from 'lucide-react'
-import { useEffect, useRef, useState } from 'react'
+import { memo, useEffect, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { CompanyLogo } from '../../components/CompanyLogo'
 import { useDocumentMeta } from '../../hooks/useDocumentMeta'
@@ -270,53 +271,14 @@ export default function JobBrowse() {
                 </div>
               ) : (
                 <div className="divide-y divide-[#E5E7EB]">
-                  {jobs.map(job => {
-                    const active = job.id === selectedId
-                    const sal    = money(job.salaryMin, job.salaryMax, job.salaryCurrency)
-                    const skills = parseSkills(job.skills).slice(0, 3)
-                    // fallback meta: emirate + level when no salary
-                    const emirateLabel = EMIRATES.find(e => e.value === job.emirate)?.label
-                    const metaFallback = [emirateLabel, job.experienceLevel ? labelize(job.experienceLevel) : null].filter(Boolean).join(' · ')
-                    return (
-                      <button
-                        key={job.id}
-                        onClick={() => handleJobClick(job)}
-                        className="relative w-full text-left px-4 py-5 transition-colors"
-                        style={{ background: active ? PINK_BG : undefined }}
-                        onMouseEnter={e => { if (!active) (e.currentTarget as HTMLButtonElement).style.background = '#FAFAFA' }}
-                        onMouseLeave={e => { if (!active) (e.currentTarget as HTMLButtonElement).style.background = '' }}
-                      >
-                        {active && <span className="absolute left-0 top-0 bottom-0 w-[3px]" style={{ background: PINK }} />}
-                        <div className="flex items-center gap-2 mb-2">
-                          <CompanyLogo logoUrl={job.companyLogoUrl} companyName={job.companyName} size="sm" className="shrink-0" />
-                          <span className="font-mono text-[10px] font-bold uppercase tracking-widest truncate" style={{ color: active ? PINK : '#9CA3AF' }}>
-                            {job.companyName}
-                          </span>
-                          <span className="ml-auto font-mono text-[10px] text-gray-400 shrink-0">{relativeTime(job.createdAt)}</span>
-                        </div>
-                        <p className="font-bold text-sm text-black leading-snug mb-2.5">{job.title}</p>
-                        <div className="flex items-center justify-between gap-2">
-                          <span className="font-mono text-[10px] text-gray-500 truncate">
-                            {skills.length ? skills.join(', ') : (job.locationUae ?? 'UAE')}
-                          </span>
-                          <div className="flex items-center gap-1.5 shrink-0">
-                            {job.remoteUae && (
-                              <span className="font-mono text-[9px] uppercase tracking-wider font-bold" style={{ color: PINK }}>Remote</span>
-                            )}
-                            {job.immediateJoiner && (
-                              <span className="font-mono text-[9px] uppercase tracking-wider text-amber-600 font-bold">Now</span>
-                            )}
-                            {sal
-                              ? <span className="font-mono text-[11px] font-bold" style={{ color: active ? PINK : '#000' }}>{sal}</span>
-                              : metaFallback
-                                ? <span className="font-mono text-[10px] text-gray-400 truncate max-w-[130px]">{metaFallback}</span>
-                                : null
-                            }
-                          </div>
-                        </div>
-                      </button>
-                    )
-                  })}
+                  {jobs.map(job => (
+                    <JobListItem
+                      key={job.id}
+                      job={job}
+                      active={job.id === selectedId}
+                      onClick={handleJobClick}
+                    />
+                  ))}
                 </div>
               )}
             </div>
@@ -877,6 +839,55 @@ function DetailPanel({ job, onSave }: { job: Job; onSave: (id: number, e: React.
   )
 }
 
+// ── JobListItem — memoized so filter changes don't re-render unchanged cards ──
+const JobListItem = memo(function JobListItem({
+  job, active, onClick,
+}: { job: Job; active: boolean; onClick: (j: Job) => void }) {
+  const sal          = money(job.salaryMin, job.salaryMax, job.salaryCurrency)
+  const skills       = parseSkills(job.skills).slice(0, 3)
+  const emirateLabel = EMIRATES.find(e => e.value === job.emirate)?.label
+  const metaFallback = [emirateLabel, job.experienceLevel ? labelize(job.experienceLevel) : null].filter(Boolean).join(' · ')
+
+  return (
+    <button
+      onClick={() => onClick(job)}
+      className="relative w-full text-left px-4 py-5 transition-colors"
+      style={{ background: active ? PINK_BG : undefined }}
+      onMouseEnter={e => { if (!active) (e.currentTarget as HTMLButtonElement).style.background = '#FAFAFA' }}
+      onMouseLeave={e => { if (!active) (e.currentTarget as HTMLButtonElement).style.background = '' }}
+    >
+      {active && <span className="absolute left-0 top-0 bottom-0 w-[3px]" style={{ background: PINK }} />}
+      <div className="flex items-center gap-2 mb-2">
+        <CompanyLogo logoUrl={job.companyLogoUrl} companyName={job.companyName} size="sm" className="shrink-0" />
+        <span className="font-mono text-[10px] font-bold uppercase tracking-widest truncate" style={{ color: active ? PINK : '#9CA3AF' }}>
+          {job.companyName}
+        </span>
+        <span className="ml-auto font-mono text-[10px] text-gray-400 shrink-0">{relativeTime(job.createdAt)}</span>
+      </div>
+      <p className="font-bold text-sm text-black leading-snug mb-2.5">{job.title}</p>
+      <div className="flex items-center justify-between gap-2">
+        <span className="font-mono text-[10px] text-gray-500 truncate">
+          {skills.length ? skills.join(', ') : (job.locationUae ?? 'UAE')}
+        </span>
+        <div className="flex items-center gap-1.5 shrink-0">
+          {job.remoteUae && (
+            <span className="font-mono text-[9px] uppercase tracking-wider font-bold" style={{ color: PINK }}>Remote</span>
+          )}
+          {job.immediateJoiner && (
+            <span className="font-mono text-[9px] uppercase tracking-wider text-amber-600 font-bold">Now</span>
+          )}
+          {sal
+            ? <span className="font-mono text-[11px] font-bold" style={{ color: active ? PINK : '#000' }}>{sal}</span>
+            : metaFallback
+              ? <span className="font-mono text-[10px] text-gray-400 truncate max-w-[130px]">{metaFallback}</span>
+              : null
+          }
+        </div>
+      </div>
+    </button>
+  )
+})
+
 function InfoPill({ children, accent, loc, sal }: { children: React.ReactNode; accent?: boolean; loc?: boolean; sal?: boolean }) {
   const cls = accent
     ? { background: PINK_BG, borderColor: PINK_RING, color: PINK }
@@ -897,7 +908,7 @@ function DSection({ children }: { children: React.ReactNode }) {
 }
 
 function JobDescriptionBlock({ job }: { job: Job }) {
-  if (job.descriptionHtml?.trim()) return (<><DSection>About the Role</DSection><div className="prose-job" dangerouslySetInnerHTML={{ __html: job.descriptionHtml }} /></>)
+  if (job.descriptionHtml?.trim()) return (<><DSection>About the Role</DSection><div className="prose-job" dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(job.descriptionHtml) }} /></>)
   let sections: { heading: string; items: string[] }[] = []
   if (job.descriptionSections) {
     try {
