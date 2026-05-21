@@ -8,7 +8,7 @@ import { Button, Container } from './ui'
 const navClass = ({ isActive }: { isActive: boolean }) =>
   `inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium tracking-tight transition ${
     isActive
-      ? 'bg-indigo-50 text-indigo-700 ring-1 ring-inset ring-indigo-100'
+      ? 'bg-pink-50 text-pink-700 ring-1 ring-inset ring-pink-100'
       : 'text-slate-600 hover:bg-slate-100 hover:text-slate-950'
   }`
 
@@ -65,7 +65,7 @@ export function Layout() {
               <BriefcaseBusiness className="h-5 w-5" />
             </span>
             <span className="text-base sm:text-lg">
-              uaeit<span className="text-indigo-700">jobs</span>
+              uaeit<span className="text-pink-700">jobs</span>
             </span>
           </Link>
 
@@ -144,7 +144,7 @@ export function Layout() {
                   <BriefcaseBusiness className="h-5 w-5" />
                 </span>
                 <span>
-                  uaeit<span className="text-indigo-700">jobs</span>
+                  uaeit<span className="text-pink-700">jobs</span>
                 </span>
               </Link>
               <p className="mt-4 max-w-sm text-sm leading-6 text-slate-600">
@@ -159,22 +159,22 @@ export function Layout() {
               </p>
               <ul className="mt-4 grid gap-2 text-sm">
                 <li>
-                  <Link to="/jobs" className="text-slate-700 hover:text-indigo-700">
+                  <Link to="/jobs" className="text-slate-700 hover:text-pink-700">
                     Browse jobs
                   </Link>
                 </li>
                 <li>
-                  <Link to="/register" className="text-slate-700 hover:text-indigo-700">
+                  <Link to="/register" className="text-slate-700 hover:text-pink-700">
                     Create profile
                   </Link>
                 </li>
                 <li>
-                  <Link to="/seeker" className="text-slate-700 hover:text-indigo-700">
+                  <Link to="/seeker" className="text-slate-700 hover:text-pink-700">
                     My applications
                   </Link>
                 </li>
                 <li>
-                  <Link to="/seeker/saved" className="text-slate-700 hover:text-indigo-700">
+                  <Link to="/seeker/saved" className="text-slate-700 hover:text-pink-700">
                     Saved jobs
                   </Link>
                 </li>
@@ -187,17 +187,17 @@ export function Layout() {
               </p>
               <ul className="mt-4 grid gap-2 text-sm">
                 <li>
-                  <Link to="/register?type=hr" className="text-slate-700 hover:text-indigo-700">
+                  <Link to="/register?type=hr" className="text-slate-700 hover:text-pink-700">
                     Post a job
                   </Link>
                 </li>
                 <li>
-                  <Link to="/hr" className="text-slate-700 hover:text-indigo-700">
+                  <Link to="/hr" className="text-slate-700 hover:text-pink-700">
                     HR workspace
                   </Link>
                 </li>
                 <li>
-                  <Link to="/register?type=hr" className="text-slate-700 hover:text-indigo-700">
+                  <Link to="/register?type=hr" className="text-slate-700 hover:text-pink-700">
                     LinkedIn import
                   </Link>
                 </li>
@@ -210,7 +210,7 @@ export function Layout() {
               </p>
               <ul className="mt-4 grid gap-2 text-sm">
                 <li>
-                  <a href="mailto:hello@uaeitjobs.com" className="text-slate-700 hover:text-indigo-700">
+                  <a href="mailto:hello@uaeitjobs.com" className="text-slate-700 hover:text-pink-700">
                     Contact
                   </a>
                 </li>
