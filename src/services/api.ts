@@ -20,6 +20,9 @@ export const API_BASE_URL = API_URL ? apiBaseUrl(API_URL) : '/api/v1'
 export const api = axios.create({
   baseURL: API_BASE_URL,
   headers: { 'Content-Type': 'application/json' },
+  // Required so the browser sends the httpOnly refresh_token cookie on
+  // cross-origin requests (production: same domain via nginx; dev: see README).
+  withCredentials: true,
 })
 
 api.interceptors.request.use((config: InternalAxiosRequestConfig) => {
@@ -31,13 +34,24 @@ api.interceptors.request.use((config: InternalAxiosRequestConfig) => {
 api.interceptors.response.use(
   (response) => response,
   async (error: AxiosError) => {
-    const status = error.response?.status
+    const status   = error.response?.status
     const original = error.config as (InternalAxiosRequestConfig & { _retry?: boolean }) | undefined
-    const refreshToken = useAuthStore.getState().refreshToken
-    if (status === 401 && refreshToken && original && !original._retry && !original.url?.includes('/auth/refresh')) {
+
+    if (status === 401 && original && !original._retry && !original.url?.includes('/auth/refresh')) {
       original._retry = true
       try {
-        const { data } = await api.post<AuthResponse>('/auth/refresh', { refreshToken })
+        // Primary: the refresh_token httpOnly cookie is sent automatically.
+        // Legacy fallback: if the user still has a token in localStorage from
+        // a pre-cookie session, send it in the body so they don't get logged
+        // out on first page load after the upgrade. The backend accepts both.
+        const legacyToken = localStorage.getItem('uaeitjobs.refreshToken')
+        const body = legacyToken ? { refreshToken: legacyToken } : undefined
+        const { data } = await api.post<AuthResponse>('/auth/refresh', body)
+
+        // One-time migration: clear the legacy localStorage token now that
+        // the backend has issued a new cookie.
+        if (legacyToken) localStorage.removeItem('uaeitjobs.refreshToken')
+
         useAuthStore.getState().setSession(data)
         original.headers.Authorization = `Bearer ${data.accessToken}`
         return api(original)
@@ -78,12 +92,31 @@ export function errorMessage(error: unknown) {
   return error instanceof Error ? error.message : 'Something went wrong'
 }
 
+// ── Filter params type for multi-select backend filtering ──────────────────────
+export interface FilterMultiParams {
+  emirate?: string[]
+  category?: string[]
+  experienceLevel?: string[]
+  jobType?: string[]
+  remoteUae?: boolean
+  immediateJoiner?: boolean
+  postedAfter?: string
+  salaryMin?: number
+  salaryMax?: number
+  sort?: string
+  page?: number
+  size?: number
+}
+
 export const authApi = {
   register: (payload: { email: string; password: string; userType: UserType; phone?: string; country?: string }) =>
     api.post('/auth/register', payload),
   login: (payload: { email: string; password: string }) => api.post<AuthResponse>('/auth/login', payload),
   verifyEmail: (token: string) => api.post('/auth/verify-email', { token }),
-  logout: (refreshToken: string) => api.post('/auth/logout', { refreshToken }),
+  // Refresh token is in the httpOnly cookie — no body needed.
+  refresh: () => api.post<AuthResponse>('/auth/refresh'),
+  // Logout revokes the cookie server-side — no token arg needed.
+  logout: () => api.post('/auth/logout'),
 }
 
 export const jobsApi = {
@@ -91,6 +124,14 @@ export const jobsApi = {
   detail: (id: string | number) => api.get<Job>(`/jobs/${id}`),
   search: (q: string, page = 0, size = 20) => api.get<Page<Job>>('/jobs/search', { params: { q, page, size } }),
   filter: (params: Record<string, string | number | boolean | undefined>) => api.get<Page<Job>>('/jobs/filter', { params }),
+  /** Multi-select filter — all array dimensions are sent as repeated query params. */
+  filterMulti: (params: FilterMultiParams) => {
+    // Axios serializes arrays as repeated params: ?emirate=dubai&emirate=abu_dhabi
+    return api.get<Page<Job>>('/jobs/filter', {
+      params,
+      paramsSerializer: { indexes: null }, // prevents bracket notation: emirate[0]=...
+    })
+  },
   locations: () => api.get<string[]>('/locations'),
   skills: (q: string) => api.get<string[]>('/skills/autocomplete', { params: { q } }),
   stats: () => api.get<{ totalJobs: number; countriesRepresented: number; companies: number }>('/stats'),

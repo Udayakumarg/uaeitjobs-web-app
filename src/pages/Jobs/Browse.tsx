@@ -15,7 +15,7 @@ import { memo, useEffect, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { CompanyLogo } from '../../components/CompanyLogo'
 import { useDocumentMeta } from '../../hooks/useDocumentMeta'
-import { errorMessage, jobsApi, seekerApi } from '../../services/api'
+import { errorMessage, jobsApi, seekerApi, type FilterMultiParams } from '../../services/api'
 import { useAuthStore } from '../../store/authStore'
 import { useToastStore } from '../../components/Toast'
 import { JOB_CATEGORIES } from '../../types'
@@ -134,45 +134,58 @@ export default function JobBrowse() {
   // mobile sheet
   const [mobileOpen, setMobileOpen] = useState(false)
 
-  // fetch
+  // fetch — all filtering is performed server-side via filterMulti so no
+  // result is silently hidden by the 80-row page cap.
   useEffect(() => {
     let ok = true
     setJobsLoading(true)
-    const eArr = Array.from(emirates), cArr = Array.from(jobCats),
-          lArr = Array.from(levels),   tArr = Array.from(jobTypes)
 
-    const params: Record<string, string | number | boolean | undefined> = {
-      page: 0, size: 80,
-      ...(eArr.length === 1 && { emirate:         eArr[0] }),
-      ...(cArr.length === 1 && { category:        cArr[0] }),
-      ...(lArr.length === 1 && { experienceLevel: lArr[0] }),
-      ...(tArr.length === 1 && { jobType:         tArr[0] }),
-      ...(remoteOnly        && { remoteUae: true           }),
-      ...(posted            && { postedAfter: new Date(Date.now() - postedAfterMs(posted)).toISOString() }),
-      ...(sortBy !== 'newest' && { sort: sortBy === 'salary_high' ? 'salary_desc' : 'salary_asc' }),
+    const eArr = Array.from(emirates)
+    const cArr = Array.from(jobCats)
+    const lArr = Array.from(levels)
+    const tArr = Array.from(jobTypes)
+
+    let req: Promise<{ data: import('../../types').Page<import('../../types').Job> }>
+
+    if (query) {
+      // Full-text search — results already ranked by relevance; apply
+      // dimension filters client-side on top (search endpoint is separate).
+      req = jobsApi.search(query, 0, 80).then(({ data }) => {
+        let r = data.content
+        if (eArr.length) r = r.filter(j => j.emirate         && eArr.includes(j.emirate))
+        if (cArr.length) r = r.filter(j => j.jobCategory     && cArr.includes(j.jobCategory as string))
+        if (lArr.length) r = r.filter(j => j.experienceLevel && lArr.includes(j.experienceLevel!))
+        if (tArr.length) r = r.filter(j => j.jobType         && tArr.includes(j.jobType!))
+        if (remoteOnly)  r = r.filter(j => j.remoteUae)
+        if (salaryBucket) {
+          const [min, max] = salaryRange(salaryBucket)
+          r = r.filter(j => { const s = j.salaryMin ?? j.salaryMax; return s != null && s >= min && (max === null || s <= max) })
+        }
+        return { data: { ...data, content: r, totalElements: r.length } }
+      })
+    } else {
+      // Pure filter — entirely server-side, no client-side post-processing.
+      const [salMin, salMax] = salaryBucket ? salaryRange(salaryBucket) : [undefined, undefined]
+      const params: FilterMultiParams = {
+        page: 0, size: 80,
+        ...(eArr.length           && { emirate:         eArr }),
+        ...(cArr.length           && { category:        cArr }),
+        ...(lArr.length           && { experienceLevel: lArr }),
+        ...(tArr.length           && { jobType:         tArr }),
+        ...(remoteOnly            && { remoteUae:       true }),
+        ...(posted                && { postedAfter:     new Date(Date.now() - postedAfterMs(posted)).toISOString() }),
+        ...(salMin != null        && { salaryMin:       salMin }),
+        ...(salMax != null        && { salaryMax:       salMax }),
+        ...(sortBy !== 'newest'   && { sort:            sortBy === 'salary_high' ? 'salary_desc' : 'salary_asc' }),
+      }
+      req = jobsApi.filterMulti(params)
     }
 
-    const req = query ? jobsApi.search(query, 0, 80) : jobsApi.filter(params)
     req.then(({ data }) => {
       if (!ok) return
-      let r = data.content
-      if (eArr.length > 1) r = r.filter(j => j.emirate        && eArr.includes(j.emirate))
-      if (cArr.length > 1) r = r.filter(j => j.jobCategory    && cArr.includes(j.jobCategory))
-      if (lArr.length > 1) r = r.filter(j => j.experienceLevel && lArr.includes(j.experienceLevel))
-      if (tArr.length > 1) r = r.filter(j => j.jobType        && tArr.includes(j.jobType))
-      if (salaryBucket) {
-        const [min, max] = salaryRange(salaryBucket)
-        r = r.filter(j => { const s = j.salaryMin ?? j.salaryMax; return s != null && s >= min && (max === null || s <= max) })
-      }
-      if (posted) {
-        const after = Date.now() - postedAfterMs(posted)
-        r = r.filter(j => j.createdAt && new Date(j.createdAt).getTime() >= after)
-      }
-      if (sortBy === 'salary_high') r = [...r].sort((a, b) => (b.salaryMax ?? b.salaryMin ?? 0) - (a.salaryMax ?? a.salaryMin ?? 0))
-      if (sortBy === 'salary_low')  r = [...r].sort((a, b) => (a.salaryMin ?? a.salaryMax ?? 0) - (b.salaryMin ?? b.salaryMax ?? 0))
-      const multi = eArr.length > 1 || cArr.length > 1 || lArr.length > 1 || tArr.length > 1
+      const r = data.content
       setJobs(r)
-      setTotal(multi || salaryBucket || posted ? r.length : data.totalElements)
+      setTotal(data.totalElements)
       // Auto-select first job on desktop — keeps panel in sync when filters change
       if (r.length > 0 && window.innerWidth >= 768) {
         setSelectedId(r[0].id)
