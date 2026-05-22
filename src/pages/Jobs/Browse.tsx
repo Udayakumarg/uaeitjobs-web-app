@@ -173,9 +173,11 @@ export default function JobBrowse() {
       const multi = eArr.length > 1 || cArr.length > 1 || lArr.length > 1 || tArr.length > 1
       setJobs(r)
       setTotal(multi || salaryBucket || posted ? r.length : data.totalElements)
-      // Auto-select first job on desktop so the detail panel is never blank
+      // Auto-select first job on desktop — keeps panel in sync when filters change
       if (r.length > 0 && window.innerWidth >= 768) {
-        setSelectedId(prev => prev ?? r[0].id)
+        setSelectedId(r[0].id)
+      } else if (r.length === 0) {
+        setSelectedId(null)
       }
     }).catch(() => {}).finally(() => { if (ok) setJobsLoading(false) })
     return () => { ok = false }
