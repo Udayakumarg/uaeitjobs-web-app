@@ -153,7 +153,7 @@ export default function JobBrowse() {
       req = jobsApi.search(query, 0, 80).then(({ data }) => {
         let r = data.content
         if (eArr.length) r = r.filter(j => j.emirate         && eArr.includes(j.emirate))
-        if (cArr.length) r = r.filter(j => j.jobCategory     && cArr.includes(j.jobCategory as string))
+        if (cArr.length) r = r.filter(j => j.jobCategory     && cArr.includes(j.jobCategory as JobCategory))
         if (lArr.length) r = r.filter(j => j.experienceLevel && lArr.includes(j.experienceLevel!))
         if (tArr.length) r = r.filter(j => j.jobType         && tArr.includes(j.jobType!))
         if (remoteOnly)  r = r.filter(j => j.remoteUae)
