@@ -1,4 +1,4 @@
-import { Bookmark, BriefcaseBusiness, LayoutDashboard, LogIn, Menu, Search, UserRound, Users2, X } from 'lucide-react'
+import { Bookmark, LayoutDashboard, LogIn, Menu, Search, UserRound, Users2, X } from 'lucide-react'
 import { useState } from 'react'
 import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { useAuthStore } from '../store/authStore'
@@ -58,15 +58,17 @@ export function Layout() {
         <Container className="flex items-center justify-between py-3.5">
           <Link
             to="/"
-            className="flex items-center gap-2.5 text-lg font-black tracking-tight text-slate-950"
+            className="flex items-center"
             onClick={() => setOpen(false)}
+            aria-label="uaeitjobs home"
           >
-            <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-slate-950 text-white shadow-sm">
-              <BriefcaseBusiness className="h-5 w-5" />
-            </span>
-            <span className="text-base sm:text-lg">
-              uaeit<span className="text-pink-700">jobs</span>
-            </span>
+            <img
+              src="/logo-horizontal.png"
+              alt="UAE IT Jobs"
+              className="h-8 w-auto sm:h-9"
+              loading="eager"
+              decoding="async"
+            />
           </Link>
 
           <nav className="hidden items-center gap-1 md:flex">{links}</nav>
@@ -139,13 +141,14 @@ export function Layout() {
         <Container className="py-12">
           <div className="grid gap-10 md:grid-cols-[1.5fr_1fr_1fr_1fr]">
             <div>
-              <Link to="/" className="flex items-center gap-2.5 text-lg font-black tracking-tight text-slate-950">
-                <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-slate-950 text-white shadow-sm">
-                  <BriefcaseBusiness className="h-5 w-5" />
-                </span>
-                <span>
-                  uaeit<span className="text-pink-700">jobs</span>
-                </span>
+              <Link to="/" className="inline-flex items-center" aria-label="uaeitjobs home">
+                <img
+                  src="/logo-full.png"
+                  alt="UAEITJOBS.com — Connecting IT Talent with Opportunities"
+                  className="h-16 w-auto"
+                  loading="lazy"
+                  decoding="async"
+                />
               </Link>
               <p className="mt-4 max-w-sm text-sm leading-6 text-slate-600">
                 UAE-focused IT and technology hiring. Verified employers, curated roles, faster
