@@ -94,8 +94,15 @@ export default function JobDetail() {
     } catch { /* cancelled */ }
   }
 
+  // When the user is not authenticated the server sets both applyUrl and
+  // linkedinUrl to null (Phase 4 gating).  We surface a "Sign in to apply"
+  // CTA instead of falling through to a generic LinkedIn search URL.
+  const isGated = !user && job?.applyUrl == null && job?.linkedinUrl == null
+
   const applyUrl = job?.applyUrl || job?.linkedinUrl
-    || `https://www.linkedin.com/jobs/search/?keywords=${encodeURIComponent((job?.title ?? '') + ' ' + (job?.companyName ?? ''))}&location=United%20Arab%20Emirates`
+    || (user
+        ? `https://www.linkedin.com/jobs/search/?keywords=${encodeURIComponent((job?.title ?? '') + ' ' + (job?.companyName ?? ''))}&location=United%20Arab%20Emirates`
+        : null)
 
   // Detect the external platform from the apply URL so we can label the
   // CTA ("Apply on LinkedIn", "Apply on Bayt", …) and show a source badge.
@@ -369,14 +376,23 @@ export default function JobDetail() {
             <p className="truncate text-xs text-slate-500">{job.companyName}{salary ? ` · ${salary}` : ''}</p>
           </div>
           <div className="flex w-full gap-2 sm:w-auto">
-            <a
-              href={applyUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl bg-slate-950 px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-800 sm:flex-none"
-            >
-              <ExternalLink size={15} /> {applySource ? `Apply on ${applySource.name}` : 'Apply now'}
-            </a>
+            {isGated ? (
+              <Link
+                to={`/login?from=/jobs/${id}`}
+                className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl bg-pink-700 px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-pink-800 sm:flex-none"
+              >
+                Sign in to apply
+              </Link>
+            ) : (
+              <a
+                href={applyUrl!}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl bg-slate-950 px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-800 sm:flex-none"
+              >
+                <ExternalLink size={15} /> {applySource ? `Apply on ${applySource.name}` : 'Apply now'}
+              </a>
+            )}
             <button
               onClick={save}
               className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
