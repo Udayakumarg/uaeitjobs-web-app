@@ -94,6 +94,7 @@ export function errorMessage(error: unknown) {
 
 // ── Filter params type for multi-select backend filtering ──────────────────────
 export interface FilterMultiParams {
+  q?: string
   emirate?: string[]
   category?: string[]
   experienceLevel?: string[]

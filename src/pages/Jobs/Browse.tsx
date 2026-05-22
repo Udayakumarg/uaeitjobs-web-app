@@ -134,8 +134,9 @@ export default function JobBrowse() {
   // mobile sheet
   const [mobileOpen, setMobileOpen] = useState(false)
 
-  // fetch — all filtering is performed server-side via filterMulti so no
-  // result is silently hidden by the 80-row page cap.
+  // fetch — search + all filtering in a single DB round-trip via filterMulti.
+  // The 'q' param drives plainto_tsquery full-text ranking server-side so
+  // results are never silently cropped by the 80-row page cap.
   useEffect(() => {
     let ok = true
     setJobsLoading(true)
@@ -145,41 +146,21 @@ export default function JobBrowse() {
     const lArr = Array.from(levels)
     const tArr = Array.from(jobTypes)
 
-    let req: Promise<{ data: import('../../types').Page<import('../../types').Job> }>
-
-    if (query) {
-      // Full-text search — results already ranked by relevance; apply
-      // dimension filters client-side on top (search endpoint is separate).
-      req = jobsApi.search(query, 0, 80).then(({ data }) => {
-        let r = data.content
-        if (eArr.length) r = r.filter(j => j.emirate         && eArr.includes(j.emirate))
-        if (cArr.length) r = r.filter(j => j.jobCategory     && cArr.includes(j.jobCategory as JobCategory))
-        if (lArr.length) r = r.filter(j => j.experienceLevel && lArr.includes(j.experienceLevel!))
-        if (tArr.length) r = r.filter(j => j.jobType         && tArr.includes(j.jobType!))
-        if (remoteOnly)  r = r.filter(j => j.remoteUae)
-        if (salaryBucket) {
-          const [min, max] = salaryRange(salaryBucket)
-          r = r.filter(j => { const s = j.salaryMin ?? j.salaryMax; return s != null && s >= min && (max === null || s <= max) })
-        }
-        return { data: { ...data, content: r, totalElements: r.length } }
-      })
-    } else {
-      // Pure filter — entirely server-side, no client-side post-processing.
-      const [salMin, salMax] = salaryBucket ? salaryRange(salaryBucket) : [undefined, undefined]
-      const params: FilterMultiParams = {
-        page: 0, size: 80,
-        ...(eArr.length           && { emirate:         eArr }),
-        ...(cArr.length           && { category:        cArr }),
-        ...(lArr.length           && { experienceLevel: lArr }),
-        ...(tArr.length           && { jobType:         tArr }),
-        ...(remoteOnly            && { remoteUae:       true }),
-        ...(posted                && { postedAfter:     new Date(Date.now() - postedAfterMs(posted)).toISOString() }),
-        ...(salMin != null        && { salaryMin:       salMin }),
-        ...(salMax != null        && { salaryMax:       salMax }),
-        ...(sortBy !== 'newest'   && { sort:            sortBy === 'salary_high' ? 'salary_desc' : 'salary_asc' }),
-      }
-      req = jobsApi.filterMulti(params)
+    const [salMin, salMax] = salaryBucket ? salaryRange(salaryBucket) : [undefined, undefined]
+    const params: FilterMultiParams = {
+      page: 0, size: 80,
+      ...(query.trim()          && { q:              query.trim() }),
+      ...(eArr.length           && { emirate:         eArr }),
+      ...(cArr.length           && { category:        cArr }),
+      ...(lArr.length           && { experienceLevel: lArr }),
+      ...(tArr.length           && { jobType:         tArr }),
+      ...(remoteOnly            && { remoteUae:       true }),
+      ...(posted                && { postedAfter:     new Date(Date.now() - postedAfterMs(posted)).toISOString() }),
+      ...(salMin != null        && { salaryMin:       salMin }),
+      ...(salMax != null        && { salaryMax:       salMax }),
+      ...(sortBy !== 'newest'   && { sort:            sortBy === 'salary_high' ? 'salary_desc' : 'salary_asc' }),
     }
+    const req = jobsApi.filterMulti(params)
 
     req.then(({ data }) => {
       if (!ok) return
@@ -766,10 +747,12 @@ function SheetSection({ label, children }: { label: string; children: React.Reac
 
 // ── Detail panel ──────────────────────────────────────────────────────────────
 function DetailPanel({ job, onSave }: { job: Job; onSave: (id: number, e: React.MouseEvent) => void }) {
-  const skills   = parseSkills(job.skills)
-  const salary   = money(job.salaryMin, job.salaryMax, job.salaryCurrency)
-  const applyUrl = job.applyUrl ?? job.linkedinUrl
-    ?? `https://www.linkedin.com/jobs/search/?keywords=${encodeURIComponent(`${job.title} ${job.companyName}`)}&location=United%20Arab%20Emirates`
+  const { user }     = useAuthStore()
+  const skills       = parseSkills(job.skills)
+  const salary       = money(job.salaryMin, job.salaryMax, job.salaryCurrency)
+  const isGated      = !user && job.applyUrl == null && job.linkedinUrl == null
+  const applyUrl     = job.applyUrl ?? job.linkedinUrl
+    ?? (user ? `https://www.linkedin.com/jobs/search/?keywords=${encodeURIComponent(`${job.title} ${job.companyName}`)}&location=United%20Arab%20Emirates` : null)
   const half = Math.ceil(skills.length / 2)
   const emirateLabel = EMIRATES.find(e => e.value === job.emirate)?.label
 
@@ -786,14 +769,25 @@ function DetailPanel({ job, onSave }: { job: Job; onSave: (id: number, e: React.
           <h1 className="text-3xl font-bold tracking-tight text-black leading-tight">{job.title}</h1>
         </div>
         <div className="flex gap-2 shrink-0 mt-1">
-          <a href={applyUrl} target="_blank" rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 text-white font-sans text-sm font-bold px-5 py-2.5 rounded-lg transition-colors"
-            style={{ background: PINK }}
-            onMouseEnter={e => (e.currentTarget as HTMLAnchorElement).style.background = PINK_HOV}
-            onMouseLeave={e => (e.currentTarget as HTMLAnchorElement).style.background = PINK}
-          >
-            <ExternalLink size={14} /> Apply Now
-          </a>
+          {isGated ? (
+            <Link to={`/login?from=/jobs/${job.id}`}
+              className="inline-flex items-center gap-2 text-white font-sans text-sm font-bold px-5 py-2.5 rounded-lg transition-colors"
+              style={{ background: PINK }}
+              onMouseEnter={e => (e.currentTarget as HTMLAnchorElement).style.background = PINK_HOV}
+              onMouseLeave={e => (e.currentTarget as HTMLAnchorElement).style.background = PINK}
+            >
+              Sign in to apply
+            </Link>
+          ) : (
+            <a href={applyUrl!} target="_blank" rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 text-white font-sans text-sm font-bold px-5 py-2.5 rounded-lg transition-colors"
+              style={{ background: PINK }}
+              onMouseEnter={e => (e.currentTarget as HTMLAnchorElement).style.background = PINK_HOV}
+              onMouseLeave={e => (e.currentTarget as HTMLAnchorElement).style.background = PINK}
+            >
+              <ExternalLink size={14} /> Apply Now
+            </a>
+          )}
           <button onClick={(e) => onSave(job.id, e)}
             className="border border-[#E5E7EB] rounded-lg p-2.5 hover:bg-gray-50 transition-colors" aria-label="Save job">
             <Bookmark size={16} />
