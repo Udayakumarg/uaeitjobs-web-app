@@ -92,6 +92,7 @@ export default function Register() {
     <main className="mx-auto grid max-w-6xl gap-8 px-4 py-10 lg:grid-cols-[1fr_500px] lg:py-16">
       <section className="hidden lg:block">
         <div className="sticky top-24 rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
+          <img src="/logo-full.png" alt="UAEITJOBS.com" className="mb-6 h-20 w-auto" />
           <p className="text-xs font-semibold uppercase tracking-[0.18em] text-indigo-700">Create account</p>
           <h1 className="mt-4 text-4xl font-semibold tracking-tight text-slate-950">
             A focused workspace for UAE technology hiring.
