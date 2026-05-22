@@ -27,7 +27,7 @@ import { CompanyLogo } from '../components/CompanyLogo'
 import { Button, Container } from '../components/ui'
 import { useDocumentMeta } from '../hooks/useDocumentMeta'
 import type { Job } from '../types'
-import { money, parseSkills, relativeTime } from '../utils/format'
+import { money, parseSkills } from '../utils/format'
 
 // ── Design tokens (matches Jobs page exactly) ─────────────────────────────────
 const PINK      = '#BE185D'
