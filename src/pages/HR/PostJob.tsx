@@ -139,8 +139,8 @@ export default function PostJob() {
           </Field>
 
           {/* UAE essentials — competitive differentiator vs other portals */}
-          <div className="rounded-xl border border-indigo-100 bg-indigo-50/40 p-4">
-            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-indigo-700">UAE essentials</p>
+          <div className="rounded-xl border border-pink-100 bg-pink-50/40 p-4">
+            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-pink-700">UAE essentials</p>
             <p className="mt-1 text-xs text-slate-600">These fields help candidates filter relevant roles quickly.</p>
             <div className="mt-3 grid gap-4 md:grid-cols-2">
               <Field label="Visa requirement">
@@ -167,7 +167,7 @@ export default function PostJob() {
               <label className="flex cursor-pointer items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm font-medium text-slate-700">
                 <input
                   type="checkbox"
-                  className="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                  className="h-4 w-4 rounded border-slate-300 text-pink-600 focus:ring-pink-500"
                   {...register('immediateJoiner')}
                 />
                 Immediate joiner preferred
@@ -175,7 +175,7 @@ export default function PostJob() {
               <label className="flex cursor-pointer items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm font-medium text-slate-700">
                 <input
                   type="checkbox"
-                  className="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                  className="h-4 w-4 rounded border-slate-300 text-pink-600 focus:ring-pink-500"
                   {...register('remoteUae')}
                 />
                 Remote within UAE allowed

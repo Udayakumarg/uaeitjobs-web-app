@@ -32,10 +32,10 @@ export function Button({ className, variant = 'primary', size = 'md', ...props }
         variant === 'primary' &&
           'bg-slate-950 text-white shadow-sm shadow-slate-950/15 hover:bg-slate-800 hover:shadow-md',
         variant === 'accent' &&
-          'bg-indigo-700 text-white shadow-sm shadow-indigo-900/20 hover:bg-indigo-800',
+          'bg-pink-700 text-white shadow-sm shadow-pink-900/20 hover:bg-pink-800',
         variant === 'secondary' &&
           'border border-slate-200 bg-white text-slate-900 shadow-sm hover:border-slate-300 hover:bg-slate-50',
-        variant === 'subtle' && 'bg-indigo-50 text-indigo-800 hover:bg-indigo-100',
+        variant === 'subtle' && 'bg-pink-50 text-pink-800 hover:bg-pink-100',
         variant === 'ghost' && 'text-slate-700 hover:bg-slate-100',
         variant === 'danger' &&
           'bg-red-600 text-white shadow-sm shadow-red-700/20 hover:bg-red-700',
@@ -74,7 +74,7 @@ export const Input = forwardRef<HTMLInputElement, InputHTMLAttributes<HTMLInputE
       className={cn(
         'min-h-11 w-full rounded-lg border border-slate-200 bg-white px-3.5 py-2 text-sm text-slate-900 shadow-sm transition placeholder:text-slate-400',
         'hover:border-slate-300',
-        'focus:border-indigo-600 focus:outline-none focus:ring-4 focus:ring-indigo-600/15',
+        'focus:border-pink-600 focus:outline-none focus:ring-4 focus:ring-pink-600/15',
         props['aria-invalid'] && 'border-red-400 bg-red-50/40 focus:border-red-500 focus:ring-red-500/15',
         props.className,
       )}
@@ -90,7 +90,7 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaHTMLAttributes<H
       className={cn(
         'min-h-28 w-full rounded-lg border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 shadow-sm transition placeholder:text-slate-400',
         'hover:border-slate-300',
-        'focus:border-indigo-600 focus:outline-none focus:ring-4 focus:ring-indigo-600/15',
+        'focus:border-pink-600 focus:outline-none focus:ring-4 focus:ring-pink-600/15',
         props['aria-invalid'] && 'border-red-400 bg-red-50/40 focus:border-red-500 focus:ring-red-500/15',
         props.className,
       )}
@@ -106,7 +106,7 @@ export const Select = forwardRef<HTMLSelectElement, SelectHTMLAttributes<HTMLSel
       className={cn(
         'min-h-11 w-full appearance-none rounded-lg border border-slate-200 bg-white px-3.5 py-2 pr-9 text-sm text-slate-900 shadow-sm transition',
         'hover:border-slate-300',
-        'focus:border-indigo-600 focus:outline-none focus:ring-4 focus:ring-indigo-600/15',
+        'focus:border-pink-600 focus:outline-none focus:ring-4 focus:ring-pink-600/15',
         props['aria-invalid'] && 'border-red-400 bg-red-50/40 focus:border-red-500 focus:ring-red-500/15',
         'bg-[url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2020%2020%27%20fill%3D%27%2364748b%27%3E%3Cpath%20fill-rule%3D%27evenodd%27%20d%3D%27M5.23%207.21a.75.75%200%20011.06.02L10%2011.06l3.71-3.83a.75.75%200%20111.08%201.04l-4.25%204.39a.75.75%200%2001-1.08%200L5.21%208.27a.75.75%200%2001.02-1.06z%27%20clip-rule%3D%27evenodd%27%2F%3E%3C%2Fsvg%3E")] bg-[length:18px_18px] bg-[right_0.75rem_center] bg-no-repeat',
         props.className,
@@ -175,8 +175,8 @@ export function Badge({
       className={cn(
         'inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold ring-1 ring-inset',
         tone === 'slate' && 'bg-slate-50 text-slate-700 ring-slate-200',
-        tone === 'blue' && 'bg-indigo-50 text-indigo-800 ring-indigo-200',
-        tone === 'teal' && 'bg-indigo-50 text-indigo-800 ring-indigo-200',
+        tone === 'blue' && 'bg-blue-50 text-blue-700 ring-blue-200',
+        tone === 'teal' && 'bg-teal-50 text-teal-700 ring-teal-200',
         tone === 'green' && 'bg-green-50 text-green-700 ring-green-200',
         tone === 'amber' && 'bg-amber-50 text-amber-700 ring-amber-200',
         tone === 'red' && 'bg-red-50 text-red-700 ring-red-200',
@@ -278,7 +278,7 @@ export function Stat({
   return (
     <div className="flex items-center gap-4 rounded-2xl border border-slate-200/80 bg-white p-5 shadow-[0_1px_2px_rgba(15,23,42,0.04),0_8px_24px_-8px_rgba(15,23,42,0.08)]">
       {icon ? (
-        <span className="inline-flex h-12 w-12 items-center justify-center rounded-xl bg-indigo-50 text-indigo-700 ring-1 ring-inset ring-indigo-100">
+        <span className="inline-flex h-12 w-12 items-center justify-center rounded-xl bg-pink-50 text-pink-700 ring-1 ring-inset ring-pink-100">
           {icon}
         </span>
       ) : null}

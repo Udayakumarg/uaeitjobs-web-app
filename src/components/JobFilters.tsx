@@ -120,8 +120,8 @@ export function JobFilters({
               onClick={() => pickCategory(category.value)}
               className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold transition ${
                 active
-                  ? 'bg-indigo-600 text-white shadow-sm ring-1 ring-inset ring-indigo-600'
-                  : 'bg-slate-100 text-slate-700 ring-1 ring-inset ring-slate-200 hover:bg-indigo-50 hover:text-indigo-700 hover:ring-indigo-100'
+                  ? 'bg-pink-600 text-white shadow-sm ring-1 ring-inset ring-pink-600'
+                  : 'bg-slate-100 text-slate-700 ring-1 ring-inset ring-slate-200 hover:bg-pink-50 hover:text-pink-700 hover:ring-pink-100'
               }`}
               aria-pressed={active}
             >
@@ -153,7 +153,7 @@ export function JobFilters({
             <SlidersHorizontal className="h-4 w-4" />
             Filters
             {activeCount > 0 ? (
-              <span className="ml-1 rounded-full bg-indigo-100 px-1.5 py-0.5 text-[10px] font-bold text-indigo-800">
+              <span className="ml-1 rounded-full bg-pink-100 px-1.5 py-0.5 text-[10px] font-bold text-pink-800">
                 {activeCount}
               </span>
             ) : null}
@@ -202,8 +202,8 @@ export function JobFilters({
           </div>
 
           {/* UAE essentials — only here, not on other portals */}
-          <div className="mt-4 rounded-xl border border-indigo-100 bg-indigo-50/40 p-4">
-            <p className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-[0.14em] text-indigo-700">
+          <div className="mt-4 rounded-xl border border-pink-100 bg-pink-50/40 p-4">
+            <p className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-[0.14em] text-pink-700">
               <Flag className="h-3.5 w-3.5" />
               UAE essentials
             </p>
@@ -235,24 +235,24 @@ export function JobFilters({
                   <option value="umm_al_quwain">Umm Al Quwain</option>
                 </Select>
               </Field>
-              <label className="flex cursor-pointer items-center gap-2 self-end rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm font-medium text-slate-700 transition hover:border-indigo-300">
+              <label className="flex cursor-pointer items-center gap-2 self-end rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm font-medium text-slate-700 transition hover:border-pink-300">
                 <input
                   type="checkbox"
-                  className="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                  className="h-4 w-4 rounded border-slate-300 text-pink-600 focus:ring-pink-500"
                   checked={draft.immediateJoiner}
                   onChange={(event) => update('immediateJoiner', event.target.checked)}
                 />
-                <Sparkles className="h-3.5 w-3.5 text-indigo-500" />
+                <Sparkles className="h-3.5 w-3.5 text-pink-500" />
                 Immediate joiner
               </label>
-              <label className="flex cursor-pointer items-center gap-2 self-end rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm font-medium text-slate-700 transition hover:border-indigo-300">
+              <label className="flex cursor-pointer items-center gap-2 self-end rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm font-medium text-slate-700 transition hover:border-pink-300">
                 <input
                   type="checkbox"
-                  className="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                  className="h-4 w-4 rounded border-slate-300 text-pink-600 focus:ring-pink-500"
                   checked={draft.remoteUae}
                   onChange={(event) => update('remoteUae', event.target.checked)}
                 />
-                <Sparkles className="h-3.5 w-3.5 text-indigo-500" />
+                <Sparkles className="h-3.5 w-3.5 text-pink-500" />
                 Remote within UAE
               </label>
             </div>

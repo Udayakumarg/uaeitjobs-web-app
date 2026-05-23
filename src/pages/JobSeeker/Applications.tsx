@@ -24,7 +24,7 @@ export default function JobSeekerApplications() {
             <thead className="bg-slate-50 text-slate-600"><tr><th className="p-4">Role</th><th className="p-4">Company</th><th className="p-4">Status</th><th className="p-4">Applied</th></tr></thead>
             <tbody>{page.content.map((application) => (
               <tr key={application.id} className="border-t border-slate-100">
-                <td className="p-4 font-semibold text-slate-950">{application.job ? <Link className="text-indigo-700" to={`/jobs/${application.job.id}`}>{application.job.title}</Link> : 'Job'}</td>
+                <td className="p-4 font-semibold text-slate-950">{application.job ? <Link className="text-pink-700" to={`/jobs/${application.job.id}`}>{application.job.title}</Link> : 'Job'}</td>
                 <td className="p-4">{application.job?.companyName ?? 'Company'}</td>
                 <td className="p-4"><StatusBadge status={application.status} /></td>
                 <td className="p-4">{dateLabel(application.appliedAt)}</td>

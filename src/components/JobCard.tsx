@@ -53,7 +53,7 @@ export function JobCard({ job, onSave, variant = 'list' }: JobCardProps) {
           <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
             <Link
               to={`/jobs/${job.id}`}
-              className="font-semibold leading-snug tracking-tight text-slate-950 transition group-hover:text-indigo-700"
+              className="font-semibold leading-snug tracking-tight text-slate-950 transition group-hover:text-pink-700"
             >
               {job.title}
             </Link>
@@ -130,7 +130,7 @@ export function JobCard({ job, onSave, variant = 'list' }: JobCardProps) {
           <p className="line-clamp-1 text-xs text-slate-500">{job.companyName}</p>
           <Link
             to={`/jobs/${job.id}`}
-            className="mt-0.5 line-clamp-2 block text-base font-semibold leading-snug tracking-tight text-slate-950 transition group-hover:text-indigo-700"
+            className="mt-0.5 line-clamp-2 block text-base font-semibold leading-snug tracking-tight text-slate-950 transition group-hover:text-pink-700"
           >
             {job.title}
           </Link>
