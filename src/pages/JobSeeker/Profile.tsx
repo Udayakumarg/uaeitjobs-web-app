@@ -8,6 +8,17 @@ import type { JobSeekerProfile } from '../../types'
 
 const initial: JobSeekerProfile = { headline: '', summary: '', yearsExperience: 0, visaStatus: '', skills: '', experience: '', education: '' }
 
+/** Convert a JSONB skills array → comma-separated display string for the input. */
+function fromSkillsJson(raw: string | undefined): string {
+  if (!raw || raw.trim() === '[]' || raw.trim() === 'null') return ''
+  try {
+    const parsed = JSON.parse(raw)
+    if (Array.isArray(parsed)) return (parsed as string[]).join(', ')
+    if (typeof parsed === 'string') return parsed
+  } catch { /* plain text fallback */ }
+  return raw
+}
+
 export default function JobSeekerProfilePage() {
   const toast = useToastStore((state) => state.add)
   const [profile, setProfile] = useState<JobSeekerProfile>(initial)
@@ -15,7 +26,10 @@ export default function JobSeekerProfilePage() {
   const [saving, setSaving] = useState(false)
 
   useEffect(() => {
-    seekerApi.profile().then(({ data }) => setProfile({ ...initial, ...data })).catch(() => undefined).finally(() => setLoading(false))
+    seekerApi.profile()
+      .then(({ data }) => setProfile({ ...initial, ...data, skills: fromSkillsJson(data.skills) }))
+      .catch(() => undefined)
+      .finally(() => setLoading(false))
   }, [])
 
   function update<K extends keyof JobSeekerProfile>(key: K, value: JobSeekerProfile[K]) {
@@ -26,7 +40,7 @@ export default function JobSeekerProfilePage() {
     setSaving(true)
     try {
       const { data } = await seekerApi.saveProfile(profile)
-      setProfile({ ...initial, ...data })
+      setProfile({ ...initial, ...data, skills: fromSkillsJson(data.skills) })
       toast({ type: 'success', title: 'Profile saved' })
     } catch (error) {
       toast({ type: 'error', title: 'Could not save profile', message: errorMessage(error) })

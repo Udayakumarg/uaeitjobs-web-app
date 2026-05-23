@@ -1,6 +1,7 @@
 import DOMPurify from 'dompurify'
 import {
   Bookmark,
+  BookmarkCheck,
   BriefcaseBusiness,
   CalendarDays,
   ChevronDown,
@@ -11,7 +12,7 @@ import {
   X,
   Zap,
 } from 'lucide-react'
-import { memo, useEffect, useRef, useState } from 'react'
+import { memo, useCallback, useEffect, useRef, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { CompanyLogo } from '../../components/CompanyLogo'
 import { useDocumentMeta } from '../../hooks/useDocumentMeta'
@@ -137,6 +138,11 @@ export default function JobBrowse() {
   // mobile sheet
   const [mobileOpen, setMobileOpen] = useState(false)
 
+  // saved job IDs — optimistically maintained; loaded once when user logs in
+  const [savedIds, setSavedIds]   = useState<Set<number>>(new Set())
+  const savedIdsRef               = useRef<Set<number>>(new Set())
+  savedIdsRef.current             = savedIds
+
   // fetch — search + all filtering in a single DB round-trip via filterMulti.
   // The 'q' param drives plainto_tsquery full-text ranking server-side so
   // results are never silently cropped by the 80-row page cap.
@@ -188,18 +194,35 @@ export default function JobBrowse() {
       .catch(() => {}).finally(() => setDetailLoading(false))
   }, [selectedId])
 
+  // Load saved job IDs whenever the logged-in user changes
+  useEffect(() => {
+    if (!user) { setSavedIds(new Set()); return }
+    seekerApi.savedJobs()
+      .then(({ data }) => setSavedIds(new Set(data.map(s => s.job.id))))
+      .catch(() => {}) // graceful — state stays empty if endpoint is unavailable
+  }, [user])
+
   function clearAll() {
     setQuery(''); setEmirates(new Set()); setJobCats(new Set())
     setLevels(new Set()); setJobTypes(new Set()); setRemoteOnly(false)
     setPosted(''); setSalary(''); setSortBy('newest')
   }
 
-  async function saveJob(id: number, e: React.MouseEvent) {
+  const saveJob = useCallback(async (id: number, e: React.MouseEvent) => {
     e.stopPropagation()
     if (!user) { toast({ type: 'info', title: 'Sign in to save jobs' }); return }
-    try { await seekerApi.saveJob(id); toast({ type: 'success', title: 'Saved' }) }
-    catch (err) { toast({ type: 'error', title: 'Could not save', message: errorMessage(err) }) }
-  }
+    const wasSaved = savedIdsRef.current.has(id)
+    // Optimistic update
+    setSavedIds(prev => { const n = new Set(prev); wasSaved ? n.delete(id) : n.add(id); return n })
+    try {
+      if (wasSaved) { await seekerApi.unsaveJob(id); toast({ type: 'success', title: 'Removed from saved' }) }
+      else          { await seekerApi.saveJob(id);   toast({ type: 'success', title: 'Saved' }) }
+    } catch (err) {
+      // Revert on failure
+      setSavedIds(prev => { const n = new Set(prev); wasSaved ? n.add(id) : n.delete(id); return n })
+      toast({ type: 'error', title: 'Could not save', message: errorMessage(err) })
+    }
+  }, [user]) // eslint-disable-line react-hooks/exhaustive-deps
 
   function handleJobClick(job: Job) {
     if (window.innerWidth < 768) { navigate(`/jobs/${job.id}`) }
@@ -279,6 +302,8 @@ export default function JobBrowse() {
                       key={job.id}
                       job={job}
                       active={job.id === selectedId}
+                      isSaved={savedIds.has(job.id)}
+                      onSave={saveJob}
                       onClick={handleJobClick}
                     />
                   ))}
@@ -300,7 +325,7 @@ export default function JobBrowse() {
                 <div className="h-3 w-1/2 shimmer" /><div className="h-24 shimmer mt-6" />
               </div>
             ) : detail ? (
-              <DetailPanel job={detail} onSave={saveJob} />
+              <DetailPanel job={detail} onSave={saveJob} isSaved={savedIds.has(detail.id)} />
             ) : null}
           </main>
 
@@ -803,10 +828,11 @@ function SheetSection({ label, children }: { label: string; children: React.Reac
 }
 
 // ── Detail panel ──────────────────────────────────────────────────────────────
-function DetailPanel({ job, onSave }: { job: Job; onSave: (id: number, e: React.MouseEvent) => void }) {
+function DetailPanel({ job, onSave, isSaved }: { job: Job; onSave: (id: number, e: React.MouseEvent) => void; isSaved: boolean }) {
   const { user }     = useAuthStore()
   const skills       = parseSkills(job.skills)
   const salary       = money(job.salaryMin, job.salaryMax, job.salaryCurrency)
+  const isLinkedIn   = !!(job.linkedinUrl || job.applyUrl?.toLowerCase().includes('linkedin.com'))
   const isGated      = !user && job.applyUrl == null && job.linkedinUrl == null
   const applyUrl     = job.applyUrl ?? job.linkedinUrl
     ?? (user ? `https://www.linkedin.com/jobs/search/?keywords=${encodeURIComponent(`${job.title} ${job.companyName}`)}&location=United%20Arab%20Emirates` : null)
@@ -845,9 +871,17 @@ function DetailPanel({ job, onSave }: { job: Job; onSave: (id: number, e: React.
               <ExternalLink size={14} /> Apply Now
             </a>
           )}
-          <button onClick={(e) => onSave(job.id, e)}
-            className="border border-[#E5E7EB] rounded-lg p-2.5 hover:bg-gray-50 transition-colors" aria-label="Save job">
-            <Bookmark size={16} />
+          <button
+            onClick={(e) => onSave(job.id, e)}
+            className="border rounded-lg p-2.5 transition-colors"
+            aria-label={isSaved ? 'Remove from saved' : 'Save job'}
+            style={isSaved ? { background: PINK_BG, borderColor: PINK_RING } : { borderColor: '#E5E7EB', background: '#fff' }}
+            onMouseEnter={e => { if (!isSaved) (e.currentTarget as HTMLButtonElement).style.background = '#F9FAFB' }}
+            onMouseLeave={e => { if (!isSaved) (e.currentTarget as HTMLButtonElement).style.background = '#fff' }}
+          >
+            {isSaved
+              ? <BookmarkCheck size={16} style={{ color: PINK }} />
+              : <Bookmark size={16} className="text-slate-400" />}
           </button>
         </div>
       </div>
@@ -873,6 +907,7 @@ function DetailPanel({ job, onSave }: { job: Job; onSave: (id: number, e: React.
         {job.visaType === 'visit_visa_accepted' && <InfoPill>Visit Visa OK</InfoPill>}
         {job.immediateJoiner && <InfoPill><Zap size={10} /> Immediate Joiner</InfoPill>}
         {job.remoteUae && <InfoPill>Remote UAE</InfoPill>}
+        {isLinkedIn && <InfoPill li>via LinkedIn</InfoPill>}
       </div>
 
       {skills.length > 0 && (
@@ -911,12 +946,17 @@ function DetailPanel({ job, onSave }: { job: Job; onSave: (id: number, e: React.
 
 // ── JobListItem — memoized so filter changes don't re-render unchanged cards ──
 const JobListItem = memo(function JobListItem({
-  job, active, onClick,
-}: { job: Job; active: boolean; onClick: (j: Job) => void }) {
+  job, active, isSaved, onSave, onClick,
+}: {
+  job: Job; active: boolean; isSaved: boolean
+  onSave: (id: number, e: React.MouseEvent) => void
+  onClick: (j: Job) => void
+}) {
   const sal          = money(job.salaryMin, job.salaryMax, job.salaryCurrency)
   const skills       = parseSkills(job.skills).slice(0, 3)
   const emirateLabel = EMIRATES.find(e => e.value === job.emirate)?.label
   const metaFallback = [emirateLabel, job.experienceLevel ? labelize(job.experienceLevel) : null].filter(Boolean).join(' · ')
+  const isLinkedIn   = !!(job.linkedinUrl || job.applyUrl?.toLowerCase().includes('linkedin.com'))
 
   return (
     <button
@@ -933,6 +973,16 @@ const JobListItem = memo(function JobListItem({
           {job.companyName}
         </span>
         <span className="ml-auto font-mono text-[10px] text-gray-400 shrink-0">{relativeTime(job.createdAt)}</span>
+        {/* Save toggle — stopPropagation prevents the card click from firing */}
+        <button
+          onClick={(e) => onSave(job.id, e)}
+          className="shrink-0 rounded p-0.5 transition-colors hover:bg-gray-100"
+          aria-label={isSaved ? 'Remove from saved' : 'Save job'}
+        >
+          {isSaved
+            ? <BookmarkCheck size={13} style={{ color: PINK }} />
+            : <Bookmark size={13} className="text-gray-300" />}
+        </button>
       </div>
       <p className="font-bold text-sm text-black leading-snug mb-2.5">{job.title}</p>
       <div className="flex items-center justify-between gap-2">
@@ -940,6 +990,9 @@ const JobListItem = memo(function JobListItem({
           {skills.length ? skills.join(', ') : (job.locationUae ?? 'UAE')}
         </span>
         <div className="flex items-center gap-1.5 shrink-0">
+          {isLinkedIn && (
+            <span className="font-mono text-[9px] uppercase tracking-wider font-bold" style={{ color: '#0A66C2' }}>LinkedIn</span>
+          )}
           {job.remoteUae && (
             <span className="font-mono text-[9px] uppercase tracking-wider font-bold" style={{ color: PINK }}>Remote</span>
           )}
@@ -958,14 +1011,16 @@ const JobListItem = memo(function JobListItem({
   )
 })
 
-function InfoPill({ children, accent, loc, sal }: { children: React.ReactNode; accent?: boolean; loc?: boolean; sal?: boolean }) {
+function InfoPill({ children, accent, loc, sal, li }: { children: React.ReactNode; accent?: boolean; loc?: boolean; sal?: boolean; li?: boolean }) {
   const cls = accent
     ? { background: PINK_BG, borderColor: PINK_RING, color: PINK }
     : loc
       ? { background: '#F1F5F9', borderColor: '#E2E8F0', color: '#475569' }
       : sal
         ? { background: '#ECFDF5', borderColor: '#A7F3D0', color: '#065F46' }
-        : { background: '#F3F4F6', borderColor: '#E5E7EB', color: '#000' }
+        : li
+          ? { background: '#EBF5FB', borderColor: '#BFDBFE', color: '#0A66C2' }
+          : { background: '#F3F4F6', borderColor: '#E5E7EB', color: '#000' }
   return (
     <span className="inline-flex items-center gap-1.5 border px-3 py-1.5 font-mono text-xs font-semibold rounded-md" style={cls}>
       {children}
