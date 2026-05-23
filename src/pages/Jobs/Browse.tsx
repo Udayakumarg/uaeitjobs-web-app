@@ -501,14 +501,13 @@ function FilterBar(props: SharedFilterProps & { onMobileOpen: () => void }) {
             <RadioPanel options={SORT_OPTIONS} selected={sortBy} onSelect={v => { onSortChange(v); close() }} />
           </FilterDropdown>
 
-          {hasFilters && (
-            <button
-              onClick={onClearAll}
-              className="ml-1 shrink-0 rounded-full px-3 py-1 font-sans text-[12px] font-medium text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-700"
-            >
-              Clear all
-            </button>
-          )}
+          <button
+            onClick={onClearAll}
+            disabled={!hasFilters}
+            className="ml-1 shrink-0 rounded-full px-3 py-1 font-sans text-[12px] font-medium transition-colors disabled:cursor-not-allowed disabled:text-gray-300 text-gray-400 hover:enabled:bg-gray-100 hover:enabled:text-gray-700"
+          >
+            Clear all
+          </button>
         </div>
       </div>
 
@@ -692,11 +691,13 @@ function MobileFilterSheet(props: SharedFilterProps & { open: boolean; onClose: 
         </div>
 
         <div className="shrink-0 px-5 py-4 border-t border-[#E5E7EB] bg-white flex items-center gap-3">
-          {activeCount > 0 && (
-            <button onClick={onClearAll} className="font-sans text-sm text-gray-400 hover:text-black transition-colors underline">
-              Clear all
-            </button>
-          )}
+          <button
+            onClick={onClearAll}
+            disabled={activeCount === 0}
+            className="font-sans text-sm transition-colors underline disabled:cursor-not-allowed disabled:text-gray-300 text-gray-400 hover:enabled:text-black"
+          >
+            Clear all
+          </button>
           <button
             onClick={onClose}
             className="flex-1 bg-slate-950 text-white font-sans text-sm font-bold py-3 rounded-lg hover:bg-slate-800 transition-colors"
