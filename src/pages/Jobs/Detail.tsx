@@ -378,7 +378,8 @@ export default function JobDetail() {
           <div className="flex w-full gap-2 sm:w-auto">
             {isGated ? (
               <Link
-                to={`/login?from=/jobs/${id}`}
+                to="/login"
+                state={{ from: `/jobs/${id}` }}
                 className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl bg-pink-700 px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-pink-800 sm:flex-none"
               >
                 Sign in to apply

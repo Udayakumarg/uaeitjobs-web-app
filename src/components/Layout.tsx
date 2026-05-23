@@ -172,7 +172,7 @@ export function Layout() {
                   </Link>
                 </li>
                 <li>
-                  <Link to="/seeker" className="text-slate-700 hover:text-pink-700">
+                  <Link to="/seeker/applications" className="text-slate-700 hover:text-pink-700">
                     My applications
                   </Link>
                 </li>
@@ -190,7 +190,10 @@ export function Layout() {
               </p>
               <ul className="mt-4 grid gap-2 text-sm">
                 <li>
-                  <Link to="/register?type=hr" className="text-slate-700 hover:text-pink-700">
+                  <Link
+                    to={user?.userType === 'hr' ? '/hr/jobs/new' : '/register?type=hr'}
+                    className="text-slate-700 hover:text-pink-700"
+                  >
                     Post a job
                   </Link>
                 </li>
@@ -200,7 +203,10 @@ export function Layout() {
                   </Link>
                 </li>
                 <li>
-                  <Link to="/register?type=hr" className="text-slate-700 hover:text-pink-700">
+                  <Link
+                    to={user?.userType === 'hr' ? '/hr/linkedin-import' : '/register?type=hr'}
+                    className="text-slate-700 hover:text-pink-700"
+                  >
                     LinkedIn import
                   </Link>
                 </li>
@@ -218,10 +224,14 @@ export function Layout() {
                   </a>
                 </li>
                 <li>
-                  <span className="text-slate-700">Privacy</span>
+                  <a href="mailto:hello@uaeitjobs.com?subject=Privacy%20enquiry" className="text-slate-700 hover:text-pink-700">
+                    Privacy
+                  </a>
                 </li>
                 <li>
-                  <span className="text-slate-700">Terms</span>
+                  <a href="mailto:hello@uaeitjobs.com?subject=Terms%20enquiry" className="text-slate-700 hover:text-pink-700">
+                    Terms
+                  </a>
                 </li>
               </ul>
             </div>

@@ -12,7 +12,7 @@ import {
   Zap,
 } from 'lucide-react'
 import { memo, useEffect, useRef, useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { CompanyLogo } from '../../components/CompanyLogo'
 import { useDocumentMeta } from '../../hooks/useDocumentMeta'
 import { errorMessage, jobsApi, seekerApi, type FilterMultiParams } from '../../services/api'
@@ -108,9 +108,10 @@ export default function JobBrowse() {
   const navigate = useNavigate()
   const { user }  = useAuthStore()
   const toast     = useToastStore((s) => s.add)
+  const [searchParams] = useSearchParams()
 
   // filter state
-  const [query,        setQuery]       = useState('')
+  const [query,        setQuery]       = useState(() => searchParams.get('q') ?? '')
   const [emirates,     setEmirates]    = useState<Set<Emirate>>(new Set())
   const [jobCats,      setJobCats]     = useState<Set<JobCategory>>(new Set())
   const [levels,       setLevels]      = useState<Set<string>>(new Set())
@@ -770,7 +771,7 @@ function DetailPanel({ job, onSave }: { job: Job; onSave: (id: number, e: React.
         </div>
         <div className="flex gap-2 shrink-0 mt-1">
           {isGated ? (
-            <Link to={`/login?from=/jobs/${job.id}`}
+            <Link to="/login" state={{ from: `/jobs/${job.id}` }}
               className="inline-flex items-center gap-2 text-white font-sans text-sm font-bold px-5 py-2.5 rounded-lg transition-colors"
               style={{ background: PINK }}
               onMouseEnter={e => (e.currentTarget as HTMLAnchorElement).style.background = PINK_HOV}
