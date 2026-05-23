@@ -78,26 +78,12 @@ const SORT_OPTIONS = [
 
 type PanelId = 'emirate' | 'stack' | 'level' | 'type' | 'posted' | 'salary' | 'sort' | 'source'
 
-const SOURCE_GROUPS: { group: string; options: { value: string; label: string }[] }[] = [
-  {
-    group: 'Job Boards',
-    options: [
-      { value: 'linkedin',   label: 'LinkedIn'   },
-      { value: 'indeed',     label: 'Indeed'     },
-      { value: 'bayt',       label: 'Bayt'       },
-      { value: 'gulftalent', label: 'GulfTalent' },
-    ],
-  },
-  {
-    group: 'Aggregators',
-    options: [
-      { value: 'adzuna',    label: 'Adzuna'    },
-      { value: 'himalayas', label: 'Himalayas' },
-      { value: 'remoteok',  label: 'RemoteOK'  },
-    ],
-  },
+const SOURCE_OPTIONS = [
+  { value: 'linkedin',   label: 'LinkedIn'   },
+  { value: 'indeed',     label: 'Indeed'     },
+  { value: 'bayt',       label: 'Bayt'       },
+  { value: 'gulftalent', label: 'GulfTalent' },
 ]
-const SOURCE_OPTIONS = SOURCE_GROUPS.flatMap(g => g.options)
 
 // Brand colours
 const PINK      = '#BE185D'
@@ -496,7 +482,7 @@ function FilterBar(props: SharedFilterProps & { onMobileOpen: () => void }) {
           </FilterDropdown>
 
           <FilterDropdown label="Source"   count={sources.size}         open={openPanel === 'source'}  onToggle={() => tog('source')}  onClose={close}>
-            <GroupedCheckboxPanel groups={SOURCE_GROUPS} selected={sources} onToggle={v => onSourcesChange(toggleSet(sources, v))} />
+            <CheckboxPanel options={SOURCE_OPTIONS} selected={sources} onToggle={v => onSourcesChange(toggleSet(sources, v))} />
           </FilterDropdown>
 
           <Sep />
@@ -639,21 +625,16 @@ function MobileFilterSheet(props: SharedFilterProps & { open: boolean; onClose: 
           </SheetSection>
 
           <SheetSection label="Source">
-            {SOURCE_GROUPS.map(({ group, options }) => (
-              <div key={group} className="mb-3 last:mb-0">
-                <p className="font-mono text-[9px] font-bold uppercase tracking-[0.14em] text-gray-400 mb-2">{group}</p>
-                <div className="grid grid-cols-2 gap-2">
-                  {options.map(({ value, label }) => (
-                    <label key={value}
-                      className="flex items-center gap-2.5 p-2.5 border cursor-pointer transition-colors rounded"
-                      style={sources.has(value) ? { borderColor: PINK, background: PINK_BG } : { borderColor: '#E5E7EB' }}>
-                      <input type="checkbox" checked={sources.has(value)} onChange={() => onSourcesChange(toggleSet(sources, value))} />
-                      <span className="text-sm font-medium" style={{ color: sources.has(value) ? PINK : '#374151' }}>{label}</span>
-                    </label>
-                  ))}
-                </div>
-              </div>
-            ))}
+            <div className="grid grid-cols-2 gap-2">
+              {SOURCE_OPTIONS.map(({ value, label }) => (
+                <label key={value}
+                  className="flex items-center gap-2.5 p-2.5 border cursor-pointer transition-colors rounded"
+                  style={sources.has(value) ? { borderColor: PINK, background: PINK_BG } : { borderColor: '#E5E7EB' }}>
+                  <input type="checkbox" checked={sources.has(value)} onChange={() => onSourcesChange(toggleSet(sources, value))} />
+                  <span className="text-sm font-medium" style={{ color: sources.has(value) ? PINK : '#374151' }}>{label}</span>
+                </label>
+              ))}
+            </div>
           </SheetSection>
 
           <SheetSection label="Date Posted">
@@ -785,29 +766,6 @@ function CheckboxPanel({ options, selected, onToggle }: {
           <input type="checkbox" checked={selected.has(value)} onChange={() => onToggle(value)} />
           <span className="text-xs transition-colors" style={{ color: selected.has(value) ? PINK : '#374151', fontWeight: selected.has(value) ? 600 : 400 }}>{label}</span>
         </label>
-      ))}
-    </div>
-  )
-}
-
-// ── GroupedCheckboxPanel — checkbox list with group headings ─────────────────
-function GroupedCheckboxPanel({ groups, selected, onToggle }: {
-  groups: { group: string; options: { value: string; label: string }[] }[]
-  selected: Set<string>
-  onToggle: (v: string) => void
-}) {
-  return (
-    <div className="py-1.5 max-h-[320px] overflow-y-auto" style={{ minWidth: 180 }}>
-      {groups.map(({ group, options }) => (
-        <div key={group}>
-          <div className="px-4 pt-2.5 pb-1 font-mono text-[9px] font-bold uppercase tracking-[0.14em] text-gray-400">{group}</div>
-          {options.map(({ value, label }) => (
-            <label key={value} className="flex items-center gap-2.5 px-4 py-2.5 cursor-pointer hover:bg-[#FAFAFA] transition-colors">
-              <input type="checkbox" checked={selected.has(value)} onChange={() => onToggle(value)} />
-              <span className="text-xs transition-colors" style={{ color: selected.has(value) ? PINK : '#374151', fontWeight: selected.has(value) ? 600 : 400 }}>{label}</span>
-            </label>
-          ))}
-        </div>
       ))}
     </div>
   )
