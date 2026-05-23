@@ -45,7 +45,7 @@ api.interceptors.response.use(
     const status   = error.response?.status
     const original = error.config as (InternalAxiosRequestConfig & { _retry?: boolean }) | undefined
 
-    if (status === 401 && original && !original._retry && !original.url?.includes('/auth/refresh')) {
+    if (status === 401 && original && !original._retry && !original.url?.includes('/auth/refresh') && !original.url?.includes('/auth/logout')) {
       original._retry = true
       try {
         if (!refreshPromise) {

@@ -36,9 +36,22 @@ export const useAuthStore = create<AuthState>((set) => ({
   },
 
   logout: () => {
-    // Best-effort server-side revocation — the cookie carries the token.
-    // Import lazily to avoid a circular-dependency between authStore ↔ api.
-    import('../services/api').then(({ authApi }) => authApi.logout().catch(() => {}))
+    // Capture the token BEFORE clearing state, then fire revocation via a
+    // raw fetch() instead of the axios api instance.  Using fetch() avoids:
+    //   1. The circular-dependency between authStore ↔ api (no lazy import needed).
+    //   2. The axios 401 interceptor, which would otherwise see the server's
+    //      401 (token already cleared), attempt a token refresh, receive a new
+    //      session from setSession(), and silently re-log the user back in.
+    const token = localStorage.getItem('uaeitjobs.accessToken')
+    const base = (import.meta.env.VITE_API_URL?.replace(/\/+$/, '') ?? '')
+    fetch(`${base}/api/v1/auth/logout`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      credentials: 'include', // sends the httpOnly refresh_token cookie for server-side revocation
+    }).catch(() => {})
     localStorage.removeItem('uaeitjobs.accessToken')
     localStorage.removeItem('uaeitjobs.refreshToken') // clean up legacy key
     localStorage.removeItem('uaeitjobs.user')
