@@ -42,7 +42,7 @@ function buildJobPostingJsonLd(job: Job): Record<string, unknown> {
     '@context': 'https://schema.org/', '@type': 'JobPosting',
     title: job.title,
     description: `<p>${(job.description ?? '').replace(/</g, '&lt;')}</p>${job.requirements ? `<h3>Requirements</h3><p>${job.requirements.replace(/</g, '&lt;')}</p>` : ''}`,
-    datePosted: job.createdAt, validThrough: job.expiresAt,
+    datePosted: job.postedAt ?? job.createdAt, validThrough: job.expiresAt,
     employmentType: job.jobType ? employmentMap[job.jobType] ?? job.jobType.toUpperCase() : undefined,
     directApply: true,
     hiringOrganization: { '@type': 'Organization', name: job.companyName, sameAs: 'https://www.uaeitjobs.com' },
@@ -145,7 +145,7 @@ export default function JobDetail() {
 
   const skills = parseSkills(job.skills)
   const salary = money(job.salaryMin, job.salaryMax, job.salaryCurrency)
-  const posted = relativeTime(job.createdAt)
+  const posted = relativeTime(job.postedAt ?? job.createdAt)
 
   return (
     <>

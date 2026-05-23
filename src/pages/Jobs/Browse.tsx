@@ -937,7 +937,7 @@ function DetailPanel({ job, onSave, isSaved }: { job: Job; onSave: (id: number, 
 
       <div className="mt-10 pt-6 border-t border-[#E5E7EB] flex items-center justify-between text-xs text-gray-400 font-mono">
         <div className="flex items-center gap-4">
-          {job.createdAt && <span className="flex items-center gap-1.5"><CalendarDays size={12} />{relativeTime(job.createdAt)}</span>}
+          {(job.postedAt ?? job.createdAt) && <span className="flex items-center gap-1.5"><CalendarDays size={12} />{relativeTime(job.postedAt ?? job.createdAt)}</span>}
           {job.locationUae && <span className="flex items-center gap-1.5"><MapPin size={12} />{job.locationUae}</span>}
           {job.jobType && <span className="flex items-center gap-1.5"><BriefcaseBusiness size={12} />{labelize(job.jobType)}</span>}
         </div>
@@ -977,7 +977,7 @@ const JobListItem = memo(function JobListItem({
         <span className="font-mono text-[10px] font-bold uppercase tracking-widest truncate" style={{ color: active ? PINK : '#9CA3AF' }}>
           {job.companyName}
         </span>
-        <span className="ml-auto font-mono text-[10px] text-gray-400 shrink-0">{relativeTime(job.createdAt)}</span>
+        <span className="ml-auto font-mono text-[10px] text-gray-400 shrink-0">{relativeTime(job.postedAt ?? job.createdAt)}</span>
         {/* Save toggle — stopPropagation prevents the card click from firing */}
         <button
           onClick={(e) => onSave(job.id, e)}

@@ -84,6 +84,9 @@ export interface Job {
   skills?: string
   linkedinUrl?: string
   source?: string
+  /** Original posting date at the source (Adzuna / JSearch / HR submission).
+   *  Null for rows ingested before V15 — use createdAt as fallback. */
+  postedAt?: string | null
   createdAt?: string
   updatedAt?: string
   expiresAt?: string
