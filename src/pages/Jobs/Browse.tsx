@@ -117,19 +117,20 @@ export default function JobBrowse() {
   const navigate = useNavigate()
   const { user }  = useAuthStore()
   const toast     = useToastStore((s) => s.add)
-  const [searchParams] = useSearchParams()
+  const [searchParams, setSearchParams] = useSearchParams()
 
-  // filter state
-  const [query,        setQuery]       = useState(() => searchParams.get('q') ?? '')
-  const [emirates,     setEmirates]    = useState<Set<Emirate>>(new Set())
-  const [jobCats,      setJobCats]     = useState<Set<JobCategory>>(new Set())
-  const [levels,       setLevels]      = useState<Set<string>>(new Set())
-  const [jobTypes,     setJobTypes]    = useState<Set<string>>(new Set())
-  const [remoteOnly,   setRemoteOnly]  = useState(false)
-  const [posted,       setPosted]      = useState('')
-  const [salaryBucket, setSalary]      = useState('')
-  const [sortBy,       setSortBy]      = useState('newest')
-  const [sources,      setSources]     = useState<Set<string>>(new Set())
+  // filter state — initialised from URL so bookmarks and shared links restore the full view
+  const [query,           setQuery]          = useState(() => searchParams.get('q') ?? '')
+  const [emirates,        setEmirates]       = useState<Set<Emirate>>(() => new Set(searchParams.getAll('emirate') as Emirate[]))
+  const [jobCats,         setJobCats]        = useState<Set<JobCategory>>(() => new Set(searchParams.getAll('category') as JobCategory[]))
+  const [levels,          setLevels]         = useState<Set<string>>(() => new Set(searchParams.getAll('level')))
+  const [jobTypes,        setJobTypes]       = useState<Set<string>>(() => new Set(searchParams.getAll('jobType')))
+  const [remoteOnly,      setRemoteOnly]     = useState(() => searchParams.get('remote') === '1')
+  const [immediateJoiner, setImmediateJoiner] = useState(() => searchParams.get('immediate') === '1')
+  const [posted,          setPosted]         = useState(() => searchParams.get('posted') ?? '')
+  const [salaryBucket,    setSalary]         = useState(() => searchParams.get('salary') ?? '')
+  const [sortBy,          setSortBy]         = useState(() => searchParams.get('sort') ?? 'newest')
+  const [sources,         setSources]        = useState<Set<string>>(() => new Set(searchParams.getAll('publisher')))
 
   // data
   const [jobs,        setJobs]        = useState<Job[]>([])
@@ -149,6 +150,24 @@ export default function JobBrowse() {
   const [savedIds, setSavedIds]   = useState<Set<number>>(new Set())
   const savedIdsRef               = useRef<Set<number>>(new Set())
   useEffect(() => { savedIdsRef.current = savedIds }, [savedIds])
+
+  // Sync filter state → URL (replace so individual filter toggles don't pile up in history).
+  // Initialised from URL above so bookmarks/shared links restore the exact view.
+  useEffect(() => {
+    const p = new URLSearchParams()
+    if (query.trim())      p.set('q',         query.trim())
+    emirates.forEach(e     => p.append('emirate',  e))
+    jobCats.forEach(c      => p.append('category', c))
+    levels.forEach(l       => p.append('level',    l))
+    jobTypes.forEach(t     => p.append('jobType',  t))
+    if (remoteOnly)        p.set('remote',    '1')
+    if (immediateJoiner)   p.set('immediate', '1')
+    if (posted)            p.set('posted',    posted)
+    if (salaryBucket)      p.set('salary',    salaryBucket)
+    if (sortBy !== 'newest') p.set('sort',    sortBy)
+    sources.forEach(s      => p.append('publisher', s))
+    setSearchParams(p, { replace: true })
+  }, [query, emirates, jobCats, levels, jobTypes, remoteOnly, immediateJoiner, posted, salaryBucket, sortBy, sources, setSearchParams])
 
   // fetch — search + all filtering in a single DB round-trip via filterMulti.
   // The 'q' param drives plainto_tsquery full-text ranking server-side so
@@ -172,6 +191,7 @@ export default function JobBrowse() {
       ...(lArr.length           && { experienceLevel: lArr }),
       ...(tArr.length           && { jobType:         tArr }),
       ...(remoteOnly            && { remoteUae:       true }),
+      ...(immediateJoiner       && { immediateJoiner: true }),
       ...(posted                && { postedAfter:     new Date(Date.now() - postedAfterMs(posted)).toISOString() }),
       ...(salMin != null        && { salaryMin:       salMin }),
       ...(salMax != null        && { salaryMax:       salMax }),
@@ -193,7 +213,7 @@ export default function JobBrowse() {
       }
     }).catch(() => {}).finally(() => { if (ok) setJobsLoading(false) })
     return () => { ok = false }
-  }, [query, emirates, jobCats, levels, jobTypes, remoteOnly, posted, salaryBucket, sortBy, sources])
+  }, [query, emirates, jobCats, levels, jobTypes, remoteOnly, immediateJoiner, posted, salaryBucket, sortBy, sources])
 
   useEffect(() => {
     if (!selectedId) return
@@ -216,7 +236,7 @@ export default function JobBrowse() {
 
   function clearAll() {
     setQuery(''); setEmirates(new Set()); setJobCats(new Set())
-    setLevels(new Set()); setJobTypes(new Set()); setRemoteOnly(false)
+    setLevels(new Set()); setJobTypes(new Set()); setRemoteOnly(false); setImmediateJoiner(false)
     setPosted(''); setSalary(''); setSortBy('newest'); setSources(new Set())
   }
 
@@ -250,7 +270,8 @@ export default function JobBrowse() {
     ...Array.from(levels).map(v   => ({ key: `l-${v}`, label: LEVELS.find(x => x.value === v)?.label ?? v,         onRemove: () => setLevels(toggleSet(levels, v)) })),
     ...Array.from(jobTypes).map(v => ({ key: `t-${v}`, label: JOB_TYPES.find(x => x.value === v)?.label ?? v,      onRemove: () => setJobTypes(toggleSet(jobTypes, v)) })),
     ...Array.from(sources).map(v  => ({ key: `s-${v}`, label: SOURCE_OPTIONS.find(x => x.value === v)?.label ?? v, onRemove: () => setSources(toggleSet(sources, v)) })),
-    ...(remoteOnly   ? [{ key: 'remote', label: 'Remote',  onRemove: () => setRemoteOnly(false) }] : []),
+    ...(remoteOnly       ? [{ key: 'remote',    label: 'Remote',           onRemove: () => setRemoteOnly(false)     }] : []),
+    ...(immediateJoiner ? [{ key: 'immediate', label: 'Immediate Joiner', onRemove: () => setImmediateJoiner(false) }] : []),
     ...(posted       ? [{ key: 'posted', label: POSTED_OPTIONS.find(x => x.value === posted)?.label  ?? posted,  onRemove: () => setPosted('')  }] : []),
     ...(salaryBucket ? [{ key: 'sal',    label: SALARY_OPTIONS.find(x => x.value === salaryBucket)?.label ?? salaryBucket, onRemove: () => setSalary('') }] : []),
   ]
@@ -265,6 +286,7 @@ export default function JobBrowse() {
     levels, onLevelsChange: setLevels,
     jobTypes, onJobTypesChange: setJobTypes,
     remoteOnly, onRemoteChange: setRemoteOnly,
+    immediateJoiner, onImmediateJoinerChange: setImmediateJoiner,
     posted, onPostedChange: setPosted,
     salaryBucket, onSalaryChange: setSalary,
     sortBy, onSortChange: setSortBy,
@@ -362,6 +384,7 @@ interface SharedFilterProps {
   levels: Set<string>;       onLevelsChange: (s: Set<string>) => void
   jobTypes: Set<string>;     onJobTypesChange: (s: Set<string>) => void
   remoteOnly: boolean;       onRemoteChange: (v: boolean) => void
+  immediateJoiner: boolean;  onImmediateJoinerChange: (v: boolean) => void
   posted: string;            onPostedChange: (v: string) => void
   salaryBucket: string;      onSalaryChange: (v: string) => void
   sortBy: string;            onSortChange: (v: string) => void
@@ -378,6 +401,7 @@ function FilterBar(props: SharedFilterProps & { onMobileOpen: () => void }) {
     emirates, onEmiratesChange, jobCats, onJobCatsChange,
     levels, onLevelsChange, jobTypes, onJobTypesChange,
     remoteOnly, onRemoteChange,
+    immediateJoiner, onImmediateJoinerChange,
     posted, onPostedChange, salaryBucket, onSalaryChange,
     sortBy, onSortChange,
     sources, onSourcesChange,
@@ -485,9 +509,13 @@ function FilterBar(props: SharedFilterProps & { onMobileOpen: () => void }) {
             <RadioPanel options={SALARY_OPTIONS} selected={salaryBucket} onSelect={onSalaryChange} />
           </FilterDropdown>
 
-          {/* Remote toggle — same height, same border style */}
+          {/* Remote / Immediate toggles — same height, same border style */}
           <QuickToggle active={remoteOnly} onToggle={() => onRemoteChange(!remoteOnly)}>
             🌐 Remote
+          </QuickToggle>
+
+          <QuickToggle active={immediateJoiner} onToggle={() => onImmediateJoinerChange(!immediateJoiner)}>
+            ⚡ Immediate
           </QuickToggle>
 
           <Sep />
@@ -511,26 +539,33 @@ function FilterBar(props: SharedFilterProps & { onMobileOpen: () => void }) {
         </div>
       </div>
 
-      {/* ── Active filter chips ──────────────────────────────────── */}
-      {chips.length > 0 && (
-        <div className="flex items-center gap-2 overflow-x-auto border-t border-[#F3F4F6] bg-[#FAFAFA] px-4 py-2 scrollbar-none">
-          <span className="shrink-0 font-sans text-[11px] font-semibold text-gray-400">Active:</span>
-          {chips.map(chip => (
-            <button
-              key={chip.key}
-              onClick={chip.onRemove}
-              className="inline-flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1 font-sans text-[12px] font-medium transition-colors hover:opacity-80"
-              style={{ background: PINK_BG, border: `1px solid ${PINK_RING}`, color: PINK }}
-            >
-              {chip.label}
-              <X size={10} strokeWidth={2.5} />
-            </button>
-          ))}
-          {!loading && (
-            <span className="ml-auto shrink-0 font-sans text-[12px] text-gray-400">{total.toLocaleString()} roles</span>
-          )}
-        </div>
-      )}
+      {/* ── Active filter chips ──────────────────────────────────────
+           Always rendered so the row has stable height — prevents the
+           dropdown panels from shifting position when the first chip
+           appears.                                                     */}
+      <div className="flex items-center gap-2 overflow-x-auto border-t border-[#F3F4F6] bg-[#FAFAFA] px-4 py-2 scrollbar-none min-h-[37px]">
+        {chips.length > 0 ? (
+          <>
+            <span className="shrink-0 font-sans text-[11px] font-semibold text-gray-400">Active:</span>
+            {chips.map(chip => (
+              <button
+                key={chip.key}
+                onClick={chip.onRemove}
+                className="inline-flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1 font-sans text-[12px] font-medium transition-colors hover:opacity-80"
+                style={{ background: PINK_BG, border: `1px solid ${PINK_RING}`, color: PINK }}
+              >
+                {chip.label}
+                <X size={10} strokeWidth={2.5} />
+              </button>
+            ))}
+          </>
+        ) : (
+          <span className="font-sans text-[11px] text-gray-300 select-none">No active filters</span>
+        )}
+        {!loading && (
+          <span className="ml-auto shrink-0 font-sans text-[12px] text-gray-400">{total.toLocaleString()} roles</span>
+        )}
+      </div>
     </div>
   )
 }
@@ -542,6 +577,7 @@ function MobileFilterSheet(props: SharedFilterProps & { open: boolean; onClose: 
     emirates, onEmiratesChange, jobCats, onJobCatsChange,
     levels, onLevelsChange, jobTypes, onJobTypesChange,
     remoteOnly, onRemoteChange,
+    immediateJoiner, onImmediateJoinerChange,
     posted, onPostedChange, salaryBucket, onSalaryChange,
     sortBy, onSortChange,
     sources, onSourcesChange,
@@ -659,17 +695,30 @@ function MobileFilterSheet(props: SharedFilterProps & { open: boolean; onClose: 
           </SheetSection>
 
           <SheetSection label="Work Mode">
-            <button
-              onClick={() => onRemoteChange(!remoteOnly)}
-              className="flex items-center gap-3 w-full px-3 py-2.5 rounded-lg border transition-colors"
-              style={remoteOnly ? { background: PINK_BG, borderColor: PINK_RING, color: PINK } : { borderColor: '#E5E7EB', color: '#374151', background: '#fff' }}
-            >
-              <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full border-2 transition-colors"
-                style={remoteOnly ? { borderColor: PINK, background: PINK } : { borderColor: '#D1D5DB', background: '#fff' }}>
-                {remoteOnly && <span className="h-1.5 w-1.5 rounded-full bg-white" />}
-              </span>
-              <span className="font-sans text-[13px] font-medium">Remote UAE only</span>
-            </button>
+            <div className="space-y-2">
+              <button
+                onClick={() => onRemoteChange(!remoteOnly)}
+                className="flex items-center gap-3 w-full px-3 py-2.5 rounded-lg border transition-colors"
+                style={remoteOnly ? { background: PINK_BG, borderColor: PINK_RING, color: PINK } : { borderColor: '#E5E7EB', color: '#374151', background: '#fff' }}
+              >
+                <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full border-2 transition-colors"
+                  style={remoteOnly ? { borderColor: PINK, background: PINK } : { borderColor: '#D1D5DB', background: '#fff' }}>
+                  {remoteOnly && <span className="h-1.5 w-1.5 rounded-full bg-white" />}
+                </span>
+                <span className="font-sans text-[13px] font-medium">Remote UAE only</span>
+              </button>
+              <button
+                onClick={() => onImmediateJoinerChange(!immediateJoiner)}
+                className="flex items-center gap-3 w-full px-3 py-2.5 rounded-lg border transition-colors"
+                style={immediateJoiner ? { background: PINK_BG, borderColor: PINK_RING, color: PINK } : { borderColor: '#E5E7EB', color: '#374151', background: '#fff' }}
+              >
+                <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full border-2 transition-colors"
+                  style={immediateJoiner ? { borderColor: PINK, background: PINK } : { borderColor: '#D1D5DB', background: '#fff' }}>
+                  {immediateJoiner && <span className="h-1.5 w-1.5 rounded-full bg-white" />}
+                </span>
+                <span className="font-sans text-[13px] font-medium">⚡ Immediate joiner only</span>
+              </button>
+            </div>
           </SheetSection>
 
           <SheetSection label="Sort By">
