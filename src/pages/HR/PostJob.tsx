@@ -114,7 +114,7 @@ export default function PostJob() {
             <Field label="Company" error={errors.companyName?.message}><Input {...register('companyName')} /></Field>
             <Field label="Job type" error={errors.jobType?.message}><Select {...register('jobType')}><option value="full_time">Full-time</option><option value="contract">Contract</option><option value="part_time">Part-time</option></Select></Field>
             <Field label="Experience" error={errors.experienceLevel?.message}><Select {...register('experienceLevel')}><option value="fresher">Fresher</option><option value="junior_1_2_yrs">1-2 yrs</option><option value="mid_3_5_yrs">3-5 yrs</option><option value="senior_5_plus">5+ yrs</option></Select></Field>
-            <Field label="Location" error={errors.locationUae?.message}><Select {...register('locationUae')}><option>Dubai</option><option>Abu Dhabi</option><option>Sharjah</option><option>Ajman</option><option>Ras Al Khaimah</option><option>Remote</option></Select></Field>
+            <Field label="Location" error={errors.locationUae?.message}><Select {...register('locationUae')}><option>Dubai</option><option>Abu Dhabi</option><option>Sharjah</option><option>Ajman</option><option>Ras Al Khaimah</option><option>Umm Al Quwain</option><option>Fujairah</option><option>Remote</option></Select></Field>
             <Field label="Skills"><Input {...register('skills')} placeholder="Java, Spring Boot, PostgreSQL" /></Field>
             <Field label="Job category" hint="Helps the right candidates discover this role">
               <Select {...register('jobCategory')}>

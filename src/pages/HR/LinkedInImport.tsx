@@ -2,7 +2,7 @@ import { AlertTriangle, CheckCircle2, Link2, Loader2, Sparkles } from 'lucide-re
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useToastStore } from '../../components/Toast'
-import { Button, Card, Field, Input, Textarea } from '../../components/ui'
+import { Button, Card, Field, Input, Select, Textarea } from '../../components/ui'
 import { errorMessage, hrApi } from '../../services/api'
 import type { Job } from '../../types'
 
@@ -178,11 +178,20 @@ export default function UrlImport() {
           </Field>
 
           <Field label="Location (UAE)">
-            <Input
+            <Select
               value={form.locationUae}
               onChange={e => setForm(f => ({ ...f, locationUae: e.target.value }))}
-              placeholder="e.g. Dubai"
-            />
+            >
+              <option value="">— select —</option>
+              <option>Dubai</option>
+              <option>Abu Dhabi</option>
+              <option>Sharjah</option>
+              <option>Ajman</option>
+              <option>Ras Al Khaimah</option>
+              <option>Umm Al Quwain</option>
+              <option>Fujairah</option>
+              <option>Remote</option>
+            </Select>
           </Field>
 
           <Field label="Apply URL">
