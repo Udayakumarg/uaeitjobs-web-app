@@ -1,4 +1,4 @@
-import { Edit, Link2, Plus, Trash2, Users } from 'lucide-react'
+import { Edit, Globe, Plus, Trash2, Users } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { TableSkeleton } from '../../components/Skeleton'
@@ -34,10 +34,10 @@ export default function HRDashboard() {
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-3xl font-bold text-slate-950">HR dashboard</h1>
-          <p className="mt-2 text-slate-600">Post jobs, import LinkedIn roles, and manage applicants.</p>
+          <p className="mt-2 text-slate-600">Post jobs, import from any URL or LinkedIn, and manage applicants.</p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <Link to="/hr/linkedin-import"><Button variant="secondary"><Link2 size={16} /> LinkedIn import</Button></Link>
+          <Link to="/hr/linkedin-import"><Button variant="secondary"><Globe size={16} /> Import from URL</Button></Link>
           <Link to="/hr/jobs/new"><Button><Plus size={16} /> Post job</Button></Link>
         </div>
       </div>
