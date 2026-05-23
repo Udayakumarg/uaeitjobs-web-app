@@ -194,9 +194,12 @@ export default function JobBrowse() {
       .catch(() => {}).finally(() => setDetailLoading(false))
   }, [selectedId])
 
-  // Load saved job IDs whenever the logged-in user changes
+  // Load saved job IDs — job seekers only.
+  // HR and admin users do not have a saved-jobs list; calling the endpoint as
+  // an HR user returns 401/403 which would incorrectly trigger the refresh
+  // interceptor and produce a spurious "Session expired" toast.
   useEffect(() => {
-    if (!user) { setSavedIds(new Set()); return }
+    if (!user || user.userType !== 'job_seeker') { setSavedIds(new Set()); return }
     seekerApi.savedJobs()
       .then(({ data }) => setSavedIds(new Set(data.map(s => s.job.id))))
       .catch(() => {}) // graceful — state stays empty if endpoint is unavailable
@@ -211,6 +214,8 @@ export default function JobBrowse() {
   const saveJob = useCallback(async (id: number, e: React.MouseEvent) => {
     e.stopPropagation()
     if (!user) { toast({ type: 'info', title: 'Sign in to save jobs' }); return }
+    // Only job seekers can save jobs — HR / admin users have no saved-jobs list.
+    if (user.userType !== 'job_seeker') return
     const wasSaved = savedIdsRef.current.has(id)
     // Optimistic update
     setSavedIds(prev => { const n = new Set(prev); wasSaved ? n.delete(id) : n.add(id); return n })
