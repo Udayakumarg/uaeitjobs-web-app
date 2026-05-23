@@ -355,81 +355,97 @@ function FilterBar(props: SharedFilterProps & { onMobileOpen: () => void }) {
   function close() { setOpenPanel(null) }
 
   return (
-    <div className="shrink-0 bg-white border-b border-[#E5E7EB] z-20">
+    <div className="shrink-0 z-20 bg-white border-b border-[#E5E7EB]">
 
-      {/* ── Row 1: search (centered, constrained width) ───────── */}
-      <div className="flex items-center gap-2 px-4 pt-3.5 pb-2 md:justify-center">
-        <div className="relative flex-1 md:max-w-[600px]">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
+      {/* ── Search row ───────────────────────────────────────────── */}
+      <div className="flex items-center gap-2.5 px-4 pt-4 pb-3">
+
+        {/* Search input — pill shape, full-width on mobile, capped on desktop */}
+        <div className="relative flex-1 md:mx-auto md:max-w-[580px]">
+          <Search className="pointer-events-none absolute left-3.5 top-1/2 h-[15px] w-[15px] -translate-y-1/2 text-gray-400" />
           <input
             type="text"
             value={query}
-            onChange={(e) => onQueryChange(e.target.value)}
+            onChange={e => onQueryChange(e.target.value)}
             placeholder="Search roles, skills, companies…"
-            className="w-full rounded-lg border border-[#E5E7EB] bg-[#FAFAFA] pl-10 pr-9 py-2.5 text-sm focus:outline-none focus:bg-white transition-colors"
-            style={{ '--tw-ring-color': PINK } as React.CSSProperties}
-            onFocus={e => (e.currentTarget.style.borderColor = PINK)}
-            onBlur={e => (e.currentTarget.style.borderColor = '#E5E7EB')}
+            className="h-10 w-full rounded-full border border-[#E5E7EB] bg-white pl-10 pr-9 text-[14px] text-gray-900 placeholder:text-gray-400 shadow-sm transition-all focus:outline-none"
+            onFocus={e => {
+              e.currentTarget.style.borderColor = PINK
+              e.currentTarget.style.boxShadow = `0 0 0 3px ${PINK}1a, 0 1px 2px 0 rgba(0,0,0,0.05)`
+            }}
+            onBlur={e => {
+              e.currentTarget.style.borderColor = '#E5E7EB'
+              e.currentTarget.style.boxShadow = '0 1px 2px 0 rgba(0,0,0,0.05)'
+            }}
           />
           {query && (
-            <button onClick={() => onQueryChange('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-black">
-              <X className="h-4 w-4" />
+            <button
+              onClick={() => onQueryChange('')}
+              className="absolute right-3.5 top-1/2 -translate-y-1/2 rounded-full p-0.5 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-700"
+            >
+              <X className="h-3.5 w-3.5" />
             </button>
           )}
         </div>
 
-        {/* Mobile: Filters button */}
+        {/* Mobile: filters pill */}
         <button
           onClick={onMobileOpen}
-          className="md:hidden inline-flex items-center gap-1.5 border rounded-lg px-3 py-2.5 font-sans text-xs font-medium transition-colors shrink-0"
+          className="md:hidden inline-flex h-10 shrink-0 items-center gap-1.5 rounded-full border px-4 font-sans text-[13px] font-medium transition-colors"
           style={activeCount > 0
             ? { background: PINK_BG, borderColor: PINK_RING, color: PINK }
-            : { borderColor: '#E5E7EB', color: '#374151' }}
+            : { borderColor: '#E5E7EB', color: '#374151', background: '#fff' }}
         >
           <SlidersHorizontal size={14} />
           Filters
           {activeCount > 0 && (
-            <span className="inline-flex items-center justify-center h-4 w-4 rounded-full text-white text-[9px] font-bold leading-none" style={{ background: PINK }}>
+            <span className="inline-flex h-4 w-4 items-center justify-center rounded-full text-[9px] font-bold text-white leading-none" style={{ background: PINK }}>
               {activeCount}
             </span>
           )}
         </button>
       </div>
 
-      {/* ── Row 2: filter buttons (desktop, centered) ─────────── */}
-      <div className="hidden md:flex items-center justify-center px-4 pb-3">
-        <div className="flex items-center gap-1.5 flex-wrap">
+      {/* ── Filter row (desktop only) ────────────────────────────── */}
+      <div className="hidden md:block border-t border-[#F3F4F6] px-4 py-2.5">
+        <div className="flex items-center justify-center gap-1">
 
-          <FilterDropdown label="Emirate"  count={emirates.size}     open={openPanel === 'emirate'} onToggle={() => tog('emirate')} onClose={close}>
+          {/* Group 1 — who / what */}
+          <FilterDropdown label="Emirate"  count={emirates.size}        open={openPanel === 'emirate'} onToggle={() => tog('emirate')} onClose={close}>
             <CheckboxPanel options={EMIRATES} selected={emirates as Set<string>} onToggle={v => onEmiratesChange(toggleSet(emirates, v as Emirate))} />
           </FilterDropdown>
 
-          <FilterDropdown label="Stack"    count={jobCats.size}      open={openPanel === 'stack'}   onToggle={() => tog('stack')}   onClose={close}>
+          <FilterDropdown label="Stack"    count={jobCats.size}         open={openPanel === 'stack'}   onToggle={() => tog('stack')}   onClose={close}>
             <CheckboxPanel options={JOB_CATEGORIES.map(c => ({ value: c.value, label: c.label }))} selected={jobCats as Set<string>} onToggle={v => onJobCatsChange(toggleSet(jobCats, v as JobCategory))} />
           </FilterDropdown>
 
-          <FilterDropdown label="Level"    count={levels.size}       open={openPanel === 'level'}   onToggle={() => tog('level')}   onClose={close}>
+          <FilterDropdown label="Level"    count={levels.size}          open={openPanel === 'level'}   onToggle={() => tog('level')}   onClose={close}>
             <PillPanel options={LEVELS} selected={levels} onToggle={v => onLevelsChange(toggleSet(levels, v))} />
           </FilterDropdown>
 
-          <FilterDropdown label="Job Type" count={jobTypes.size}     open={openPanel === 'type'}    onToggle={() => tog('type')}    onClose={close}>
+          <FilterDropdown label="Job Type" count={jobTypes.size}        open={openPanel === 'type'}    onToggle={() => tog('type')}    onClose={close}>
             <PillPanel options={JOB_TYPES} selected={jobTypes} onToggle={v => onJobTypesChange(toggleSet(jobTypes, v))} />
           </FilterDropdown>
 
-          <FilterDropdown label="Posted"   count={posted ? 1 : 0}    open={openPanel === 'posted'}  onToggle={() => tog('posted')}  onClose={close}>
+          <Sep />
+
+          {/* Group 2 — when / how much */}
+          <FilterDropdown label="Posted"   count={posted ? 1 : 0}       open={openPanel === 'posted'}  onToggle={() => tog('posted')}  onClose={close}>
             <RadioPanel options={POSTED_OPTIONS} selected={posted} onSelect={onPostedChange} />
           </FilterDropdown>
 
-          <FilterDropdown label="Salary"   count={salaryBucket ? 1 : 0} open={openPanel === 'salary'} onToggle={() => tog('salary')} onClose={close}>
+          <FilterDropdown label="Salary"   count={salaryBucket ? 1 : 0} open={openPanel === 'salary'}  onToggle={() => tog('salary')}  onClose={close}>
             <RadioPanel options={SALARY_OPTIONS} selected={salaryBucket} onSelect={onSalaryChange} />
           </FilterDropdown>
 
+          {/* Remote toggle — same height, same border style */}
+          <QuickToggle active={remoteOnly} onToggle={() => onRemoteChange(!remoteOnly)}>
+            🌐 Remote
+          </QuickToggle>
+
           <Sep />
 
-          <QuickToggle active={remoteOnly} onToggle={() => onRemoteChange(!remoteOnly)}>🌐 Remote</QuickToggle>
-
-          <Sep />
-
+          {/* Sort — no active highlight, pushed to the right */}
           <FilterDropdown
             label={SORT_OPTIONS.find(s => s.value === sortBy)?.label ?? 'Sort'}
             count={0} noHighlight
@@ -441,7 +457,7 @@ function FilterBar(props: SharedFilterProps & { onMobileOpen: () => void }) {
           {hasFilters && (
             <button
               onClick={onClearAll}
-              className="ml-1 shrink-0 font-sans text-xs text-gray-400 hover:text-black transition-colors underline"
+              className="ml-1 shrink-0 rounded-full px-3 py-1 font-sans text-[12px] font-medium text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-700"
             >
               Clear all
             </button>
@@ -449,25 +465,24 @@ function FilterBar(props: SharedFilterProps & { onMobileOpen: () => void }) {
         </div>
       </div>
 
-      {/* ── Row 3: active chips ────────────────────────────────── */}
+      {/* ── Active filter chips ──────────────────────────────────── */}
       {chips.length > 0 && (
-        <div className="flex items-center justify-center border-t border-[#E5E7EB] bg-[#FAFAFA] px-4 py-2 overflow-x-auto">
-          <div className="flex items-center gap-2 min-w-0">
-            <span className="font-mono text-[9px] font-bold uppercase tracking-[0.18em] text-gray-400 shrink-0">Active</span>
-            {chips.map(chip => (
-              <button
-                key={chip.key}
-                onClick={chip.onRemove}
-                className="inline-flex items-center gap-1 bg-white font-mono text-[10px] font-bold px-2.5 py-1 hover:opacity-80 transition-opacity shrink-0"
-                style={{ border: `1px solid ${PINK}`, color: PINK }}
-              >
-                {chip.label} <X size={9} />
-              </button>
-            ))}
-            {!loading && (
-              <span className="font-mono text-[10px] text-gray-500 ml-1 shrink-0">{total.toLocaleString()} roles</span>
-            )}
-          </div>
+        <div className="flex items-center gap-2 overflow-x-auto border-t border-[#F3F4F6] bg-[#FAFAFA] px-4 py-2 scrollbar-none">
+          <span className="shrink-0 font-sans text-[11px] font-semibold text-gray-400">Active:</span>
+          {chips.map(chip => (
+            <button
+              key={chip.key}
+              onClick={chip.onRemove}
+              className="inline-flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1 font-sans text-[12px] font-medium transition-colors hover:opacity-80"
+              style={{ background: PINK_BG, border: `1px solid ${PINK_RING}`, color: PINK }}
+            >
+              {chip.label}
+              <X size={10} strokeWidth={2.5} />
+            </button>
+          ))}
+          {!loading && (
+            <span className="ml-auto shrink-0 font-sans text-[12px] text-gray-400">{total.toLocaleString()} roles</span>
+          )}
         </div>
       )}
     </div>
@@ -652,23 +667,27 @@ function FilterDropdown({ label, count, open, onToggle, onClose, children, noHig
     <div ref={ref} className="relative shrink-0">
       <button
         onClick={onToggle}
-        className="inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 font-sans text-[13px] font-medium transition-colors"
+        className="inline-flex h-9 min-w-[96px] items-center justify-between gap-2 rounded-lg border px-3.5 font-sans text-[13px] font-medium transition-all"
         style={isActive
           ? { background: PINK_BG, borderColor: PINK_RING, color: PINK }
-          : { background: '#fff', borderColor: '#E5E7EB', color: '#374151' }}
-        onMouseEnter={e => { if (!isActive) { (e.currentTarget as HTMLButtonElement).style.borderColor = '#9CA3AF'; (e.currentTarget as HTMLButtonElement).style.color = '#000' } }}
-        onMouseLeave={e => { if (!isActive) { (e.currentTarget as HTMLButtonElement).style.borderColor = '#E5E7EB'; (e.currentTarget as HTMLButtonElement).style.color = '#374151' } }}
+          : open
+            ? { background: '#F9FAFB', borderColor: '#9CA3AF', color: '#111827' }
+            : { background: '#fff', borderColor: '#E5E7EB', color: '#374151' }}
+        onMouseEnter={e => { if (!isActive && !open) { const b = e.currentTarget as HTMLButtonElement; b.style.borderColor = '#9CA3AF'; b.style.color = '#111827'; b.style.background = '#F9FAFB' } }}
+        onMouseLeave={e => { if (!isActive && !open) { const b = e.currentTarget as HTMLButtonElement; b.style.borderColor = '#E5E7EB'; b.style.color = '#374151'; b.style.background = '#fff' } }}
       >
-        {label}
-        {isActive && (
-          <span className="inline-flex items-center justify-center h-4 w-4 rounded-full text-white text-[9px] font-bold leading-none" style={{ background: PINK }}>
-            {count}
-          </span>
-        )}
-        <ChevronDown size={12} className={`transition-transform duration-150 ${open ? 'rotate-180' : ''}`} />
+        <span className="flex items-center gap-1.5">
+          {label}
+          {isActive && (
+            <span className="inline-flex h-[18px] min-w-[18px] items-center justify-center rounded-full px-1 text-white text-[10px] font-bold leading-none" style={{ background: PINK }}>
+              {count}
+            </span>
+          )}
+        </span>
+        <ChevronDown size={13} strokeWidth={2} className={`shrink-0 text-gray-400 transition-transform duration-150 ${open ? 'rotate-180' : ''}`} />
       </button>
       {open && (
-        <div className="absolute top-full left-0 mt-1.5 z-50 bg-white border border-[#E5E7EB] rounded-lg shadow-[0_4px_20px_rgba(15,23,42,0.1)] min-w-[160px]">
+        <div className="absolute top-full left-0 mt-1.5 z-50 overflow-hidden rounded-xl border border-[#E5E7EB] bg-white shadow-[0_8px_30px_rgba(15,23,42,0.12)]" style={{ minWidth: 160 }}>
           {children}
         </div>
       )}
@@ -760,10 +779,12 @@ function QuickToggle({ active, onToggle, children }: { active: boolean; onToggle
   return (
     <button
       onClick={onToggle}
-      className="inline-flex items-center gap-1 rounded-lg border px-3 py-1.5 font-sans text-[13px] font-medium transition-colors shrink-0"
+      className="inline-flex h-9 items-center gap-1.5 rounded-lg border px-3.5 font-sans text-[13px] font-medium transition-all shrink-0"
       style={active
         ? { background: PINK, color: '#fff', borderColor: PINK }
         : { background: '#fff', color: '#374151', borderColor: '#E5E7EB' }}
+      onMouseEnter={e => { if (!active) { const b = e.currentTarget as HTMLButtonElement; b.style.borderColor = '#9CA3AF'; b.style.color = '#111827'; b.style.background = '#F9FAFB' } }}
+      onMouseLeave={e => { if (!active) { const b = e.currentTarget as HTMLButtonElement; b.style.borderColor = '#E5E7EB'; b.style.color = '#374151'; b.style.background = '#fff' } }}
     >
       {children}
     </button>
