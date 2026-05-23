@@ -151,6 +151,12 @@ export const jobsApi = {
   locations: () => api.get<string[]>('/locations'),
   skills: (q: string) => api.get<string[]>('/skills/autocomplete', { params: { q } }),
   stats: () => api.get<{ totalJobs: number; countriesRepresented: number; companies: number }>('/stats'),
+  /** Job boards that have more than minCount active jobs (default 5).
+   *  Used by the Browse page Source filter so new boards appear automatically. */
+  publishers: (minCount = 5) =>
+    api.get<{ key: string; label: string; count: number }[]>('/jobs/publishers', {
+      params: { minCount },
+    }),
 }
 
 export const seekerApi = {

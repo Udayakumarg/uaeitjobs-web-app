@@ -17,6 +17,9 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { CompanyLogo } from '../../components/CompanyLogo'
 import { useDocumentMeta } from '../../hooks/useDocumentMeta'
 import { errorMessage, jobsApi, seekerApi, type FilterMultiParams } from '../../services/api'
+
+// ── Publisher type ────────────────────────────────────────────────────────────
+type Publisher = { key: string; label: string; count: number }
 import { useAuthStore } from '../../store/authStore'
 import { useToastStore } from '../../components/Toast'
 import { JOB_CATEGORIES } from '../../types'
@@ -78,11 +81,13 @@ const SORT_OPTIONS = [
 
 type PanelId = 'emirate' | 'stack' | 'level' | 'type' | 'posted' | 'salary' | 'sort' | 'source'
 
-const SOURCE_OPTIONS = [
-  { value: 'linkedin',   label: 'LinkedIn'   },
-  { value: 'indeed',     label: 'Indeed'     },
-  { value: 'bayt',       label: 'Bayt'       },
-  { value: 'gulftalent', label: 'GulfTalent' },
+// Static fallback shown instantly while the dynamic list loads.
+// If a board accumulates > 5 jobs it will appear in the live list automatically.
+const SOURCE_FALLBACK: Publisher[] = [
+  { key: 'linkedin',   label: 'LinkedIn',   count: 0 },
+  { key: 'indeed',     label: 'Indeed',     count: 0 },
+  { key: 'bayt',       label: 'Bayt',       count: 0 },
+  { key: 'gulftalent', label: 'GulfTalent', count: 0 },
 ]
 
 // Brand colours
@@ -130,6 +135,14 @@ export default function JobBrowse() {
   const [salaryBucket,    setSalary]         = useState(() => searchParams.get('salary') ?? '')
   const [sortBy,          setSortBy]         = useState(() => searchParams.get('sort') ?? 'newest')
   const [sources,         setSources]        = useState<Set<string>>(() => new Set(searchParams.getAll('publisher')))
+
+  // dynamic publisher list — loaded once, falls back to static list while fetching
+  const [publishers, setPublishers] = useState<Publisher[]>(SOURCE_FALLBACK)
+  useEffect(() => {
+    jobsApi.publishers()
+      .then(({ data }) => { if (data.length > 0) setPublishers(data) })
+      .catch(() => {}) // graceful — static fallback stays in place
+  }, [])
 
   // data
   const [jobs,        setJobs]        = useState<Job[]>([])
@@ -264,7 +277,7 @@ export default function JobBrowse() {
     ...Array.from(jobCats).map(v  => ({ key: `c-${v}`, label: JOB_CATEGORIES.find(x => x.value === v)?.label ?? v, onRemove: () => setJobCats(toggleSet(jobCats, v)) })),
     ...Array.from(levels).map(v   => ({ key: `l-${v}`, label: LEVELS.find(x => x.value === v)?.label ?? v,         onRemove: () => setLevels(toggleSet(levels, v)) })),
     ...Array.from(jobTypes).map(v => ({ key: `t-${v}`, label: JOB_TYPES.find(x => x.value === v)?.label ?? v,      onRemove: () => setJobTypes(toggleSet(jobTypes, v)) })),
-    ...Array.from(sources).map(v  => ({ key: `s-${v}`, label: SOURCE_OPTIONS.find(x => x.value === v)?.label ?? v, onRemove: () => setSources(toggleSet(sources, v)) })),
+    ...Array.from(sources).map(v  => ({ key: `s-${v}`, label: publishers.find(p => p.key === v)?.label ?? v, onRemove: () => setSources(toggleSet(sources, v)) })),
     ...(posted       ? [{ key: 'posted', label: POSTED_OPTIONS.find(x => x.value === posted)?.label  ?? posted,  onRemove: () => setPosted('')  }] : []),
     ...(salaryBucket ? [{ key: 'sal',    label: SALARY_OPTIONS.find(x => x.value === salaryBucket)?.label ?? salaryBucket, onRemove: () => setSalary('') }] : []),
   ]
@@ -282,6 +295,7 @@ export default function JobBrowse() {
     salaryBucket, onSalaryChange: setSalary,
     sortBy, onSortChange: setSortBy,
     sources, onSourcesChange: setSources,
+    publishers,
     chips, activeCount, total, loading: jobsLoading,
     onClearAll: clearAll, hasFilters,
   }
@@ -378,6 +392,7 @@ interface SharedFilterProps {
   salaryBucket: string;      onSalaryChange: (v: string) => void
   sortBy: string;            onSortChange: (v: string) => void
   sources: Set<string>;      onSourcesChange: (s: Set<string>) => void
+  publishers: Publisher[]
   chips: { key: string; label: string; onRemove: () => void }[]
   activeCount: number; hasFilters: boolean
   total: number; loading: boolean; onClearAll: () => void
@@ -391,7 +406,7 @@ function FilterBar(props: SharedFilterProps & { onMobileOpen: () => void }) {
     levels, onLevelsChange, jobTypes, onJobTypesChange,
     posted, onPostedChange, salaryBucket, onSalaryChange,
     sortBy, onSortChange,
-    sources, onSourcesChange,
+    sources, onSourcesChange, publishers,
     chips, activeCount, hasFilters, total, loading,
     onClearAll, onMobileOpen,
   } = props
@@ -482,7 +497,11 @@ function FilterBar(props: SharedFilterProps & { onMobileOpen: () => void }) {
           </FilterDropdown>
 
           <FilterDropdown label="Source"   count={sources.size}         open={openPanel === 'source'}  onToggle={() => tog('source')}  onClose={close}>
-            <CheckboxPanel options={SOURCE_OPTIONS} selected={sources} onToggle={v => onSourcesChange(toggleSet(sources, v))} />
+            <CheckboxPanel
+              options={publishers.map(p => ({ value: p.key, label: p.label }))}
+              selected={sources}
+              onToggle={v => onSourcesChange(toggleSet(sources, v))}
+            />
           </FilterDropdown>
 
           <Sep />
@@ -556,7 +575,7 @@ function MobileFilterSheet(props: SharedFilterProps & { open: boolean; onClose: 
     levels, onLevelsChange, jobTypes, onJobTypesChange,
     posted, onPostedChange, salaryBucket, onSalaryChange,
     sortBy, onSortChange,
-    sources, onSourcesChange,
+    sources, onSourcesChange, publishers,
     total, loading, onClearAll, activeCount,
   } = props
 
@@ -626,12 +645,12 @@ function MobileFilterSheet(props: SharedFilterProps & { open: boolean; onClose: 
 
           <SheetSection label="Source">
             <div className="grid grid-cols-2 gap-2">
-              {SOURCE_OPTIONS.map(({ value, label }) => (
-                <label key={value}
+              {publishers.map(({ key, label }) => (
+                <label key={key}
                   className="flex items-center gap-2.5 p-2.5 border cursor-pointer transition-colors rounded"
-                  style={sources.has(value) ? { borderColor: PINK, background: PINK_BG } : { borderColor: '#E5E7EB' }}>
-                  <input type="checkbox" checked={sources.has(value)} onChange={() => onSourcesChange(toggleSet(sources, value))} />
-                  <span className="text-sm font-medium" style={{ color: sources.has(value) ? PINK : '#374151' }}>{label}</span>
+                  style={sources.has(key) ? { borderColor: PINK, background: PINK_BG } : { borderColor: '#E5E7EB' }}>
+                  <input type="checkbox" checked={sources.has(key)} onChange={() => onSourcesChange(toggleSet(sources, key))} />
+                  <span className="text-sm font-medium" style={{ color: sources.has(key) ? PINK : '#374151' }}>{label}</span>
                 </label>
               ))}
             </div>
