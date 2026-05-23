@@ -84,7 +84,9 @@ const PINK_BG   = '#FDF2F8'
 const PINK_RING = '#FBCFE8'
 
 function toggleSet<T>(set: Set<T>, v: T): Set<T> {
-  const n = new Set(set); n.has(v) ? n.delete(v) : n.add(v); return n
+  const n = new Set(set)
+  if (n.has(v)) { n.delete(v) } else { n.add(v) }
+  return n
 }
 function salaryRange(b: string): [number, number | null] {
   const m: Record<string, [number, number | null]> = {
