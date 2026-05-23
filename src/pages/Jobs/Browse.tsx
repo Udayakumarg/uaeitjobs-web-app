@@ -527,10 +527,10 @@ function MobileFilterSheet(props: SharedFilterProps & { open: boolean; onClose: 
           </SheetSection>
 
           <SheetSection label="Experience Level">
-            <div className="grid grid-cols-2 gap-1.5">
+            <div className="flex flex-wrap gap-1.5">
               {LEVELS.map(({ value, label }) => (
                 <button key={value} onClick={() => onLevelsChange(toggleSet(levels, value))}
-                  className="flex h-9 items-center justify-center rounded-lg border font-mono text-[10px] font-bold uppercase tracking-[0.12em] transition-colors"
+                  className="inline-flex h-9 items-center whitespace-nowrap rounded-lg border px-3.5 font-sans text-[13px] font-medium transition-colors"
                   style={levels.has(value) ? { background: PINK, color: '#fff', borderColor: PINK } : { borderColor: '#E5E7EB', color: '#374151', background: '#fff' }}>
                   {label}
                 </button>
@@ -539,10 +539,10 @@ function MobileFilterSheet(props: SharedFilterProps & { open: boolean; onClose: 
           </SheetSection>
 
           <SheetSection label="Job Type">
-            <div className="grid grid-cols-2 gap-1.5">
+            <div className="flex flex-wrap gap-1.5">
               {JOB_TYPES.map(({ value, label }) => (
                 <button key={value} onClick={() => onJobTypesChange(toggleSet(jobTypes, value))}
-                  className="flex h-9 items-center justify-center rounded-lg border font-mono text-[10px] font-bold uppercase tracking-[0.12em] transition-colors"
+                  className="inline-flex h-9 items-center whitespace-nowrap rounded-lg border px-3.5 font-sans text-[13px] font-medium transition-colors"
                   style={jobTypes.has(value) ? { background: PINK, color: '#fff', borderColor: PINK } : { borderColor: '#E5E7EB', color: '#374151', background: '#fff' }}>
                   {label}
                 </button>
@@ -559,8 +559,7 @@ function MobileFilterSheet(props: SharedFilterProps & { open: boolean; onClose: 
                     style={posted === value ? { borderColor: PINK, background: PINK } : { borderColor: '#D1D5DB', background: '#fff' }}>
                     {posted === value && <span className="h-1.5 w-1.5 rounded-full bg-white" />}
                   </span>
-                  <span className="font-mono text-[11px] font-bold uppercase tracking-[0.12em]"
-                    style={{ color: posted === value ? PINK : '#374151' }}>
+                  <span className="font-sans text-[13px] font-medium" style={{ color: posted === value ? PINK : '#374151' }}>
                     {label}
                   </span>
                 </button>
@@ -577,8 +576,7 @@ function MobileFilterSheet(props: SharedFilterProps & { open: boolean; onClose: 
                     style={salaryBucket === value ? { borderColor: PINK, background: PINK } : { borderColor: '#D1D5DB', background: '#fff' }}>
                     {salaryBucket === value && <span className="h-1.5 w-1.5 rounded-full bg-white" />}
                   </span>
-                  <span className="font-mono text-[11px] font-bold uppercase tracking-[0.12em]"
-                    style={{ color: salaryBucket === value ? PINK : '#374151' }}>
+                  <span className="font-sans text-[13px] font-medium" style={{ color: salaryBucket === value ? PINK : '#374151' }}>
                     {label}
                   </span>
                 </button>
@@ -596,7 +594,7 @@ function MobileFilterSheet(props: SharedFilterProps & { open: boolean; onClose: 
                 style={remoteOnly ? { borderColor: PINK, background: PINK } : { borderColor: '#D1D5DB', background: '#fff' }}>
                 {remoteOnly && <span className="h-1.5 w-1.5 rounded-full bg-white" />}
               </span>
-              <span className="font-mono text-[11px] font-bold uppercase tracking-[0.12em]">Remote UAE only</span>
+              <span className="font-sans text-[13px] font-medium">Remote UAE only</span>
             </button>
           </SheetSection>
 
@@ -609,8 +607,7 @@ function MobileFilterSheet(props: SharedFilterProps & { open: boolean; onClose: 
                     style={sortBy === value ? { borderColor: PINK, background: PINK } : { borderColor: '#D1D5DB', background: '#fff' }}>
                     {sortBy === value && <span className="h-1.5 w-1.5 rounded-full bg-white" />}
                   </span>
-                  <span className="font-mono text-[11px] font-bold uppercase tracking-[0.12em]"
-                    style={{ color: sortBy === value ? PINK : '#374151' }}>
+                  <span className="font-sans text-[13px] font-medium" style={{ color: sortBy === value ? PINK : '#374151' }}>
                     {label}
                   </span>
                 </button>
@@ -696,20 +693,20 @@ function CheckboxPanel({ options, selected, onToggle }: {
 }
 
 // ── PillPanel — multi-select ──────────────────────────────────────────────────
-// 2-column grid so pills align cleanly regardless of label length.
-// Uses the same mono-uppercase typographic voice as the rest of the app.
+// Flex-wrap so each pill sizes to its own content — no grid truncation.
+// font-sans keeps it readable; whitespace-nowrap prevents mid-label breaks.
 function PillPanel({ options, selected, onToggle }: {
   options: { value: string; label: string }[]; selected: Set<string>; onToggle: (v: string) => void
 }) {
   return (
-    <div className="p-2.5 grid grid-cols-2 gap-1.5" style={{ minWidth: 248 }}>
+    <div className="flex flex-wrap gap-1.5 p-3" style={{ minWidth: 240 }}>
       {options.map(({ value, label }) => {
         const on = selected.has(value)
         return (
           <button
             key={value}
             onClick={() => onToggle(value)}
-            className="flex h-8 items-center justify-center rounded-lg border font-mono text-[10px] font-bold uppercase tracking-[0.12em] transition-colors"
+            className="inline-flex h-8 items-center whitespace-nowrap rounded-lg border px-3.5 font-sans text-[13px] font-medium transition-colors"
             style={on
               ? { background: PINK, color: '#fff', borderColor: PINK }
               : { background: '#fff', color: '#374151', borderColor: '#E5E7EB' }}
@@ -725,8 +722,7 @@ function PillPanel({ options, selected, onToggle }: {
 }
 
 // ── RadioPanel — single-select ────────────────────────────────────────────────
-// Rendered as a styled radio list (not pills) to make the single-select
-// semantics obvious and to keep a clean vertical scannable layout.
+// Styled radio list — clearer single-select semantics than pills.
 function RadioPanel({ options, selected, onSelect }: {
   options: { value: string; label: string }[]; selected: string; onSelect: (v: string) => void
 }) {
@@ -740,7 +736,6 @@ function RadioPanel({ options, selected, onSelect }: {
             onClick={() => onSelect(on ? '' : value)}
             className="flex w-full items-center gap-3 px-4 py-2.5 transition-colors hover:bg-[#FAFAFA]"
           >
-            {/* Radio dot */}
             <span
               className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full border-2 transition-colors"
               style={on ? { borderColor: PINK, background: PINK } : { borderColor: '#D1D5DB', background: '#fff' }}
@@ -748,7 +743,7 @@ function RadioPanel({ options, selected, onSelect }: {
               {on && <span className="h-1.5 w-1.5 rounded-full bg-white" />}
             </span>
             <span
-              className="font-mono text-[11px] font-bold uppercase tracking-[0.12em] transition-colors"
+              className="font-sans text-[13px] font-medium transition-colors"
               style={{ color: on ? PINK : '#374151' }}
             >
               {label}
