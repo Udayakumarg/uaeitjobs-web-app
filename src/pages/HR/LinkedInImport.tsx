@@ -1,4 +1,4 @@
-import { AlertTriangle, CheckCircle2, Link2, Sparkles } from 'lucide-react'
+import { AlertTriangle, CheckCircle2, Link2, Loader2, Sparkles } from 'lucide-react'
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useToastStore } from '../../components/Toast'
@@ -115,6 +115,21 @@ export default function UrlImport() {
           {previewing ? 'Fetching…' : 'Preview'}
         </Button>
       </Card>
+
+      {/* ── Fetching indicator ──────────────────────────────────────── */}
+      {previewing && (
+        <Card className="mt-5">
+          <div className="flex items-center gap-3 text-slate-600" aria-live="polite" aria-busy="true">
+            <Loader2 size={20} className="shrink-0 animate-spin text-pink-600" />
+            <div>
+              <p className="font-medium text-slate-900">Fetching job details…</p>
+              <p className="mt-0.5 text-sm text-slate-500">
+                JavaScript-rendered pages may take a few seconds.
+              </p>
+            </div>
+          </div>
+        </Card>
+      )}
 
       {/* ── Step 2 — editable form ──────────────────────────────────── */}
       {preview && !imported && (
