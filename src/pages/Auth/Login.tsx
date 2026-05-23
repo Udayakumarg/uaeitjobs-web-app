@@ -64,7 +64,7 @@ export default function Login() {
       <section className="hidden lg:block">
         <div className="sticky top-24 rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
           <img src="/logo-full.png" alt="UAEITJOBS.com" className="mb-6 h-20 w-auto" />
-          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-indigo-700">Account access</p>
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-pink-700">Account access</p>
           <h1 className="mt-4 text-4xl font-semibold tracking-tight text-slate-950">
             Sign in to manage UAE technology hiring.
           </h1>
@@ -73,11 +73,11 @@ export default function Login() {
           </p>
           <div className="mt-8 grid gap-3 border-t border-slate-200 pt-6">
             <div className="flex items-center gap-3 text-sm font-medium text-slate-700">
-              <ShieldCheck className="h-5 w-5 text-indigo-700" />
+              <ShieldCheck className="h-5 w-5 text-pink-700" />
               Protected JWT session with refresh token handling
             </div>
             <div className="flex items-center gap-3 text-sm font-medium text-slate-700">
-              <BriefcaseBusiness className="h-5 w-5 text-indigo-700" />
+              <BriefcaseBusiness className="h-5 w-5 text-pink-700" />
               Separate dashboards for job seekers and HR teams
             </div>
           </div>
@@ -86,7 +86,7 @@ export default function Login() {
 
       <Card className="animate-fade-in-up border-slate-200 p-6 shadow-lg shadow-slate-950/5 sm:p-8">
         <div className="mb-6">
-          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-indigo-700">Welcome back</p>
+          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-pink-700">Welcome back</p>
           <h2 className="mt-2 text-3xl font-semibold text-slate-950">Sign in</h2>
           <p className="mt-2 text-sm text-slate-600">Use your registered email and password.</p>
         </div>
@@ -112,7 +112,7 @@ export default function Login() {
           </Field>
 
           <label className="inline-flex items-center gap-2 text-sm text-slate-700">
-            <input type="checkbox" className="h-4 w-4 rounded border-slate-300 text-indigo-700 focus:ring-indigo-600" {...register('remember')} />
+            <input type="checkbox" className="h-4 w-4 rounded border-slate-300 text-pink-700 focus:ring-pink-600" {...register('remember')} />
             Remember me
           </label>
 
@@ -130,7 +130,7 @@ export default function Login() {
 
           <p className="text-center text-sm text-slate-600">
             New here?{' '}
-            <Link className="font-semibold text-indigo-700 hover:text-indigo-800" to="/register">
+            <Link className="font-semibold text-pink-700 hover:text-pink-800" to="/register">
               Create an account
             </Link>
           </p>
