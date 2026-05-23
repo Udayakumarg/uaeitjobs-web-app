@@ -178,4 +178,14 @@ export const hrApi = {
   applicants: (jobId: number, page = 0, size = 20) => api.get<Page<Application>>(`/hr/jobs/${jobId}/applicants`, { params: { page, size } }),
   updateApplication: (id: number, status: ApplicationStatus) => api.patch<Application>(`/applications/${id}`, { status }),
   importLinkedIn: (linkedInUrl: string) => api.post<Job>('/linkedin-import', { linkedInUrl }),
+  /** Preview-only: fetch and parse a job URL. Never saves. Returns partial data for JS-rendered pages. */
+  importPreview: (url: string) => api.post<{
+    title: string | null
+    companyName: string | null
+    description: string | null
+    locationUae: string | null
+    applyUrl: string
+    complete: boolean
+    message: string | null
+  }>('/hr/jobs/import-preview', { url }),
 }
