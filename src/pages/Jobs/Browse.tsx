@@ -525,11 +525,11 @@ function MobileFilterSheet(props: SharedFilterProps & { open: boolean; onClose: 
           </SheetSection>
 
           <SheetSection label="Experience Level">
-            <div className="flex flex-wrap gap-2">
+            <div className="grid grid-cols-2 gap-1.5">
               {LEVELS.map(({ value, label }) => (
                 <button key={value} onClick={() => onLevelsChange(toggleSet(levels, value))}
-                  className="px-4 py-2 border rounded text-sm font-medium transition-colors"
-                  style={levels.has(value) ? { background: PINK, color: '#fff', borderColor: PINK } : { borderColor: '#E5E7EB', color: '#374151' }}>
+                  className="flex h-9 items-center justify-center rounded-lg border font-mono text-[10px] font-bold uppercase tracking-[0.12em] transition-colors"
+                  style={levels.has(value) ? { background: PINK, color: '#fff', borderColor: PINK } : { borderColor: '#E5E7EB', color: '#374151', background: '#fff' }}>
                   {label}
                 </button>
               ))}
@@ -537,11 +537,11 @@ function MobileFilterSheet(props: SharedFilterProps & { open: boolean; onClose: 
           </SheetSection>
 
           <SheetSection label="Job Type">
-            <div className="flex flex-wrap gap-2">
+            <div className="grid grid-cols-2 gap-1.5">
               {JOB_TYPES.map(({ value, label }) => (
                 <button key={value} onClick={() => onJobTypesChange(toggleSet(jobTypes, value))}
-                  className="px-4 py-2 border rounded text-sm font-medium transition-colors"
-                  style={jobTypes.has(value) ? { background: PINK, color: '#fff', borderColor: PINK } : { borderColor: '#E5E7EB', color: '#374151' }}>
+                  className="flex h-9 items-center justify-center rounded-lg border font-mono text-[10px] font-bold uppercase tracking-[0.12em] transition-colors"
+                  style={jobTypes.has(value) ? { background: PINK, color: '#fff', borderColor: PINK } : { borderColor: '#E5E7EB', color: '#374151', background: '#fff' }}>
                   {label}
                 </button>
               ))}
@@ -549,24 +549,36 @@ function MobileFilterSheet(props: SharedFilterProps & { open: boolean; onClose: 
           </SheetSection>
 
           <SheetSection label="Date Posted">
-            <div className="flex flex-wrap gap-2">
+            <div className="grid gap-0.5">
               {POSTED_OPTIONS.map(({ value, label }) => (
                 <button key={value} onClick={() => onPostedChange(posted === value ? '' : value)}
-                  className="px-4 py-2 border rounded text-sm font-medium transition-colors"
-                  style={posted === value ? { background: PINK, color: '#fff', borderColor: PINK } : { borderColor: '#E5E7EB', color: '#374151' }}>
-                  {label}
+                  className="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors hover:bg-[#FAFAFA]">
+                  <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full border-2 transition-colors"
+                    style={posted === value ? { borderColor: PINK, background: PINK } : { borderColor: '#D1D5DB', background: '#fff' }}>
+                    {posted === value && <span className="h-1.5 w-1.5 rounded-full bg-white" />}
+                  </span>
+                  <span className="font-mono text-[11px] font-bold uppercase tracking-[0.12em]"
+                    style={{ color: posted === value ? PINK : '#374151' }}>
+                    {label}
+                  </span>
                 </button>
               ))}
             </div>
           </SheetSection>
 
           <SheetSection label="Salary (AED / month)">
-            <div className="flex flex-wrap gap-2">
+            <div className="grid gap-0.5">
               {SALARY_OPTIONS.map(({ value, label }) => (
                 <button key={value} onClick={() => onSalaryChange(salaryBucket === value ? '' : value)}
-                  className="px-4 py-2 border rounded text-sm font-medium transition-colors"
-                  style={salaryBucket === value ? { background: PINK, color: '#fff', borderColor: PINK } : { borderColor: '#E5E7EB', color: '#374151' }}>
-                  {label}
+                  className="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors hover:bg-[#FAFAFA]">
+                  <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full border-2 transition-colors"
+                    style={salaryBucket === value ? { borderColor: PINK, background: PINK } : { borderColor: '#D1D5DB', background: '#fff' }}>
+                    {salaryBucket === value && <span className="h-1.5 w-1.5 rounded-full bg-white" />}
+                  </span>
+                  <span className="font-mono text-[11px] font-bold uppercase tracking-[0.12em]"
+                    style={{ color: salaryBucket === value ? PINK : '#374151' }}>
+                    {label}
+                  </span>
                 </button>
               ))}
             </div>
@@ -575,21 +587,30 @@ function MobileFilterSheet(props: SharedFilterProps & { open: boolean; onClose: 
           <SheetSection label="Work Mode">
             <button
               onClick={() => onRemoteChange(!remoteOnly)}
-              className="flex items-center gap-2 px-4 py-2.5 border rounded text-sm font-medium transition-colors w-full"
-              style={remoteOnly ? { background: PINK_BG, borderColor: PINK, color: PINK } : { borderColor: '#E5E7EB', color: '#374151' }}
+              className="flex items-center gap-3 w-full px-3 py-2.5 rounded-lg border transition-colors"
+              style={remoteOnly ? { background: PINK_BG, borderColor: PINK_RING, color: PINK } : { borderColor: '#E5E7EB', color: '#374151', background: '#fff' }}
             >
-              🌐 <span>Remote UAE only</span>
-              {remoteOnly && <span className="ml-auto">✓</span>}
+              <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full border-2 transition-colors"
+                style={remoteOnly ? { borderColor: PINK, background: PINK } : { borderColor: '#D1D5DB', background: '#fff' }}>
+                {remoteOnly && <span className="h-1.5 w-1.5 rounded-full bg-white" />}
+              </span>
+              <span className="font-mono text-[11px] font-bold uppercase tracking-[0.12em]">Remote UAE only</span>
             </button>
           </SheetSection>
 
           <SheetSection label="Sort By">
-            <div className="flex flex-wrap gap-2">
+            <div className="grid gap-0.5">
               {SORT_OPTIONS.map(({ value, label }) => (
                 <button key={value} onClick={() => onSortChange(value)}
-                  className="px-4 py-2 border rounded text-sm font-medium transition-colors"
-                  style={sortBy === value ? { background: PINK, color: '#fff', borderColor: PINK } : { borderColor: '#E5E7EB', color: '#374151' }}>
-                  {label}
+                  className="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors hover:bg-[#FAFAFA]">
+                  <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full border-2 transition-colors"
+                    style={sortBy === value ? { borderColor: PINK, background: PINK } : { borderColor: '#D1D5DB', background: '#fff' }}>
+                    {sortBy === value && <span className="h-1.5 w-1.5 rounded-full bg-white" />}
+                  </span>
+                  <span className="font-mono text-[11px] font-bold uppercase tracking-[0.12em]"
+                    style={{ color: sortBy === value ? PINK : '#374151' }}>
+                    {label}
+                  </span>
                 </button>
               ))}
             </div>
@@ -673,49 +694,66 @@ function CheckboxPanel({ options, selected, onToggle }: {
 }
 
 // ── PillPanel — multi-select ──────────────────────────────────────────────────
+// 2-column grid so pills align cleanly regardless of label length.
+// Uses the same mono-uppercase typographic voice as the rest of the app.
 function PillPanel({ options, selected, onToggle }: {
   options: { value: string; label: string }[]; selected: Set<string>; onToggle: (v: string) => void
 }) {
   return (
-    <div className="p-3 flex flex-wrap gap-2" style={{ minWidth: 260 }}>
-      {options.map(({ value, label }) => (
-        <button
-          key={value}
-          onClick={() => onToggle(value)}
-          className="px-3.5 py-2 text-xs font-semibold border rounded-md transition-colors"
-          style={selected.has(value)
-            ? { background: PINK, color: '#fff', borderColor: PINK }
-            : { background: '#fff', color: '#374151', borderColor: '#E5E7EB' }}
-          onMouseEnter={e => { if (!selected.has(value)) { (e.currentTarget as HTMLButtonElement).style.borderColor = PINK; (e.currentTarget as HTMLButtonElement).style.color = PINK } }}
-          onMouseLeave={e => { if (!selected.has(value)) { (e.currentTarget as HTMLButtonElement).style.borderColor = '#E5E7EB'; (e.currentTarget as HTMLButtonElement).style.color = '#374151' } }}
-        >
-          {label}
-        </button>
-      ))}
+    <div className="p-2.5 grid grid-cols-2 gap-1.5" style={{ minWidth: 248 }}>
+      {options.map(({ value, label }) => {
+        const on = selected.has(value)
+        return (
+          <button
+            key={value}
+            onClick={() => onToggle(value)}
+            className="flex h-8 items-center justify-center rounded-lg border font-mono text-[10px] font-bold uppercase tracking-[0.12em] transition-colors"
+            style={on
+              ? { background: PINK, color: '#fff', borderColor: PINK }
+              : { background: '#fff', color: '#374151', borderColor: '#E5E7EB' }}
+            onMouseEnter={e => { if (!on) { const b = e.currentTarget as HTMLButtonElement; b.style.borderColor = PINK_RING; b.style.color = PINK; b.style.background = PINK_BG } }}
+            onMouseLeave={e => { if (!on) { const b = e.currentTarget as HTMLButtonElement; b.style.borderColor = '#E5E7EB'; b.style.color = '#374151'; b.style.background = '#fff' } }}
+          >
+            {label}
+          </button>
+        )
+      })}
     </div>
   )
 }
 
 // ── RadioPanel — single-select ────────────────────────────────────────────────
+// Rendered as a styled radio list (not pills) to make the single-select
+// semantics obvious and to keep a clean vertical scannable layout.
 function RadioPanel({ options, selected, onSelect }: {
   options: { value: string; label: string }[]; selected: string; onSelect: (v: string) => void
 }) {
   return (
-    <div className="p-3 flex flex-wrap gap-2" style={{ minWidth: 220 }}>
-      {options.map(({ value, label }) => (
-        <button
-          key={value}
-          onClick={() => onSelect(selected === value ? '' : value)}
-          className="px-3.5 py-2 text-xs font-semibold border rounded-md transition-colors"
-          style={selected === value
-            ? { background: PINK, color: '#fff', borderColor: PINK }
-            : { background: '#fff', color: '#374151', borderColor: '#E5E7EB' }}
-          onMouseEnter={e => { if (selected !== value) { (e.currentTarget as HTMLButtonElement).style.borderColor = PINK; (e.currentTarget as HTMLButtonElement).style.color = PINK } }}
-          onMouseLeave={e => { if (selected !== value) { (e.currentTarget as HTMLButtonElement).style.borderColor = '#E5E7EB'; (e.currentTarget as HTMLButtonElement).style.color = '#374151' } }}
-        >
-          {label}
-        </button>
-      ))}
+    <div className="py-1.5" style={{ minWidth: 180 }}>
+      {options.map(({ value, label }) => {
+        const on = selected === value
+        return (
+          <button
+            key={value}
+            onClick={() => onSelect(on ? '' : value)}
+            className="flex w-full items-center gap-3 px-4 py-2.5 transition-colors hover:bg-[#FAFAFA]"
+          >
+            {/* Radio dot */}
+            <span
+              className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full border-2 transition-colors"
+              style={on ? { borderColor: PINK, background: PINK } : { borderColor: '#D1D5DB', background: '#fff' }}
+            >
+              {on && <span className="h-1.5 w-1.5 rounded-full bg-white" />}
+            </span>
+            <span
+              className="font-mono text-[11px] font-bold uppercase tracking-[0.12em] transition-colors"
+              style={{ color: on ? PINK : '#374151' }}
+            >
+              {label}
+            </span>
+          </button>
+        )
+      })}
     </div>
   )
 }
