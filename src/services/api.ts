@@ -31,6 +31,14 @@ api.interceptors.request.use((config: InternalAxiosRequestConfig) => {
   return config
 })
 
+// ── Token-refresh de-duplication ─────────────────────────────────────────────
+// When the 15-min access token expires, every in-flight request receives 401
+// simultaneously. Without this guard each would fire its own /auth/refresh,
+// instantly exhausting the 5 req/min auth rate-limit bucket (thundering herd).
+// The shared promise ensures only ONE refresh call is in-flight at a time;
+// all other waiting requests reuse the same resolved token.
+let refreshPromise: Promise<string> | null = null
+
 api.interceptors.response.use(
   (response) => response,
   async (error: AxiosError) => {
@@ -40,20 +48,26 @@ api.interceptors.response.use(
     if (status === 401 && original && !original._retry && !original.url?.includes('/auth/refresh')) {
       original._retry = true
       try {
-        // Primary: the refresh_token httpOnly cookie is sent automatically.
-        // Legacy fallback: if the user still has a token in localStorage from
-        // a pre-cookie session, send it in the body so they don't get logged
-        // out on first page load after the upgrade. The backend accepts both.
-        const legacyToken = localStorage.getItem('uaeitjobs.refreshToken')
-        const body = legacyToken ? { refreshToken: legacyToken } : undefined
-        const { data } = await api.post<AuthResponse>('/auth/refresh', body)
-
-        // One-time migration: clear the legacy localStorage token now that
-        // the backend has issued a new cookie.
-        if (legacyToken) localStorage.removeItem('uaeitjobs.refreshToken')
-
-        useAuthStore.getState().setSession(data)
-        original.headers.Authorization = `Bearer ${data.accessToken}`
+        if (!refreshPromise) {
+          // Primary: the refresh_token httpOnly cookie is sent automatically.
+          // Legacy fallback: if the user still has a token in localStorage from
+          // a pre-cookie session, send it in the body so they don't get logged
+          // out on first page load after the upgrade. The backend accepts both.
+          const legacyToken = localStorage.getItem('uaeitjobs.refreshToken')
+          const body = legacyToken ? { refreshToken: legacyToken } : undefined
+          refreshPromise = api
+            .post<AuthResponse>('/auth/refresh', body)
+            .then(({ data }) => {
+              // One-time migration: clear the legacy localStorage token now that
+              // the backend has issued a new cookie.
+              if (legacyToken) localStorage.removeItem('uaeitjobs.refreshToken')
+              useAuthStore.getState().setSession(data)
+              return data.accessToken
+            })
+            .finally(() => { refreshPromise = null })
+        }
+        const newToken = await refreshPromise
+        original.headers.Authorization = `Bearer ${newToken}`
         return api(original)
       } catch {
         useAuthStore.getState().logout()
