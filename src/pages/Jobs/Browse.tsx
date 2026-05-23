@@ -78,11 +78,26 @@ const SORT_OPTIONS = [
 
 type PanelId = 'emirate' | 'stack' | 'level' | 'type' | 'posted' | 'salary' | 'sort' | 'source'
 
-const SOURCE_OPTIONS = [
-  { value: 'linkedin', label: 'LinkedIn' },
-  { value: 'indeed',   label: 'Indeed'   },
-  { value: 'bayt',     label: 'Bayt'     },
+const SOURCE_GROUPS: { group: string; options: { value: string; label: string }[] }[] = [
+  {
+    group: 'Job Boards',
+    options: [
+      { value: 'linkedin',   label: 'LinkedIn'   },
+      { value: 'indeed',     label: 'Indeed'     },
+      { value: 'bayt',       label: 'Bayt'       },
+      { value: 'gulftalent', label: 'GulfTalent' },
+    ],
+  },
+  {
+    group: 'Aggregators',
+    options: [
+      { value: 'adzuna',    label: 'Adzuna'    },
+      { value: 'himalayas', label: 'Himalayas' },
+      { value: 'remoteok',  label: 'RemoteOK'  },
+    ],
+  },
 ]
+const SOURCE_OPTIONS = SOURCE_GROUPS.flatMap(g => g.options)
 
 // Brand colours
 const PINK      = '#BE185D'
@@ -125,8 +140,6 @@ export default function JobBrowse() {
   const [jobCats,         setJobCats]        = useState<Set<JobCategory>>(() => new Set(searchParams.getAll('category') as JobCategory[]))
   const [levels,          setLevels]         = useState<Set<string>>(() => new Set(searchParams.getAll('level')))
   const [jobTypes,        setJobTypes]       = useState<Set<string>>(() => new Set(searchParams.getAll('jobType')))
-  const [remoteOnly,      setRemoteOnly]     = useState(() => searchParams.get('remote') === '1')
-  const [immediateJoiner, setImmediateJoiner] = useState(() => searchParams.get('immediate') === '1')
   const [posted,          setPosted]         = useState(() => searchParams.get('posted') ?? '')
   const [salaryBucket,    setSalary]         = useState(() => searchParams.get('salary') ?? '')
   const [sortBy,          setSortBy]         = useState(() => searchParams.get('sort') ?? 'newest')
@@ -160,14 +173,12 @@ export default function JobBrowse() {
     jobCats.forEach(c      => p.append('category', c))
     levels.forEach(l       => p.append('level',    l))
     jobTypes.forEach(t     => p.append('jobType',  t))
-    if (remoteOnly)        p.set('remote',    '1')
-    if (immediateJoiner)   p.set('immediate', '1')
     if (posted)            p.set('posted',    posted)
     if (salaryBucket)      p.set('salary',    salaryBucket)
     if (sortBy !== 'newest') p.set('sort',    sortBy)
     sources.forEach(s      => p.append('publisher', s))
     setSearchParams(p, { replace: true })
-  }, [query, emirates, jobCats, levels, jobTypes, remoteOnly, immediateJoiner, posted, salaryBucket, sortBy, sources, setSearchParams])
+  }, [query, emirates, jobCats, levels, jobTypes, posted, salaryBucket, sortBy, sources, setSearchParams])
 
   // fetch — search + all filtering in a single DB round-trip via filterMulti.
   // The 'q' param drives plainto_tsquery full-text ranking server-side so
@@ -190,8 +201,6 @@ export default function JobBrowse() {
       ...(cArr.length           && { category:        cArr }),
       ...(lArr.length           && { experienceLevel: lArr }),
       ...(tArr.length           && { jobType:         tArr }),
-      ...(remoteOnly            && { remoteUae:       true }),
-      ...(immediateJoiner       && { immediateJoiner: true }),
       ...(posted                && { postedAfter:     new Date(Date.now() - postedAfterMs(posted)).toISOString() }),
       ...(salMin != null        && { salaryMin:       salMin }),
       ...(salMax != null        && { salaryMax:       salMax }),
@@ -213,7 +222,7 @@ export default function JobBrowse() {
       }
     }).catch(() => {}).finally(() => { if (ok) setJobsLoading(false) })
     return () => { ok = false }
-  }, [query, emirates, jobCats, levels, jobTypes, remoteOnly, immediateJoiner, posted, salaryBucket, sortBy, sources])
+  }, [query, emirates, jobCats, levels, jobTypes, posted, salaryBucket, sortBy, sources])
 
   useEffect(() => {
     if (!selectedId) return
@@ -236,7 +245,7 @@ export default function JobBrowse() {
 
   function clearAll() {
     setQuery(''); setEmirates(new Set()); setJobCats(new Set())
-    setLevels(new Set()); setJobTypes(new Set()); setRemoteOnly(false); setImmediateJoiner(false)
+    setLevels(new Set()); setJobTypes(new Set())
     setPosted(''); setSalary(''); setSortBy('newest'); setSources(new Set())
   }
 
@@ -270,8 +279,6 @@ export default function JobBrowse() {
     ...Array.from(levels).map(v   => ({ key: `l-${v}`, label: LEVELS.find(x => x.value === v)?.label ?? v,         onRemove: () => setLevels(toggleSet(levels, v)) })),
     ...Array.from(jobTypes).map(v => ({ key: `t-${v}`, label: JOB_TYPES.find(x => x.value === v)?.label ?? v,      onRemove: () => setJobTypes(toggleSet(jobTypes, v)) })),
     ...Array.from(sources).map(v  => ({ key: `s-${v}`, label: SOURCE_OPTIONS.find(x => x.value === v)?.label ?? v, onRemove: () => setSources(toggleSet(sources, v)) })),
-    ...(remoteOnly       ? [{ key: 'remote',    label: 'Remote',           onRemove: () => setRemoteOnly(false)     }] : []),
-    ...(immediateJoiner ? [{ key: 'immediate', label: 'Immediate Joiner', onRemove: () => setImmediateJoiner(false) }] : []),
     ...(posted       ? [{ key: 'posted', label: POSTED_OPTIONS.find(x => x.value === posted)?.label  ?? posted,  onRemove: () => setPosted('')  }] : []),
     ...(salaryBucket ? [{ key: 'sal',    label: SALARY_OPTIONS.find(x => x.value === salaryBucket)?.label ?? salaryBucket, onRemove: () => setSalary('') }] : []),
   ]
@@ -285,8 +292,6 @@ export default function JobBrowse() {
     jobCats, onJobCatsChange: setJobCats,
     levels, onLevelsChange: setLevels,
     jobTypes, onJobTypesChange: setJobTypes,
-    remoteOnly, onRemoteChange: setRemoteOnly,
-    immediateJoiner, onImmediateJoinerChange: setImmediateJoiner,
     posted, onPostedChange: setPosted,
     salaryBucket, onSalaryChange: setSalary,
     sortBy, onSortChange: setSortBy,
@@ -383,8 +388,6 @@ interface SharedFilterProps {
   jobCats: Set<JobCategory>; onJobCatsChange: (s: Set<JobCategory>) => void
   levels: Set<string>;       onLevelsChange: (s: Set<string>) => void
   jobTypes: Set<string>;     onJobTypesChange: (s: Set<string>) => void
-  remoteOnly: boolean;       onRemoteChange: (v: boolean) => void
-  immediateJoiner: boolean;  onImmediateJoinerChange: (v: boolean) => void
   posted: string;            onPostedChange: (v: string) => void
   salaryBucket: string;      onSalaryChange: (v: string) => void
   sortBy: string;            onSortChange: (v: string) => void
@@ -400,8 +403,6 @@ function FilterBar(props: SharedFilterProps & { onMobileOpen: () => void }) {
     query, onQueryChange,
     emirates, onEmiratesChange, jobCats, onJobCatsChange,
     levels, onLevelsChange, jobTypes, onJobTypesChange,
-    remoteOnly, onRemoteChange,
-    immediateJoiner, onImmediateJoinerChange,
     posted, onPostedChange, salaryBucket, onSalaryChange,
     sortBy, onSortChange,
     sources, onSourcesChange,
@@ -487,15 +488,15 @@ function FilterBar(props: SharedFilterProps & { onMobileOpen: () => void }) {
           </FilterDropdown>
 
           <FilterDropdown label="Level"    count={levels.size}          open={openPanel === 'level'}   onToggle={() => tog('level')}   onClose={close}>
-            <PillPanel options={LEVELS} selected={levels} onToggle={v => onLevelsChange(toggleSet(levels, v))} />
+            <CheckboxPanel options={LEVELS} selected={levels} onToggle={v => onLevelsChange(toggleSet(levels, v))} />
           </FilterDropdown>
 
           <FilterDropdown label="Job Type" count={jobTypes.size}        open={openPanel === 'type'}    onToggle={() => tog('type')}    onClose={close}>
-            <PillPanel options={JOB_TYPES} selected={jobTypes} onToggle={v => onJobTypesChange(toggleSet(jobTypes, v))} />
+            <CheckboxPanel options={JOB_TYPES} selected={jobTypes} onToggle={v => onJobTypesChange(toggleSet(jobTypes, v))} />
           </FilterDropdown>
 
           <FilterDropdown label="Source"   count={sources.size}         open={openPanel === 'source'}  onToggle={() => tog('source')}  onClose={close}>
-            <PillPanel options={SOURCE_OPTIONS} selected={sources} onToggle={v => onSourcesChange(toggleSet(sources, v))} />
+            <GroupedCheckboxPanel groups={SOURCE_GROUPS} selected={sources} onToggle={v => onSourcesChange(toggleSet(sources, v))} />
           </FilterDropdown>
 
           <Sep />
@@ -508,15 +509,6 @@ function FilterBar(props: SharedFilterProps & { onMobileOpen: () => void }) {
           <FilterDropdown label="Salary"   count={salaryBucket ? 1 : 0} open={openPanel === 'salary'}  onToggle={() => tog('salary')}  onClose={close}>
             <RadioPanel options={SALARY_OPTIONS} selected={salaryBucket} onSelect={onSalaryChange} />
           </FilterDropdown>
-
-          {/* Remote / Immediate toggles — same height, same border style */}
-          <QuickToggle active={remoteOnly} onToggle={() => onRemoteChange(!remoteOnly)}>
-            🌐 Remote
-          </QuickToggle>
-
-          <QuickToggle active={immediateJoiner} onToggle={() => onImmediateJoinerChange(!immediateJoiner)}>
-            ⚡ Immediate
-          </QuickToggle>
 
           <Sep />
 
@@ -576,8 +568,6 @@ function MobileFilterSheet(props: SharedFilterProps & { open: boolean; onClose: 
     open, onClose,
     emirates, onEmiratesChange, jobCats, onJobCatsChange,
     levels, onLevelsChange, jobTypes, onJobTypesChange,
-    remoteOnly, onRemoteChange,
-    immediateJoiner, onImmediateJoinerChange,
     posted, onPostedChange, salaryBucket, onSalaryChange,
     sortBy, onSortChange,
     sources, onSourcesChange,
@@ -649,15 +639,21 @@ function MobileFilterSheet(props: SharedFilterProps & { open: boolean; onClose: 
           </SheetSection>
 
           <SheetSection label="Source">
-            <div className="flex flex-wrap gap-1.5">
-              {SOURCE_OPTIONS.map(({ value, label }) => (
-                <button key={value} onClick={() => onSourcesChange(toggleSet(sources, value))}
-                  className="inline-flex h-9 items-center whitespace-nowrap rounded-lg border px-3.5 font-sans text-[13px] font-medium transition-colors"
-                  style={sources.has(value) ? { background: PINK, color: '#fff', borderColor: PINK } : { borderColor: '#E5E7EB', color: '#374151', background: '#fff' }}>
-                  {label}
-                </button>
-              ))}
-            </div>
+            {SOURCE_GROUPS.map(({ group, options }) => (
+              <div key={group} className="mb-3 last:mb-0">
+                <p className="font-mono text-[9px] font-bold uppercase tracking-[0.14em] text-gray-400 mb-2">{group}</p>
+                <div className="grid grid-cols-2 gap-2">
+                  {options.map(({ value, label }) => (
+                    <label key={value}
+                      className="flex items-center gap-2.5 p-2.5 border cursor-pointer transition-colors rounded"
+                      style={sources.has(value) ? { borderColor: PINK, background: PINK_BG } : { borderColor: '#E5E7EB' }}>
+                      <input type="checkbox" checked={sources.has(value)} onChange={() => onSourcesChange(toggleSet(sources, value))} />
+                      <span className="text-sm font-medium" style={{ color: sources.has(value) ? PINK : '#374151' }}>{label}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+            ))}
           </SheetSection>
 
           <SheetSection label="Date Posted">
@@ -691,33 +687,6 @@ function MobileFilterSheet(props: SharedFilterProps & { open: boolean; onClose: 
                   </span>
                 </button>
               ))}
-            </div>
-          </SheetSection>
-
-          <SheetSection label="Work Mode">
-            <div className="space-y-2">
-              <button
-                onClick={() => onRemoteChange(!remoteOnly)}
-                className="flex items-center gap-3 w-full px-3 py-2.5 rounded-lg border transition-colors"
-                style={remoteOnly ? { background: PINK_BG, borderColor: PINK_RING, color: PINK } : { borderColor: '#E5E7EB', color: '#374151', background: '#fff' }}
-              >
-                <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full border-2 transition-colors"
-                  style={remoteOnly ? { borderColor: PINK, background: PINK } : { borderColor: '#D1D5DB', background: '#fff' }}>
-                  {remoteOnly && <span className="h-1.5 w-1.5 rounded-full bg-white" />}
-                </span>
-                <span className="font-sans text-[13px] font-medium">Remote UAE only</span>
-              </button>
-              <button
-                onClick={() => onImmediateJoinerChange(!immediateJoiner)}
-                className="flex items-center gap-3 w-full px-3 py-2.5 rounded-lg border transition-colors"
-                style={immediateJoiner ? { background: PINK_BG, borderColor: PINK_RING, color: PINK } : { borderColor: '#E5E7EB', color: '#374151', background: '#fff' }}
-              >
-                <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full border-2 transition-colors"
-                  style={immediateJoiner ? { borderColor: PINK, background: PINK } : { borderColor: '#D1D5DB', background: '#fff' }}>
-                  {immediateJoiner && <span className="h-1.5 w-1.5 rounded-full bg-white" />}
-                </span>
-                <span className="font-sans text-[13px] font-medium">⚡ Immediate joiner only</span>
-              </button>
             </div>
           </SheetSection>
 
@@ -821,31 +790,25 @@ function CheckboxPanel({ options, selected, onToggle }: {
   )
 }
 
-// ── PillPanel — multi-select ──────────────────────────────────────────────────
-// Flex-wrap so each pill sizes to its own content — no grid truncation.
-// font-sans keeps it readable; whitespace-nowrap prevents mid-label breaks.
-function PillPanel({ options, selected, onToggle }: {
-  options: { value: string; label: string }[]; selected: Set<string>; onToggle: (v: string) => void
+// ── GroupedCheckboxPanel — checkbox list with group headings ─────────────────
+function GroupedCheckboxPanel({ groups, selected, onToggle }: {
+  groups: { group: string; options: { value: string; label: string }[] }[]
+  selected: Set<string>
+  onToggle: (v: string) => void
 }) {
   return (
-    <div className="flex flex-wrap gap-1.5 p-3" style={{ minWidth: 240 }}>
-      {options.map(({ value, label }) => {
-        const on = selected.has(value)
-        return (
-          <button
-            key={value}
-            onClick={() => onToggle(value)}
-            className="inline-flex h-8 items-center whitespace-nowrap rounded-lg border px-3.5 font-sans text-[13px] font-medium transition-colors"
-            style={on
-              ? { background: PINK, color: '#fff', borderColor: PINK }
-              : { background: '#fff', color: '#374151', borderColor: '#E5E7EB' }}
-            onMouseEnter={e => { if (!on) { const b = e.currentTarget as HTMLButtonElement; b.style.borderColor = PINK_RING; b.style.color = PINK; b.style.background = PINK_BG } }}
-            onMouseLeave={e => { if (!on) { const b = e.currentTarget as HTMLButtonElement; b.style.borderColor = '#E5E7EB'; b.style.color = '#374151'; b.style.background = '#fff' } }}
-          >
-            {label}
-          </button>
-        )
-      })}
+    <div className="py-1.5 max-h-[320px] overflow-y-auto" style={{ minWidth: 180 }}>
+      {groups.map(({ group, options }) => (
+        <div key={group}>
+          <div className="px-4 pt-2.5 pb-1 font-mono text-[9px] font-bold uppercase tracking-[0.14em] text-gray-400">{group}</div>
+          {options.map(({ value, label }) => (
+            <label key={value} className="flex items-center gap-2.5 px-4 py-2.5 cursor-pointer hover:bg-[#FAFAFA] transition-colors">
+              <input type="checkbox" checked={selected.has(value)} onChange={() => onToggle(value)} />
+              <span className="text-xs transition-colors" style={{ color: selected.has(value) ? PINK : '#374151', fontWeight: selected.has(value) ? 600 : 400 }}>{label}</span>
+            </label>
+          ))}
+        </div>
+      ))}
     </div>
   )
 }
@@ -881,23 +844,6 @@ function RadioPanel({ options, selected, onSelect }: {
         )
       })}
     </div>
-  )
-}
-
-// ── QuickToggle ───────────────────────────────────────────────────────────────
-function QuickToggle({ active, onToggle, children }: { active: boolean; onToggle: () => void; children: React.ReactNode }) {
-  return (
-    <button
-      onClick={onToggle}
-      className="inline-flex h-9 items-center gap-1.5 rounded-lg border px-3.5 font-sans text-[13px] font-medium transition-all shrink-0"
-      style={active
-        ? { background: PINK, color: '#fff', borderColor: PINK }
-        : { background: '#fff', color: '#374151', borderColor: '#E5E7EB' }}
-      onMouseEnter={e => { if (!active) { const b = e.currentTarget as HTMLButtonElement; b.style.borderColor = '#9CA3AF'; b.style.color = '#111827'; b.style.background = '#F9FAFB' } }}
-      onMouseLeave={e => { if (!active) { const b = e.currentTarget as HTMLButtonElement; b.style.borderColor = '#E5E7EB'; b.style.color = '#374151'; b.style.background = '#fff' } }}
-    >
-      {children}
-    </button>
   )
 }
 
