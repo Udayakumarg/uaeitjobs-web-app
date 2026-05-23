@@ -141,7 +141,7 @@ export default function JobBrowse() {
   // saved job IDs — optimistically maintained; loaded once when user logs in
   const [savedIds, setSavedIds]   = useState<Set<number>>(new Set())
   const savedIdsRef               = useRef<Set<number>>(new Set())
-  savedIdsRef.current             = savedIds
+  useEffect(() => { savedIdsRef.current = savedIds }, [savedIds])
 
   // fetch — search + all filtering in a single DB round-trip via filterMulti.
   // The 'q' param drives plainto_tsquery full-text ranking server-side so
@@ -218,13 +218,13 @@ export default function JobBrowse() {
     if (user.userType !== 'job_seeker') return
     const wasSaved = savedIdsRef.current.has(id)
     // Optimistic update
-    setSavedIds(prev => { const n = new Set(prev); wasSaved ? n.delete(id) : n.add(id); return n })
+    setSavedIds(prev => { const n = new Set(prev); if (wasSaved) n.delete(id); else n.add(id); return n })
     try {
       if (wasSaved) { await seekerApi.unsaveJob(id); toast({ type: 'success', title: 'Removed from saved' }) }
       else          { await seekerApi.saveJob(id);   toast({ type: 'success', title: 'Saved' }) }
     } catch (err) {
       // Revert on failure
-      setSavedIds(prev => { const n = new Set(prev); wasSaved ? n.add(id) : n.delete(id); return n })
+      setSavedIds(prev => { const n = new Set(prev); if (wasSaved) n.add(id); else n.delete(id); return n })
       toast({ type: 'error', title: 'Could not save', message: errorMessage(err) })
     }
   }, [user]) // eslint-disable-line react-hooks/exhaustive-deps

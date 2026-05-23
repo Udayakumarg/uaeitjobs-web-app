@@ -65,6 +65,11 @@ function setJsonLd(payload: DocumentMeta['jsonLd']) {
 }
 
 export function useDocumentMeta(meta: DocumentMeta) {
+  // Stable string key derived from jsonLd — avoids both the "complex expression
+  // in deps" warning and the "missing meta.jsonLd dep" warning by keeping the
+  // object reference out of the deps array entirely.
+  const jsonLdKey = JSON.stringify(meta.jsonLd ?? null)
+
   useEffect(() => {
     const fullTitle = meta.raw ? meta.title : `${meta.title}${SUFFIX}`
     document.title = fullTitle
@@ -81,7 +86,7 @@ export function useDocumentMeta(meta: DocumentMeta) {
     setMetaTag('name', 'twitter:image', meta.image ?? DEFAULT_IMAGE)
     setLink('canonical', meta.canonical ?? window.location.href)
 
-    setJsonLd(meta.jsonLd)
+    setJsonLd((JSON.parse(jsonLdKey) ?? undefined) as DocumentMeta['jsonLd'])
 
     return () => {
       // Per-page JSON-LD should not leak into the next route
@@ -93,6 +98,6 @@ export function useDocumentMeta(meta: DocumentMeta) {
     meta.image,
     meta.canonical,
     meta.raw,
-    JSON.stringify(meta.jsonLd ?? null),
+    jsonLdKey,
   ])
 }
