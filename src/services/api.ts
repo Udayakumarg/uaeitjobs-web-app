@@ -119,6 +119,7 @@ export interface FilterMultiParams {
   salaryMin?: number
   salaryMax?: number
   sort?: string
+  publisher?: string[]
   page?: number
   size?: number
 }

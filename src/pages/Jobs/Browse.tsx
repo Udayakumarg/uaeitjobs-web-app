@@ -76,7 +76,13 @@ const SORT_OPTIONS = [
   { value: 'salary_low',  label: 'Salary: Low ↑'  },
 ]
 
-type PanelId = 'emirate' | 'stack' | 'level' | 'type' | 'posted' | 'salary' | 'sort'
+type PanelId = 'emirate' | 'stack' | 'level' | 'type' | 'posted' | 'salary' | 'sort' | 'source'
+
+const SOURCE_OPTIONS = [
+  { value: 'linkedin', label: 'LinkedIn' },
+  { value: 'indeed',   label: 'Indeed'   },
+  { value: 'bayt',     label: 'Bayt'     },
+]
 
 // Brand colours
 const PINK      = '#BE185D'
@@ -123,6 +129,7 @@ export default function JobBrowse() {
   const [posted,       setPosted]      = useState('')
   const [salaryBucket, setSalary]      = useState('')
   const [sortBy,       setSortBy]      = useState('newest')
+  const [sources,      setSources]     = useState<Set<string>>(new Set())
 
   // data
   const [jobs,        setJobs]        = useState<Job[]>([])
@@ -154,6 +161,7 @@ export default function JobBrowse() {
     const cArr = Array.from(jobCats)
     const lArr = Array.from(levels)
     const tArr = Array.from(jobTypes)
+    const sArr = Array.from(sources)
 
     const [salMin, salMax] = salaryBucket ? salaryRange(salaryBucket) : [undefined, undefined]
     const params: FilterMultiParams = {
@@ -168,6 +176,7 @@ export default function JobBrowse() {
       ...(salMin != null        && { salaryMin:       salMin }),
       ...(salMax != null        && { salaryMax:       salMax }),
       ...(sortBy !== 'newest'   && { sort:            sortBy === 'salary_high' ? 'salary_desc' : 'salary_asc' }),
+      ...(sArr.length           && { publisher:       sArr }),
     }
     const req = jobsApi.filterMulti(params)
 
@@ -184,7 +193,7 @@ export default function JobBrowse() {
       }
     }).catch(() => {}).finally(() => { if (ok) setJobsLoading(false) })
     return () => { ok = false }
-  }, [query, emirates, jobCats, levels, jobTypes, remoteOnly, posted, salaryBucket, sortBy])
+  }, [query, emirates, jobCats, levels, jobTypes, remoteOnly, posted, salaryBucket, sortBy, sources])
 
   useEffect(() => {
     if (!selectedId) return
@@ -208,7 +217,7 @@ export default function JobBrowse() {
   function clearAll() {
     setQuery(''); setEmirates(new Set()); setJobCats(new Set())
     setLevels(new Set()); setJobTypes(new Set()); setRemoteOnly(false)
-    setPosted(''); setSalary(''); setSortBy('newest')
+    setPosted(''); setSalary(''); setSortBy('newest'); setSources(new Set())
   }
 
   const saveJob = useCallback(async (id: number, e: React.MouseEvent) => {
@@ -240,6 +249,7 @@ export default function JobBrowse() {
     ...Array.from(jobCats).map(v  => ({ key: `c-${v}`, label: JOB_CATEGORIES.find(x => x.value === v)?.label ?? v, onRemove: () => setJobCats(toggleSet(jobCats, v)) })),
     ...Array.from(levels).map(v   => ({ key: `l-${v}`, label: LEVELS.find(x => x.value === v)?.label ?? v,         onRemove: () => setLevels(toggleSet(levels, v)) })),
     ...Array.from(jobTypes).map(v => ({ key: `t-${v}`, label: JOB_TYPES.find(x => x.value === v)?.label ?? v,      onRemove: () => setJobTypes(toggleSet(jobTypes, v)) })),
+    ...Array.from(sources).map(v  => ({ key: `s-${v}`, label: SOURCE_OPTIONS.find(x => x.value === v)?.label ?? v, onRemove: () => setSources(toggleSet(sources, v)) })),
     ...(remoteOnly   ? [{ key: 'remote', label: 'Remote',  onRemove: () => setRemoteOnly(false) }] : []),
     ...(posted       ? [{ key: 'posted', label: POSTED_OPTIONS.find(x => x.value === posted)?.label  ?? posted,  onRemove: () => setPosted('')  }] : []),
     ...(salaryBucket ? [{ key: 'sal',    label: SALARY_OPTIONS.find(x => x.value === salaryBucket)?.label ?? salaryBucket, onRemove: () => setSalary('') }] : []),
@@ -258,6 +268,7 @@ export default function JobBrowse() {
     posted, onPostedChange: setPosted,
     salaryBucket, onSalaryChange: setSalary,
     sortBy, onSortChange: setSortBy,
+    sources, onSourcesChange: setSources,
     chips, activeCount, total, loading: jobsLoading,
     onClearAll: clearAll, hasFilters,
   }
@@ -354,6 +365,7 @@ interface SharedFilterProps {
   posted: string;            onPostedChange: (v: string) => void
   salaryBucket: string;      onSalaryChange: (v: string) => void
   sortBy: string;            onSortChange: (v: string) => void
+  sources: Set<string>;      onSourcesChange: (s: Set<string>) => void
   chips: { key: string; label: string; onRemove: () => void }[]
   activeCount: number; hasFilters: boolean
   total: number; loading: boolean; onClearAll: () => void
@@ -368,6 +380,7 @@ function FilterBar(props: SharedFilterProps & { onMobileOpen: () => void }) {
     remoteOnly, onRemoteChange,
     posted, onPostedChange, salaryBucket, onSalaryChange,
     sortBy, onSortChange,
+    sources, onSourcesChange,
     chips, activeCount, hasFilters, total, loading,
     onClearAll, onMobileOpen,
   } = props
@@ -457,6 +470,10 @@ function FilterBar(props: SharedFilterProps & { onMobileOpen: () => void }) {
             <PillPanel options={JOB_TYPES} selected={jobTypes} onToggle={v => onJobTypesChange(toggleSet(jobTypes, v))} />
           </FilterDropdown>
 
+          <FilterDropdown label="Source"   count={sources.size}         open={openPanel === 'source'}  onToggle={() => tog('source')}  onClose={close}>
+            <PillPanel options={SOURCE_OPTIONS} selected={sources} onToggle={v => onSourcesChange(toggleSet(sources, v))} />
+          </FilterDropdown>
+
           <Sep />
 
           {/* Group 2 — when / how much */}
@@ -528,6 +545,7 @@ function MobileFilterSheet(props: SharedFilterProps & { open: boolean; onClose: 
     remoteOnly, onRemoteChange,
     posted, onPostedChange, salaryBucket, onSalaryChange,
     sortBy, onSortChange,
+    sources, onSourcesChange,
     total, loading, onClearAll, activeCount,
   } = props
 
@@ -589,6 +607,18 @@ function MobileFilterSheet(props: SharedFilterProps & { open: boolean; onClose: 
                 <button key={value} onClick={() => onJobTypesChange(toggleSet(jobTypes, value))}
                   className="inline-flex h-9 items-center whitespace-nowrap rounded-lg border px-3.5 font-sans text-[13px] font-medium transition-colors"
                   style={jobTypes.has(value) ? { background: PINK, color: '#fff', borderColor: PINK } : { borderColor: '#E5E7EB', color: '#374151', background: '#fff' }}>
+                  {label}
+                </button>
+              ))}
+            </div>
+          </SheetSection>
+
+          <SheetSection label="Source">
+            <div className="flex flex-wrap gap-1.5">
+              {SOURCE_OPTIONS.map(({ value, label }) => (
+                <button key={value} onClick={() => onSourcesChange(toggleSet(sources, value))}
+                  className="inline-flex h-9 items-center whitespace-nowrap rounded-lg border px-3.5 font-sans text-[13px] font-medium transition-colors"
+                  style={sources.has(value) ? { background: PINK, color: '#fff', borderColor: PINK } : { borderColor: '#E5E7EB', color: '#374151', background: '#fff' }}>
                   {label}
                 </button>
               ))}
