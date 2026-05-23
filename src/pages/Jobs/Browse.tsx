@@ -82,12 +82,12 @@ const SORT_OPTIONS = [
 type PanelId = 'emirate' | 'stack' | 'level' | 'type' | 'posted' | 'salary' | 'sort' | 'source'
 
 // Static fallback shown instantly while the dynamic list loads.
-// If a board accumulates > 5 jobs it will appear in the live list automatically.
+// Replaced by the live /jobs/publishers response once it arrives.
 const SOURCE_FALLBACK: Publisher[] = [
   { key: 'linkedin',   label: 'LinkedIn',   count: 0 },
   { key: 'indeed',     label: 'Indeed',     count: 0 },
-  { key: 'bayt',       label: 'Bayt',       count: 0 },
   { key: 'gulftalent', label: 'GulfTalent', count: 0 },
+  { key: 'bebee',      label: 'BeBee',      count: 0 },
 ]
 
 // Brand colours
