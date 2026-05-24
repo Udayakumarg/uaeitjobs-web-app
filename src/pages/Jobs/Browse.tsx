@@ -840,10 +840,10 @@ function DetailPanel({ job, onSave, isSaved }: { job: Job; onSave: (id: number, 
   const { user }     = useAuthStore()
   const skills       = parseSkills(job.skills)
   const salary       = money(job.salaryMin, job.salaryMax, job.salaryCurrency)
-  const isLinkedIn   = !!(job.linkedinUrl || job.applyUrl?.toLowerCase().includes('linkedin.com'))
-  const isGated      = !user && job.applyUrl == null && job.linkedinUrl == null
-  const applyUrl     = job.applyUrl ?? job.linkedinUrl
-    ?? (user ? `https://www.linkedin.com/jobs/search/?keywords=${encodeURIComponent(`${job.title} ${job.companyName}`)}&location=United%20Arab%20Emirates` : null)
+  const isLinkedIn     = !!(job.linkedinUrl || job.applyUrl?.toLowerCase().includes('linkedin.com'))
+  const isGated        = !user && job.applyUrl == null && job.linkedinUrl == null
+  const isDirectApply  = !!user && !job.applyUrl && !job.linkedinUrl
+  const applyUrl       = job.applyUrl ?? job.linkedinUrl ?? null
   const half = Math.ceil(skills.length / 2)
   const emirateLabel = EMIRATES.find(e => e.value === job.emirate)?.label
 
@@ -868,6 +868,15 @@ function DetailPanel({ job, onSave, isSaved }: { job: Job; onSave: (id: number, 
               onMouseLeave={e => (e.currentTarget as HTMLAnchorElement).style.background = PINK}
             >
               Sign in to apply
+            </Link>
+          ) : isDirectApply ? (
+            <Link to={`/jobs/${job.id}`}
+              className="inline-flex items-center gap-2 text-white font-sans text-sm font-bold px-5 py-2.5 rounded-lg transition-colors"
+              style={{ background: PINK }}
+              onMouseEnter={e => (e.currentTarget as HTMLAnchorElement).style.background = PINK_HOV}
+              onMouseLeave={e => (e.currentTarget as HTMLAnchorElement).style.background = PINK}
+            >
+              Apply Now
             </Link>
           ) : (
             <a href={applyUrl!} target="_blank" rel="noopener noreferrer"
