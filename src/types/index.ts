@@ -143,6 +143,12 @@ export interface Application {
   coverLetter?: string
   appliedAt?: string
   status: ApplicationStatus
+  /** Enriched seeker-profile fields — present only on HR applicant responses */
+  headline?: string
+  yearsExperience?: number
+  skills?: string
+  visaStatus?: string
+  cvUrl?: string
 }
 
 export interface JobSeekerProfile {
