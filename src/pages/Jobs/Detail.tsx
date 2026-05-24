@@ -4,8 +4,10 @@ import {
   Bookmark,
   BriefcaseBusiness,
   CalendarDays,
+  CheckCircle2,
   ExternalLink,
   MapPin,
+  Send,
   Share2,
   Zap,
 } from 'lucide-react'
@@ -64,6 +66,10 @@ export default function JobDetail() {
   const [job, setJob] = useState<Job | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [showApplyModal, setShowApplyModal] = useState(false)
+  const [coverLetter, setCoverLetter] = useState('')
+  const [applying, setApplying] = useState(false)
+  const [applied, setApplied] = useState(false)
 
   useDocumentMeta(
     job
@@ -86,6 +92,20 @@ export default function JobDetail() {
     }
   }
 
+  async function doApply() {
+    setApplying(true)
+    try {
+      await seekerApi.apply({ jobId: job!.id, coverLetter: coverLetter.trim() || undefined })
+      setApplied(true)
+      setShowApplyModal(false)
+      toast({ type: 'success', title: 'Application submitted!', message: 'Track it from your dashboard.' })
+    } catch (err) {
+      toast({ type: 'error', title: 'Could not apply', message: errorMessage(err) })
+    } finally {
+      setApplying(false)
+    }
+  }
+
   async function share() {
     const url = window.location.href
     try {
@@ -99,8 +119,11 @@ export default function JobDetail() {
   // CTA instead of falling through to a generic LinkedIn search URL.
   const isGated = !user && job?.applyUrl == null && job?.linkedinUrl == null
 
+  // HR-posted jobs have no external applyUrl — seeker applies within the platform.
+  const isDirectApply = !!user && !job?.applyUrl && !job?.linkedinUrl
+
   const applyUrl = job?.applyUrl || job?.linkedinUrl
-    || (user
+    || (user && !isDirectApply
         ? `https://www.linkedin.com/jobs/search/?keywords=${encodeURIComponent((job?.title ?? '') + ' ' + (job?.companyName ?? ''))}&location=United%20Arab%20Emirates`
         : null)
 
@@ -384,6 +407,19 @@ export default function JobDetail() {
               >
                 Sign in to apply
               </Link>
+            ) : isDirectApply ? (
+              applied ? (
+                <button disabled className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl bg-emerald-600 px-6 py-3 text-sm font-semibold text-white sm:flex-none">
+                  <CheckCircle2 size={15} /> Applied
+                </button>
+              ) : (
+                <button
+                  onClick={() => setShowApplyModal(true)}
+                  className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl bg-pink-700 px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-pink-800 sm:flex-none"
+                >
+                  <Send size={15} /> Apply now
+                </button>
+              )
             ) : (
               <a
                 href={applyUrl!}
@@ -404,6 +440,48 @@ export default function JobDetail() {
           </div>
         </div>
       </div>
+      {/* ── In-platform apply modal ────────────────────────── */}
+      {showApplyModal && (
+        <div
+          className="fixed inset-0 z-50 flex items-end justify-center bg-slate-950/60 backdrop-blur-sm sm:items-center"
+          onClick={e => { if (e.target === e.currentTarget) setShowApplyModal(false) }}
+        >
+          <div className="w-full max-w-lg rounded-t-2xl bg-white p-6 shadow-xl sm:rounded-2xl">
+            <h2 className="text-lg font-bold text-slate-950">Apply for {job.title}</h2>
+            <p className="mt-0.5 text-sm text-slate-500">{job.companyName}</p>
+
+            <div className="mt-4">
+              <label className="text-sm font-medium text-slate-700">
+                Cover letter <span className="text-slate-400 font-normal">(optional)</span>
+              </label>
+              <textarea
+                className="mt-1.5 w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-pink-400 focus:outline-none focus:ring-2 focus:ring-pink-400/20 resize-none"
+                rows={6}
+                value={coverLetter}
+                onChange={e => setCoverLetter(e.target.value)}
+                placeholder="Briefly describe why you're a great fit for this role…"
+                autoFocus
+              />
+            </div>
+
+            <div className="mt-4 flex gap-3">
+              <button
+                disabled={applying}
+                onClick={doApply}
+                className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl bg-pink-700 px-4 py-3 text-sm font-semibold text-white transition hover:bg-pink-800 disabled:opacity-60"
+              >
+                {applying ? 'Submitting…' : <><Send size={14} /> Submit application</>}
+              </button>
+              <button
+                onClick={() => setShowApplyModal(false)}
+                className="rounded-xl border border-slate-200 px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   )
 }
