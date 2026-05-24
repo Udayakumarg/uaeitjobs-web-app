@@ -127,6 +127,7 @@ export default function JobBrowse() {
 
   // filter state — initialised from URL so bookmarks and shared links restore the full view
   const [query,           setQuery]          = useState(() => searchParams.get('q') ?? '')
+  const [company,         setCompany]        = useState(() => searchParams.get('company') ?? '')
   const [emirates,        setEmirates]       = useState<Set<Emirate>>(() => new Set(searchParams.getAll('emirate') as Emirate[]))
   const [jobCats,         setJobCats]        = useState<Set<JobCategory>>(() => new Set(searchParams.getAll('category') as JobCategory[]))
   const [levels,          setLevels]         = useState<Set<string>>(() => new Set(searchParams.getAll('level')))
@@ -167,17 +168,18 @@ export default function JobBrowse() {
   // Initialised from URL above so bookmarks/shared links restore the exact view.
   useEffect(() => {
     const p = new URLSearchParams()
-    if (query.trim())      p.set('q',         query.trim())
-    emirates.forEach(e     => p.append('emirate',  e))
-    jobCats.forEach(c      => p.append('category', c))
-    levels.forEach(l       => p.append('level',    l))
-    jobTypes.forEach(t     => p.append('jobType',  t))
-    if (posted)            p.set('posted',    posted)
-    if (salaryBucket)      p.set('salary',    salaryBucket)
-    if (sortBy !== 'newest') p.set('sort',    sortBy)
-    sources.forEach(s      => p.append('publisher', s))
+    if (query.trim())       p.set('q',         query.trim())
+    if (company.trim())     p.set('company',   company.trim())
+    emirates.forEach(e      => p.append('emirate',  e))
+    jobCats.forEach(c       => p.append('category', c))
+    levels.forEach(l        => p.append('level',    l))
+    jobTypes.forEach(t      => p.append('jobType',  t))
+    if (posted)             p.set('posted',    posted)
+    if (salaryBucket)       p.set('salary',    salaryBucket)
+    if (sortBy !== 'newest') p.set('sort',     sortBy)
+    sources.forEach(s       => p.append('publisher', s))
     setSearchParams(p, { replace: true })
-  }, [query, emirates, jobCats, levels, jobTypes, posted, salaryBucket, sortBy, sources, setSearchParams])
+  }, [query, company, emirates, jobCats, levels, jobTypes, posted, salaryBucket, sortBy, sources, setSearchParams])
 
   // fetch — search + all filtering in a single DB round-trip via filterMulti.
   // The 'q' param drives plainto_tsquery full-text ranking server-side so
@@ -196,6 +198,7 @@ export default function JobBrowse() {
     const params: FilterMultiParams = {
       page: 0, size: 80,
       ...(query.trim()          && { q:              query.trim() }),
+      ...(company.trim()        && { company:        company.trim() }),
       ...(eArr.length           && { emirate:         eArr }),
       ...(cArr.length           && { category:        cArr }),
       ...(lArr.length           && { experienceLevel: lArr }),
@@ -221,7 +224,7 @@ export default function JobBrowse() {
       }
     }).catch(() => {}).finally(() => { if (ok) setJobsLoading(false) })
     return () => { ok = false }
-  }, [query, emirates, jobCats, levels, jobTypes, posted, salaryBucket, sortBy, sources])
+  }, [query, company, emirates, jobCats, levels, jobTypes, posted, salaryBucket, sortBy, sources])
 
   useEffect(() => {
     if (!selectedId) return
@@ -243,7 +246,7 @@ export default function JobBrowse() {
   }, [user])
 
   function clearAll() {
-    setQuery(''); setEmirates(new Set()); setJobCats(new Set())
+    setQuery(''); setCompany(''); setEmirates(new Set()); setJobCats(new Set())
     setLevels(new Set()); setJobTypes(new Set())
     setPosted(''); setSalary(''); setSortBy('newest'); setSources(new Set())
   }
@@ -273,6 +276,7 @@ export default function JobBrowse() {
 
   // active chips
   const chips: { key: string; label: string; onRemove: () => void }[] = [
+    ...(company.trim() ? [{ key: 'co', label: company.trim(), onRemove: () => setCompany('') }] : []),
     ...Array.from(emirates).map(v => ({ key: `e-${v}`, label: EMIRATES.find(x => x.value === v)?.label ?? v, onRemove: () => setEmirates(toggleSet(emirates, v)) })),
     ...Array.from(jobCats).map(v  => ({ key: `c-${v}`, label: JOB_CATEGORIES.find(x => x.value === v)?.label ?? v, onRemove: () => setJobCats(toggleSet(jobCats, v)) })),
     ...Array.from(levels).map(v   => ({ key: `l-${v}`, label: LEVELS.find(x => x.value === v)?.label ?? v,         onRemove: () => setLevels(toggleSet(levels, v)) })),
@@ -953,7 +957,7 @@ function DetailPanel({ job, onSave, isSaved }: { job: Job; onSave: (id: number, 
           {job.locationUae && <span className="flex items-center gap-1.5"><MapPin size={12} />{job.locationUae}</span>}
           {job.jobType && <span className="flex items-center gap-1.5"><BriefcaseBusiness size={12} />{labelize(job.jobType)}</span>}
         </div>
-        <Link to={`/jobs?q=${encodeURIComponent(job.companyName ?? '')}`} className="hover:underline" style={{ color: PINK }}>
+        <Link to={`/jobs?company=${encodeURIComponent(job.companyName ?? '')}`} className="hover:underline" style={{ color: PINK }}>
           More from {job.companyName} →
         </Link>
       </div>

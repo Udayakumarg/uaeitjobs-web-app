@@ -383,7 +383,7 @@ export default function JobDetail() {
         {/* More from this company */}
         <div className="mt-12 border-t border-slate-200 pt-8 text-sm text-slate-500">
           <Link
-            to={`/jobs?q=${encodeURIComponent(job.companyName ?? '')}`}
+            to={`/jobs?company=${encodeURIComponent(job.companyName ?? '')}`}
             className="font-semibold text-pink-700 hover:text-pink-800"
           >
             See all roles from {job.companyName} →
