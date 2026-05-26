@@ -1,7 +1,7 @@
 import axios, { AxiosError, type InternalAxiosRequestConfig } from 'axios'
 import { useToastStore } from '../components/Toast'
 import { useAuthStore } from '../store/authStore'
-import type { Application, ApplicationStatus, AuthResponse, HRProfile, Job, JobRequest, JobSeekerProfile, Page, UserType } from '../types'
+import type { Application, ApplicationStatus, AuthResponse, HRProfile, IngestStatus, Job, JobRequest, JobSeekerProfile, Page, UserType } from '../types'
 
 const configuredApiUrl = import.meta.env.VITE_API_URL
 
@@ -196,4 +196,11 @@ export const hrApi = {
     complete: boolean
     message: string | null
   }>('/hr/jobs/import-preview', { url }),
+}
+
+export const adminApi = {
+  ingestStatus: (limit = 50) =>
+    api.get<IngestStatus>('/admin/ingest/status', { params: { limit } }),
+  runIngest: () =>
+    api.post<{ status: string; message: string }>('/admin/ingest/run'),
 }

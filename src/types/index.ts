@@ -171,3 +171,24 @@ export interface HRProfile {
   industry?: string
   subscriptionTier?: string
 }
+
+export interface IngestRunLog {
+  id: number
+  source: string
+  keyword?: string | null
+  fetched: number
+  rejectedHard: number
+  rejectedScore: number
+  duplicatesL1: number
+  duplicatesL2: number
+  duplicatesL3: number
+  inserted: number
+  error?: string | null
+  startedAt: string
+  finishedAt?: string | null
+}
+
+export interface IngestStatus {
+  running: boolean
+  recent: IngestRunLog[]
+}

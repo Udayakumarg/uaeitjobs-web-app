@@ -21,6 +21,7 @@ const JobBrowse = lazy(() => import('./pages/Jobs/Browse'))
 const JobDetail = lazy(() => import('./pages/Jobs/Detail'))
 const Landing = lazy(() => import('./pages/Landing'))
 const NotFound = lazy(() => import('./pages/NotFound'))
+const IngestDashboard = lazy(() => import('./pages/Admin/IngestDashboard'))
 
 export default function App() {
   return (
@@ -51,6 +52,10 @@ export default function App() {
                 <Route path="hr/jobs/:id/edit" element={<PostJob />} />
                 <Route path="hr/linkedin-import" element={<LinkedInImport />} />
                 <Route path="hr/jobs/:id/applicants" element={<HRApplicants />} />
+              </Route>
+
+              <Route element={<ProtectedRoute roles={['admin']} />}>
+                <Route path="admin/ingest" element={<IngestDashboard />} />
               </Route>
 
               <Route path="dashboard" element={<Navigate to="/seeker" replace />} />
