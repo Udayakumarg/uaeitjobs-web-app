@@ -1,4 +1,4 @@
-import { Bookmark, LayoutDashboard, LogIn, Menu, Search, Settings2, UserRound, Users, Users2, X, Zap } from 'lucide-react'
+import { Bookmark, LayoutDashboard, LogIn, Menu, Search, UserRound, Users, Users2, X, Zap } from 'lucide-react'
 import { useState } from 'react'
 import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { useAuthStore } from '../store/authStore'

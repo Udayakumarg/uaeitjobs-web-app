@@ -35,7 +35,7 @@ export default function Login() {
     reValidateMode: 'onChange',
   })
 
-  if (user) return <Navigate to={user.userType === 'hr' ? '/hr' : '/seeker'} replace />
+  if (user) return <Navigate to={user.userType === 'hr' ? '/hr' : user.userType === 'admin' ? '/admin/ingest' : '/seeker'} replace />
 
   async function onSubmit(values: FormValues) {
     setServerError('')
@@ -43,7 +43,7 @@ export default function Login() {
       const { data } = await authApi.login({ email: values.email.trim(), password: values.password })
       setSession(data)
       toast({ type: 'success', title: 'Welcome back', message: 'You are signed in.' })
-      navigate((location.state as { from?: string } | null)?.from ?? (data.user.userType === 'hr' ? '/hr' : '/seeker'))
+      navigate((location.state as { from?: string } | null)?.from ?? (data.user.userType === 'hr' ? '/hr' : data.user.userType === 'admin' ? '/admin/ingest' : '/seeker'))
     } catch (error) {
       if (statusCode(error) === 401) {
         setServerError('Invalid email or password. Please check your details and try again.')
