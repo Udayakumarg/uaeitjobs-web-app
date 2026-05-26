@@ -28,6 +28,7 @@ function RunRow({ run }: { run: IngestRunLog }) {
   const duration = run.finishedAt
     ? Math.round((new Date(run.finishedAt).getTime() - new Date(run.startedAt).getTime()) / 1000)
     : null
+  const isStale = !run.finishedAt && (Date.now() - new Date(run.startedAt).getTime()) > 10 * 60 * 1000
   const insertRate = run.fetched > 0 ? Math.round((run.inserted / run.fetched) * 100) : null
 
   return (
@@ -66,7 +67,9 @@ function RunRow({ run }: { run: IngestRunLog }) {
           ? <span className="text-xs text-red-500 truncate block" title={run.error}>{run.error}</span>
           : run.finishedAt
             ? <span className="text-xs text-emerald-500 font-medium">OK</span>
-            : <span className="text-xs text-amber-500 animate-pulse">running…</span>}
+            : isStale
+              ? <span className="text-xs text-slate-400">timed out</span>
+              : <span className="text-xs text-amber-500 animate-pulse">running…</span>}
       </td>
     </tr>
   )
