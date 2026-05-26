@@ -172,6 +172,15 @@ export interface HRProfile {
   subscriptionTier?: string
 }
 
+export interface AdminUser {
+  id: number
+  email: string
+  userType: UserType
+  verified?: boolean
+  createdAt?: string
+  displayName?: string | null
+}
+
 export interface IngestRunLog {
   id: number
   source: string

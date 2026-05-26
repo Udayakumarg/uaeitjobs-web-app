@@ -1,7 +1,7 @@
 import axios, { AxiosError, type InternalAxiosRequestConfig } from 'axios'
 import { useToastStore } from '../components/Toast'
 import { useAuthStore } from '../store/authStore'
-import type { Application, ApplicationStatus, AuthResponse, HRProfile, IngestStatus, Job, JobRequest, JobSeekerProfile, Page, UserType } from '../types'
+import type { AdminUser, Application, ApplicationStatus, AuthResponse, HRProfile, IngestStatus, Job, JobRequest, JobSeekerProfile, Page, UserType } from '../types'
 
 const configuredApiUrl = import.meta.env.VITE_API_URL
 
@@ -199,8 +199,16 @@ export const hrApi = {
 }
 
 export const adminApi = {
-  ingestStatus: (limit = 50) =>
+  ingestStatus: (limit = 100) =>
     api.get<IngestStatus>('/admin/ingest/status', { params: { limit } }),
   runIngest: () =>
     api.post<{ status: string; message: string }>('/admin/ingest/run'),
+  stats: () =>
+    api.get<{ totalUsers: number; totalJobSeekers: number; totalHr: number; totalJobs: number; totalApplications: number; estimatedRevenue: number }>('/admin/stats'),
+  users: (search?: string, page = 0, size = 20) =>
+    api.get<Page<AdminUser>>('/admin/users', { params: { search, page, size } }),
+  createUser: (payload: { email: string; password: string; userType: 'admin' | 'hr' | 'job_seeker' }) =>
+    api.post<AdminUser>('/admin/users', payload),
+  deleteUser: (id: number) =>
+    api.delete(`/admin/users/${id}`),
 }
