@@ -235,10 +235,14 @@ export default function Landing() {
                     style={{ background: PINK }}
                     onMouseEnter={e => ((e.currentTarget as HTMLButtonElement).style.background = PINK_HOV)}
                     onMouseLeave={e => ((e.currentTarget as HTMLButtonElement).style.background = PINK)}
+                    onClick={() => navigate('/jobs')}
                   >
                     Apply in one click
                   </button>
-                  <button className="rounded-lg border border-white/15 px-3 py-2 font-sans text-xs font-bold text-white transition hover:bg-white/10">
+                  <button
+                    className="rounded-lg border border-white/15 px-3 py-2 font-sans text-xs font-bold text-white transition hover:bg-white/10"
+                    onClick={() => navigate('/jobs')}
+                  >
                     Save
                   </button>
                 </div>
