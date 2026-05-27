@@ -1,11 +1,17 @@
 import 'dotenv/config'
-import { chromium } from 'playwright'
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const { chromium } = require('playwright-extra')
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const StealthPlugin = require('puppeteer-extra-plugin-stealth')
+chromium.use(StealthPlugin())
+
 import { scrapeBayt } from './scrapers/bayt'
 import { scrapeNaukrigulf } from './scrapers/naukrigulf'
+import { scrapeGulfTalent } from './scrapers/gulftalent'
 import { postJobs } from './api'
 
 const HEADED  = process.env.HEADED === 'true'
-const SOURCES = process.env.SOURCES?.split(',').map(s => s.trim().toLowerCase()) ?? ['bayt', 'naukrigulf']
+const SOURCES = process.env.SOURCES?.split(',').map(s => s.trim().toLowerCase()) ?? ['gulftalent']
 
 const args = process.argv.slice(2)
 const sourceArg = args.find(a => a.startsWith('--source='))?.split('=')[1]
@@ -16,18 +22,33 @@ async function main() {
 
   const browser = await chromium.launch({
     headless: !HEADED,
-    args: ['--no-sandbox', '--disable-setuid-sandbox'],
+    args: [
+      '--no-sandbox',
+      '--disable-setuid-sandbox',
+      '--disable-blink-features=AutomationControlled',
+      '--disable-http2',
+    ],
   })
 
   const context = await browser.newContext({
     userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
     locale: 'en-US',
-    viewport: { width: 1280, height: 800 },
+    viewport: { width: 1280, height: 900 },
+    extraHTTPHeaders: {
+      'Accept-Language': 'en-US,en;q=0.9',
+      'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+    },
+  })
+
+  // Stealth plugin already patches webdriver — this is a belt-and-suspenders backup
+  await context.addInitScript(() => {
+    try { Object.defineProperty((globalThis as any).navigator, 'webdriver', { get: () => undefined }) } catch {}
   })
 
   const page = await context.newPage()
-  // Block images/fonts/media to speed up scraping
-  await page.route('**/*.{png,jpg,jpeg,gif,webp,svg,woff,woff2,ttf,mp4,mp3}', r => r.abort())
+
+  // Block only media — keep CSS/JS so pages render correctly
+  await page.route('**/*.{mp4,mp3,ogg,wav}', (r: any) => r.abort())
 
   const summary: Record<string, object> = {}
 
@@ -35,11 +56,13 @@ async function main() {
     for (const source of activeSources) {
       console.log(`\n── ${source.toUpperCase()} ──────────────────────────`)
 
-      let jobs = []
+      let jobs: Awaited<ReturnType<typeof scrapeBayt>> = []
       if (source === 'bayt') {
         jobs = await scrapeBayt(page)
       } else if (source === 'naukrigulf') {
         jobs = await scrapeNaukrigulf(page)
+      } else if (source === 'gulftalent') {
+        jobs = await scrapeGulfTalent()
       } else {
         console.warn(`  Unknown source "${source}" — skipping`)
         continue
