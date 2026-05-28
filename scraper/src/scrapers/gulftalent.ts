@@ -66,7 +66,10 @@ async function fetchPage(slug: string, pageNum: number): Promise<ScrapedJob[]> {
     : `${BASE}/uae/jobs/title/${slug}/${pageNum}`
 
   const { data: html, status } = await http.get<string>(url)
-  if (status !== 200) return []
+  if (status !== 200) {
+    console.warn(`  [gulftalent] HTTP ${status} — ${url} (IP may be blocked)`)
+    return []
+  }
 
   const $ = cheerio.load(html)
   const jobs: ScrapedJob[] = []
