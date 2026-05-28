@@ -6,6 +6,8 @@
     "scrape": "ts-node src/index.ts",
     "scrape:bayt": "ts-node src/index.ts --source=bayt",
     "scrape:naukrigulf": "ts-node src/index.ts --source=naukrigulf",
+    "scrape:gulftalent": "ts-node src/index.ts --source=gulftalent",
+    "scrape:all": "ts-node src/index.ts --source=gulftalent,bayt,naukrigulf",
     "install:browsers": "npx playwright install chromium"
   },
   "dependencies": {

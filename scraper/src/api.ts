@@ -17,8 +17,8 @@ async function getToken(): Promise<string> {
 }
 
 export async function postJobs(source: string, jobs: ScrapedJob[]): Promise<IngestResult> {
-  if (jobs.length === 0) return { source, fetched: 0, inserted: 0, duplicates: 0, rejected: 0 }
-
+  // Always POST even when jobs array is empty — this ensures every scraper run
+  // appears as a row in the ingest monitor so you can see it ran (and why it got 0).
   const token = await getToken()
   const { data } = await axios.post<IngestResult>(
     `${BASE}/api/v1/admin/ingest/external`,
