@@ -76,6 +76,12 @@ export async function scrapeBayt(page: Page): Promise<ScrapedJob[]> {
         }
         console.log(`  [bayt] Found ${cards.length} cards via selector: ${usedSelector}`)
 
+        // Dump first card HTML once so we can diagnose selector mismatches
+        if (!debugDone && cards.length > 0) {
+          const firstCardHtml = await cards[0].innerHTML()
+          console.log(`  [bayt] first card HTML snippet:\n${firstCardHtml.substring(0, 800)}`)
+        }
+
         let newOnPage = 0
         for (const card of cards) {
           try {
@@ -83,7 +89,7 @@ export async function scrapeBayt(page: Page): Promise<ScrapedJob[]> {
             if (!jobId || seen.has(`bayt_${jobId}`)) continue
             seen.add(`bayt_${jobId}`)
 
-            const titleEl = await card.$('h2 a, .jb-title a, h3 a, a[data-automation-id="job-title"]')
+            const titleEl = await card.$('h2 a, .jb-title a, h3 a, a[data-automation-id="job-title"], a[class*="title"], a[id*="title"]')
             if (!titleEl) continue
             const title = (await titleEl.innerText()).trim()
             const href = await titleEl.getAttribute('href')
