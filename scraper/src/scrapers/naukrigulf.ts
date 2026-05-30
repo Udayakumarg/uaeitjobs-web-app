@@ -47,12 +47,27 @@ export async function scrapeNaukrigulf(page: Page): Promise<ScrapedJob[]> {
         await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30_000 })
         await page.waitForTimeout(2000)
 
-        // Job cards: .ni-job-tuple or .jobTuple
-        const cards = await page.$$('.ni-job-tuple, .jobTuple, [data-job-id]')
+        // Job cards: try multiple selector patterns
+        const CARD_SELECTORS = [
+          '.ni-job-tuple', '.jobTuple', '[data-job-id]',
+          'article', '.job-card', '.job-listing', '.srp-jobtuple-wrapper',
+          '[class*="jobTuple"]', '[class*="job-card"]', '[class*="JobCard"]',
+          'li[class*="job"]', 'div[class*="job-item"]',
+        ]
+        let cards: Awaited<ReturnType<typeof page.$$>> = []
+        let usedSel = ''
+        for (const sel of CARD_SELECTORS) {
+          cards = await page.$$(sel)
+          if (cards.length > 0) { usedSel = sel; break }
+        }
+
         if (cards.length === 0) {
-          console.log(`  [naukrigulf] No cards found — stopping for "${term}"`)
+          // Dump page HTML snippet for diagnosis
+          const bodyHtml = await page.evaluate(() => document.body.innerHTML.substring(0, 1500))
+          console.log(`  [naukrigulf] No cards found — page HTML:\n${bodyHtml}`)
           break
         }
+        console.log(`  [naukrigulf] Found ${cards.length} cards via: ${usedSel}`)
 
         let newOnPage = 0
         for (const card of cards) {
