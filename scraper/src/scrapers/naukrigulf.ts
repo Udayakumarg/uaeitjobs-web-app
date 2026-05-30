@@ -68,6 +68,10 @@ export async function scrapeNaukrigulf(page: Page): Promise<ScrapedJob[]> {
           break
         }
         console.log(`  [naukrigulf] Found ${cards.length} cards via: ${usedSel}`)
+        if (pageNum === 1 && term === SEARCH_TERMS[0]) {
+          const html = await cards[0].innerHTML()
+          console.log(`  [naukrigulf] first card snippet:\n${html.substring(0, 600)}`)
+        }
 
         let newOnPage = 0
         for (const card of cards) {
