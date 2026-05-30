@@ -428,33 +428,35 @@ function FilterBar(props: SharedFilterProps & { onMobileOpen: () => void }) {
   function close() { setOpenPanel(null) }
 
   return (
-    <div className="shrink-0 z-20 bg-white border-b border-[#E5E7EB]">
+    <div className="shrink-0 z-20 bg-white" style={{ boxShadow: '0 1px 0 0 #e5e7eb' }}>
 
       {/* ── Search row ───────────────────────────────────────────── */}
-      <div className="flex items-center gap-2.5 px-4 pt-4 pb-3">
+      <div className="flex items-center gap-2.5 px-4 pt-3.5 pb-3">
 
-        {/* Search input — pill shape, full-width on mobile, capped on desktop */}
-        <div className="relative flex-1 md:mx-auto md:max-w-[580px]">
-          <Search className="pointer-events-none absolute left-3.5 top-1/2 h-[15px] w-[15px] -translate-y-1/2 text-gray-400" />
+        {/* Search input */}
+        <div className="relative flex-1 md:mx-auto md:max-w-[560px]">
+          <Search className="pointer-events-none absolute left-3.5 top-1/2 h-[14px] w-[14px] -translate-y-1/2 text-gray-400" />
           <input
             type="text"
             value={query}
             onChange={e => onQueryChange(e.target.value)}
             placeholder="Search roles, skills, companies…"
-            className="h-10 w-full rounded-full border border-[#E5E7EB] bg-white pl-10 pr-9 text-[14px] text-gray-900 placeholder:text-gray-400 shadow-sm transition-all focus:outline-none"
+            className="h-[38px] w-full rounded-full border border-gray-200 bg-gray-50 pl-9 pr-9 text-[13.5px] text-gray-900 placeholder:text-gray-400 transition-all outline-none focus:bg-white focus:border-gray-300"
             onFocus={e => {
               e.currentTarget.style.borderColor = PINK
-              e.currentTarget.style.boxShadow = `0 0 0 3px ${PINK}1a, 0 1px 2px 0 rgba(0,0,0,0.05)`
+              e.currentTarget.style.boxShadow = `0 0 0 3px ${PINK}18`
+              e.currentTarget.style.background = '#fff'
             }}
             onBlur={e => {
-              e.currentTarget.style.borderColor = '#E5E7EB'
-              e.currentTarget.style.boxShadow = '0 1px 2px 0 rgba(0,0,0,0.05)'
+              e.currentTarget.style.borderColor = '#e5e7eb'
+              e.currentTarget.style.boxShadow = ''
+              e.currentTarget.style.background = '#f9fafb'
             }}
           />
           {query && (
             <button
               onClick={() => onQueryChange('')}
-              className="absolute right-3.5 top-1/2 -translate-y-1/2 rounded-full p-0.5 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-700"
+              className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full p-0.5 text-gray-400 transition-colors hover:bg-gray-200 hover:text-gray-600"
             >
               <X className="h-3.5 w-3.5" />
             </button>
@@ -464,15 +466,15 @@ function FilterBar(props: SharedFilterProps & { onMobileOpen: () => void }) {
         {/* Mobile: filters pill */}
         <button
           onClick={onMobileOpen}
-          className="md:hidden inline-flex h-10 shrink-0 items-center gap-1.5 rounded-full border px-4 font-sans text-[13px] font-medium transition-colors"
+          className="md:hidden inline-flex h-[38px] shrink-0 items-center gap-1.5 rounded-full border px-3.5 font-sans text-[13px] font-medium transition-all"
           style={activeCount > 0
             ? { background: PINK_BG, borderColor: PINK_RING, color: PINK }
-            : { borderColor: '#E5E7EB', color: '#374151', background: '#fff' }}
+            : { borderColor: '#e5e7eb', color: '#4b5563', background: '#f9fafb' }}
         >
-          <SlidersHorizontal size={14} />
+          <SlidersHorizontal size={13} />
           Filters
           {activeCount > 0 && (
-            <span className="inline-flex h-4 w-4 items-center justify-center rounded-full text-[9px] font-bold text-white leading-none" style={{ background: PINK }}>
+            <span className="inline-flex h-[17px] min-w-[17px] items-center justify-center rounded-full px-1 text-[9px] font-bold text-white leading-none" style={{ background: PINK }}>
               {activeCount}
             </span>
           )}
@@ -480,93 +482,85 @@ function FilterBar(props: SharedFilterProps & { onMobileOpen: () => void }) {
       </div>
 
       {/* ── Filter row (desktop only) ────────────────────────────── */}
-      <div className="hidden md:block border-t border-[#F3F4F6] px-4 py-2.5">
-        <div className="flex items-center justify-center gap-1">
+      <div className="hidden md:flex items-center gap-1.5 overflow-x-auto scrollbar-none border-t border-gray-100 px-4 py-2">
 
-          {/* Group 1 — who / what */}
-          <FilterDropdown label="Source"   count={sources.size}         open={openPanel === 'source'}  onToggle={() => tog('source')}  onClose={close}>
-            <CheckboxPanel
-              options={publishers.map(p => ({ value: p.key, label: p.count > 0 ? `${p.label} (${p.count})` : p.label }))}
-              selected={sources}
-              onToggle={v => onSourcesChange(toggleSet(sources, v))}
-            />
-          </FilterDropdown>
+        {/* Primary filters */}
+        <FilterDropdown label="Source"   count={sources.size}         open={openPanel === 'source'}  onToggle={() => tog('source')}  onClose={close}>
+          <CheckboxPanel
+            options={publishers.map(p => ({ value: p.key, label: p.count > 0 ? `${p.label} (${p.count})` : p.label }))}
+            selected={sources}
+            onToggle={v => onSourcesChange(toggleSet(sources, v))}
+          />
+        </FilterDropdown>
 
-          <FilterDropdown label="Emirate"  count={emirates.size}        open={openPanel === 'emirate'} onToggle={() => tog('emirate')} onClose={close}>
-            <CheckboxPanel options={EMIRATES} selected={emirates as Set<string>} onToggle={v => onEmiratesChange(toggleSet(emirates, v as Emirate))} />
-          </FilterDropdown>
+        <FilterDropdown label="Emirate"  count={emirates.size}        open={openPanel === 'emirate'} onToggle={() => tog('emirate')} onClose={close}>
+          <CheckboxPanel options={EMIRATES} selected={emirates as Set<string>} onToggle={v => onEmiratesChange(toggleSet(emirates, v as Emirate))} />
+        </FilterDropdown>
 
-          <FilterDropdown label="Stack"    count={jobCats.size}         open={openPanel === 'stack'}   onToggle={() => tog('stack')}   onClose={close}>
-            <CheckboxPanel options={JOB_CATEGORIES.map(c => ({ value: c.value, label: c.label }))} selected={jobCats as Set<string>} onToggle={v => onJobCatsChange(toggleSet(jobCats, v as JobCategory))} />
-          </FilterDropdown>
+        <FilterDropdown label="Stack"    count={jobCats.size}         open={openPanel === 'stack'}   onToggle={() => tog('stack')}   onClose={close}>
+          <CheckboxPanel options={JOB_CATEGORIES.map(c => ({ value: c.value, label: c.label }))} selected={jobCats as Set<string>} onToggle={v => onJobCatsChange(toggleSet(jobCats, v as JobCategory))} />
+        </FilterDropdown>
 
-          <FilterDropdown label="Level"    count={levels.size}          open={openPanel === 'level'}   onToggle={() => tog('level')}   onClose={close}>
-            <CheckboxPanel options={LEVELS} selected={levels} onToggle={v => onLevelsChange(toggleSet(levels, v))} />
-          </FilterDropdown>
+        <Sep />
 
-          <FilterDropdown label="Job Type" count={jobTypes.size}        open={openPanel === 'type'}    onToggle={() => tog('type')}    onClose={close}>
-            <CheckboxPanel options={JOB_TYPES} selected={jobTypes} onToggle={v => onJobTypesChange(toggleSet(jobTypes, v))} />
-          </FilterDropdown>
+        {/* Secondary filters */}
+        <FilterDropdown label="Level"    count={levels.size}          open={openPanel === 'level'}   onToggle={() => tog('level')}   onClose={close}>
+          <CheckboxPanel options={LEVELS} selected={levels} onToggle={v => onLevelsChange(toggleSet(levels, v))} />
+        </FilterDropdown>
 
-          <Sep />
+        <FilterDropdown label="Job Type" count={jobTypes.size}        open={openPanel === 'type'}    onToggle={() => tog('type')}    onClose={close}>
+          <CheckboxPanel options={JOB_TYPES} selected={jobTypes} onToggle={v => onJobTypesChange(toggleSet(jobTypes, v))} />
+        </FilterDropdown>
 
-          {/* Group 2 — when / how much */}
-          <FilterDropdown label="Posted"   count={posted ? 1 : 0}       open={openPanel === 'posted'}  onToggle={() => tog('posted')}  onClose={close}>
-            <RadioPanel options={POSTED_OPTIONS} selected={posted} onSelect={onPostedChange} />
-          </FilterDropdown>
+        <FilterDropdown label="Posted"   count={posted ? 1 : 0}       open={openPanel === 'posted'}  onToggle={() => tog('posted')}  onClose={close}>
+          <RadioPanel options={POSTED_OPTIONS} selected={posted} onSelect={onPostedChange} />
+        </FilterDropdown>
 
-          <FilterDropdown label="Salary"   count={salaryBucket ? 1 : 0} open={openPanel === 'salary'}  onToggle={() => tog('salary')}  onClose={close}>
-            <RadioPanel options={SALARY_OPTIONS} selected={salaryBucket} onSelect={onSalaryChange} />
-          </FilterDropdown>
+        <FilterDropdown label="Salary"   count={salaryBucket ? 1 : 0} open={openPanel === 'salary'}  onToggle={() => tog('salary')}  onClose={close}>
+          <RadioPanel options={SALARY_OPTIONS} selected={salaryBucket} onSelect={onSalaryChange} />
+        </FilterDropdown>
 
-          <Sep />
+        <Sep />
 
-          {/* Sort — no active highlight, pushed to the right */}
-          <FilterDropdown
-            label={SORT_OPTIONS.find(s => s.value === sortBy)?.label ?? 'Sort'}
-            count={0} noHighlight
-            open={openPanel === 'sort'} onToggle={() => tog('sort')} onClose={close}
-          >
-            <RadioPanel options={SORT_OPTIONS} selected={sortBy} onSelect={v => { onSortChange(v); close() }} />
-          </FilterDropdown>
+        {/* Sort */}
+        <FilterDropdown
+          label={SORT_OPTIONS.find(s => s.value === sortBy)?.label ?? 'Sort'}
+          count={0} noHighlight
+          open={openPanel === 'sort'} onToggle={() => tog('sort')} onClose={close}
+        >
+          <RadioPanel options={SORT_OPTIONS} selected={sortBy} onSelect={v => { onSortChange(v); close() }} />
+        </FilterDropdown>
 
+        {hasFilters && (
           <button
             onClick={onClearAll}
-            disabled={!hasFilters}
-            className="ml-1 shrink-0 rounded-full px-3 py-1 font-sans text-[12px] font-medium transition-colors disabled:cursor-not-allowed disabled:text-gray-300 text-gray-400 hover:enabled:bg-gray-100 hover:enabled:text-gray-700"
+            className="ml-0.5 shrink-0 inline-flex h-[30px] items-center gap-1 rounded-full px-3 font-sans text-[11.5px] font-medium text-gray-400 transition-all hover:text-rose-500 hover:bg-rose-50"
           >
-            Clear all
+            <X size={10} strokeWidth={2.5} />
+            Clear
           </button>
-        </div>
+        )}
       </div>
 
-      {/* ── Active filter chips ──────────────────────────────────────
-           Always rendered so the row has stable height — prevents the
-           dropdown panels from shifting position when the first chip
-           appears.                                                     */}
-      <div className="flex items-center gap-2 overflow-x-auto border-t border-[#F3F4F6] bg-[#FAFAFA] px-4 py-2 scrollbar-none min-h-[37px]">
-        {chips.length > 0 ? (
-          <>
-            <span className="shrink-0 font-sans text-[11px] font-semibold text-gray-400">Active:</span>
-            {chips.map(chip => (
-              <button
-                key={chip.key}
-                onClick={chip.onRemove}
-                className="inline-flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1 font-sans text-[12px] font-medium transition-colors hover:opacity-80"
-                style={{ background: PINK_BG, border: `1px solid ${PINK_RING}`, color: PINK }}
-              >
-                {chip.label}
-                <X size={10} strokeWidth={2.5} />
-              </button>
-            ))}
-          </>
-        ) : (
-          <span className="font-sans text-[11px] text-gray-300 select-none">No active filters</span>
-        )}
-        {!loading && (
-          <span className="ml-auto shrink-0 font-sans text-[12px] text-gray-400">{total.toLocaleString()} roles</span>
-        )}
-      </div>
+      {/* ── Active filter chips ───────────────────────────────────────────────── */}
+      {chips.length > 0 && (
+        <div className="flex items-center gap-1.5 overflow-x-auto border-t border-gray-100 bg-gray-50/70 px-4 py-2 scrollbar-none">
+          {chips.map(chip => (
+            <button
+              key={chip.key}
+              onClick={chip.onRemove}
+              className="inline-flex shrink-0 items-center gap-1 rounded-full px-2.5 py-1 font-sans text-[11.5px] font-medium transition-all hover:opacity-70"
+              style={{ background: PINK_BG, border: `1px solid ${PINK_RING}`, color: PINK }}
+            >
+              {chip.label}
+              <X size={9} strokeWidth={3} />
+            </button>
+          ))}
+          {!loading && (
+            <span className="ml-auto shrink-0 font-mono text-[11px] text-gray-400 tabular-nums pl-2">{total.toLocaleString()} roles</span>
+          )}
+        </div>
+      )}
     </div>
   )
 }
@@ -598,17 +592,19 @@ function MobileFilterSheet(props: SharedFilterProps & { open: boolean; onClose: 
         <div className="flex-1 overflow-y-auto px-5 py-4 space-y-7">
 
           <SheetSection label="Source">
-            <div className="grid grid-cols-2 gap-2">
-              {publishers.map(({ key, label, count }) => (
-                <label key={key}
-                  className="flex items-center gap-2.5 p-2.5 border cursor-pointer transition-colors rounded"
-                  style={sources.has(key) ? { borderColor: PINK, background: PINK_BG } : { borderColor: '#E5E7EB' }}>
-                  <input type="checkbox" checked={sources.has(key)} onChange={() => onSourcesChange(toggleSet(sources, key))} />
-                  <span className="text-sm font-medium" style={{ color: sources.has(key) ? PINK : '#374151' }}>
-                    {label}{count > 0 ? <span className="ml-1 font-normal text-gray-400">({count})</span> : null}
-                  </span>
-                </label>
-              ))}
+            <div className="flex flex-wrap gap-2">
+              {publishers.map(({ key, label, count }) => {
+                const on = sources.has(key)
+                return (
+                  <button key={key}
+                    onClick={() => onSourcesChange(toggleSet(sources, key))}
+                    className="inline-flex items-center gap-1.5 rounded-full border px-3.5 py-2 text-[13px] font-medium transition-all"
+                    style={on ? { background: PINK_BG, borderColor: PINK_RING, color: PINK } : { borderColor: '#e5e7eb', color: '#374151', background: '#fff' }}>
+                    {label}
+                    {count > 0 && <span className="text-[11px] font-normal" style={{ color: on ? PINK : '#9ca3af' }}>({count})</span>}
+                  </button>
+                )
+              })}
             </div>
           </SheetSection>
 
@@ -714,17 +710,21 @@ function MobileFilterSheet(props: SharedFilterProps & { open: boolean; onClose: 
           </SheetSection>
         </div>
 
-        <div className="shrink-0 px-5 py-4 border-t border-[#E5E7EB] bg-white flex items-center gap-3">
-          <button
-            onClick={onClearAll}
-            disabled={activeCount === 0}
-            className="font-sans text-sm transition-colors underline disabled:cursor-not-allowed disabled:text-gray-300 text-gray-400 hover:enabled:text-black"
-          >
-            Clear all
-          </button>
+        <div className="shrink-0 px-5 py-4 border-t border-gray-100 bg-white flex items-center gap-3">
+          {activeCount > 0 && (
+            <button
+              onClick={onClearAll}
+              className="shrink-0 font-sans text-[13px] font-medium text-gray-400 transition-colors hover:text-rose-500"
+            >
+              Clear all
+            </button>
+          )}
           <button
             onClick={onClose}
-            className="flex-1 bg-slate-950 text-white font-sans text-sm font-bold py-3 rounded-lg hover:bg-slate-800 transition-colors"
+            className="flex-1 text-white font-sans text-[13.5px] font-semibold py-3 rounded-xl transition-colors"
+            style={{ background: PINK }}
+            onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = PINK_HOV }}
+            onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = PINK }}
           >
             {loading ? '…' : `Show ${total.toLocaleString()} roles`}
           </button>
@@ -748,31 +748,43 @@ function FilterDropdown({ label, count, open, onToggle, onClose, children, noHig
   }, [open, onClose])
 
   const isActive = !noHighlight && count > 0
+
+  // CSS-class driven states — no inline onMouseEnter/onMouseLeave
+  const pillCls = isActive
+    ? 'bg-[#FDF2F8] border-[#F9A8D4] text-[#BE185D] hover:bg-[#FCE7F3]'
+    : open
+      ? 'bg-white border-gray-300 text-gray-900 shadow-sm'
+      : 'bg-white border-gray-200 text-gray-500 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-700'
+
   return (
     <div ref={ref} className="relative shrink-0">
       <button
         onClick={onToggle}
-        className="inline-flex h-9 min-w-[96px] items-center justify-between gap-2 rounded-lg border px-3.5 font-sans text-[13px] font-medium transition-all"
-        style={isActive
-          ? { background: PINK_BG, borderColor: PINK_RING, color: PINK }
-          : open
-            ? { background: '#F9FAFB', borderColor: '#9CA3AF', color: '#111827' }
-            : { background: '#fff', borderColor: '#E5E7EB', color: '#374151' }}
-        onMouseEnter={e => { if (!isActive && !open) { const b = e.currentTarget as HTMLButtonElement; b.style.borderColor = '#9CA3AF'; b.style.color = '#111827'; b.style.background = '#F9FAFB' } }}
-        onMouseLeave={e => { if (!isActive && !open) { const b = e.currentTarget as HTMLButtonElement; b.style.borderColor = '#E5E7EB'; b.style.color = '#374151'; b.style.background = '#fff' } }}
+        className={`inline-flex h-[30px] items-center gap-1.5 rounded-full border px-3.5 font-sans text-[12.5px] font-medium whitespace-nowrap transition-all duration-150 select-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-gray-300 ${pillCls}`}
       >
         <span className="flex items-center gap-1.5">
           {label}
           {isActive && (
-            <span className="inline-flex h-[18px] min-w-[18px] items-center justify-center rounded-full px-1 text-white text-[10px] font-bold leading-none" style={{ background: PINK }}>
+            <span className="inline-flex h-[16px] min-w-[16px] items-center justify-center rounded-full px-1 text-white text-[9px] font-bold leading-none" style={{ background: PINK }}>
               {count}
             </span>
           )}
         </span>
-        <ChevronDown size={13} strokeWidth={2} className={`shrink-0 text-gray-400 transition-transform duration-150 ${open ? 'rotate-180' : ''}`} />
+        <ChevronDown
+          size={11}
+          strokeWidth={2.5}
+          className={`shrink-0 transition-transform duration-200 ${isActive ? 'text-[#BE185D]' : 'text-gray-400'} ${open ? 'rotate-180' : ''}`}
+        />
       </button>
+
       {open && (
-        <div className="absolute top-full left-0 mt-1.5 z-50 overflow-hidden rounded-xl border border-[#E5E7EB] bg-white shadow-[0_8px_30px_rgba(15,23,42,0.12)]" style={{ minWidth: 160 }}>
+        <div
+          className="absolute top-full left-0 mt-2 z-50 rounded-2xl border border-gray-100 bg-white overflow-hidden"
+          style={{
+            minWidth: 196,
+            boxShadow: '0 4px 6px -2px rgba(15,23,42,0.06), 0 12px 24px -4px rgba(15,23,42,0.10), 0 0 0 1px rgba(15,23,42,0.04)',
+          }}
+        >
           {children}
         </div>
       )}
@@ -785,41 +797,70 @@ function CheckboxPanel({ options, selected, onToggle }: {
   options: { value: string; label: string }[]; selected: Set<string>; onToggle: (v: string) => void
 }) {
   return (
-    <div className="py-1.5 max-h-[280px] overflow-y-auto">
-      {options.map(({ value, label }) => (
-        <label key={value} className="flex items-center gap-2.5 px-4 py-2.5 cursor-pointer hover:bg-[#FAFAFA] transition-colors group">
-          <input type="checkbox" checked={selected.has(value)} onChange={() => onToggle(value)} />
-          <span className="text-xs transition-colors" style={{ color: selected.has(value) ? PINK : '#374151', fontWeight: selected.has(value) ? 600 : 400 }}>{label}</span>
-        </label>
-      ))}
+    <div className="py-1.5 max-h-[288px] overflow-y-auto">
+      {options.map(({ value, label }) => {
+        const on = selected.has(value)
+        // Detect "Label (count)" pattern for right-aligned count display
+        const m = label.match(/^(.*?)\s+\((\d+)\)$/)
+        const mainLabel = m ? m[1] : label
+        const countStr  = m ? m[2] : null
+        return (
+          <label
+            key={value}
+            className="flex items-center gap-2.5 px-3.5 py-2.5 cursor-pointer select-none transition-colors duration-100 hover:bg-gray-50 group"
+          >
+            {/* Custom checkbox */}
+            <span
+              className={`flex h-[15px] w-[15px] shrink-0 items-center justify-center rounded-[3px] border transition-all duration-150 ${on ? 'border-transparent' : 'border-gray-300 group-hover:border-gray-400'}`}
+              style={on ? { background: PINK } : {}}
+            >
+              {on && (
+                <svg width="8" height="6" viewBox="0 0 8 6" fill="none">
+                  <path d="M1 3L3 5L7 1" stroke="white" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              )}
+            </span>
+            <span
+              className="flex-1 font-sans text-[13px] leading-none"
+              style={{ color: on ? PINK : '#374151', fontWeight: on ? 500 : 400 }}
+            >
+              {mainLabel}
+            </span>
+            {countStr && (
+              <span className="font-mono text-[11px] tabular-nums" style={{ color: on ? PINK : '#9CA3AF' }}>
+                {countStr}
+              </span>
+            )}
+          </label>
+        )
+      })}
     </div>
   )
 }
 
 // ── RadioPanel — single-select ────────────────────────────────────────────────
-// Styled radio list — clearer single-select semantics than pills.
 function RadioPanel({ options, selected, onSelect }: {
   options: { value: string; label: string }[]; selected: string; onSelect: (v: string) => void
 }) {
   return (
-    <div className="py-1.5" style={{ minWidth: 180 }}>
+    <div className="py-1.5" style={{ minWidth: 184 }}>
       {options.map(({ value, label }) => {
         const on = selected === value
         return (
           <button
             key={value}
             onClick={() => onSelect(on ? '' : value)}
-            className="flex w-full items-center gap-3 px-4 py-2.5 transition-colors hover:bg-[#FAFAFA]"
+            className="flex w-full items-center gap-2.5 px-3.5 py-2.5 select-none transition-colors duration-100 hover:bg-gray-50"
           >
             <span
-              className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full border-2 transition-colors"
-              style={on ? { borderColor: PINK, background: PINK } : { borderColor: '#D1D5DB', background: '#fff' }}
+              className={`flex h-[15px] w-[15px] shrink-0 items-center justify-center rounded-full border-[1.75px] transition-all duration-150 ${on ? 'border-transparent' : 'border-gray-300'}`}
+              style={on ? { background: PINK } : {}}
             >
               {on && <span className="h-1.5 w-1.5 rounded-full bg-white" />}
             </span>
             <span
-              className="font-sans text-[13px] font-medium transition-colors"
-              style={{ color: on ? PINK : '#374151' }}
+              className="font-sans text-[13px] leading-none"
+              style={{ color: on ? PINK : '#374151', fontWeight: on ? 500 : 400 }}
             >
               {label}
             </span>
@@ -830,12 +871,12 @@ function RadioPanel({ options, selected, onSelect }: {
   )
 }
 
-function Sep() { return <span className="h-5 w-px bg-[#E5E7EB] shrink-0" /> }
+function Sep() { return <span className="h-4 w-px bg-gray-200 shrink-0 mx-0.5" /> }
 
 function SheetSection({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div>
-      <h3 className="font-sans text-xs font-semibold uppercase tracking-[0.14em] text-gray-400 mb-3">{label}</h3>
+      <h3 className="font-sans text-[10.5px] font-bold uppercase tracking-[0.12em] text-gray-400 mb-3">{label}</h3>
       {children}
     </div>
   )
