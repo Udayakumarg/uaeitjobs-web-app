@@ -38,6 +38,50 @@ export function initials(name?: string | null) {
     .join('')
 }
 
+/**
+ * Compresses an image file to a square JPEG thumbnail suitable for avatars.
+ * Output is a base64 data-URL string (data:image/jpeg;base64,...).
+ *
+ * Algorithm:
+ *  1. Draw the image onto an offscreen canvas at SIZE × SIZE px (center-cropped).
+ *  2. Export as JPEG at QUALITY (0–1). Typical output: 2–6 KB for an 80×80 face.
+ */
+export async function compressAvatar(file: File, size = 80, quality = 0.65): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const img = new Image()
+    const objectUrl = URL.createObjectURL(file)
+
+    img.onload = () => {
+      try {
+        const canvas = document.createElement('canvas')
+        canvas.width = size
+        canvas.height = size
+        const ctx = canvas.getContext('2d')
+        if (!ctx) throw new Error('Canvas 2D context unavailable')
+
+        // Center-crop: take the largest centered square from the source image
+        const srcMin = Math.min(img.naturalWidth, img.naturalHeight)
+        const sx = (img.naturalWidth - srcMin) / 2
+        const sy = (img.naturalHeight - srcMin) / 2
+
+        ctx.drawImage(img, sx, sy, srcMin, srcMin, 0, 0, size, size)
+        resolve(canvas.toDataURL('image/jpeg', quality))
+      } catch (err) {
+        reject(err)
+      } finally {
+        URL.revokeObjectURL(objectUrl)
+      }
+    }
+
+    img.onerror = () => {
+      URL.revokeObjectURL(objectUrl)
+      reject(new Error('Image could not be loaded'))
+    }
+
+    img.src = objectUrl
+  })
+}
+
 export function parseSkills(value?: string | string[] | null): string[] {
   if (!value) return []
   if (Array.isArray(value)) return value

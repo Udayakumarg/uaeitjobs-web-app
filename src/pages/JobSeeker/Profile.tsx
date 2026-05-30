@@ -1,4 +1,4 @@
-import { BadgeCheck, Building2, FileText, GraduationCap, Phone, Plus, Tag, Upload, User, X } from 'lucide-react'
+import { BadgeCheck, Building2, Camera, FileText, GraduationCap, Phone, Plus, Tag, Upload, User, X } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { CardSkeleton } from '../../components/Skeleton'
 import { useToastStore } from '../../components/Toast'
@@ -6,7 +6,7 @@ import { Button, Card, Field, Input, Select, Textarea } from '../../components/u
 import { errorMessage, seekerApi, userApi } from '../../services/api'
 import { useAuthStore } from '../../store/authStore'
 import type { JobSeekerProfile } from '../../types'
-import { initials, parseSkills } from '../../utils/format'
+import { compressAvatar, initials, parseSkills } from '../../utils/format'
 
 const COUNTRIES = [
   'United Arab Emirates', 'India', 'Pakistan', 'Philippines', 'Egypt',
@@ -62,6 +62,8 @@ export default function JobSeekerProfilePage() {
   const [displayName, setDisplayName] = useState(user?.displayName ?? '')
   const [phone, setPhone] = useState(user?.phone ?? '')
   const [country, setCountry] = useState(user?.country ?? '')
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(user?.avatarUrl ?? null)
+  const [avatarPending, setAvatarPending] = useState<string | null>(null) // compressed, not yet saved
   const [savingAccount, setSavingAccount] = useState(false)
 
   const skillInputRef = useRef<HTMLInputElement>(null)
@@ -107,11 +109,25 @@ export default function JobSeekerProfilePage() {
     }
   }
 
+  async function pickAvatar(file?: File) {
+    if (!file) return
+    try {
+      const compressed = await compressAvatar(file)
+      setAvatarPending(compressed)
+      setAvatarPreview(compressed)
+    } catch {
+      toast({ type: 'error', title: 'Could not process image', message: 'Please try a different photo.' })
+    }
+  }
+
   async function saveAccount() {
     setSavingAccount(true)
     try {
-      const { data } = await userApi.updateProfile({ displayName, phone, country })
+      const payload: Parameters<typeof userApi.updateProfile>[0] = { displayName, phone, country }
+      if (avatarPending !== null) payload.avatarUrl = avatarPending
+      const { data } = await userApi.updateProfile(payload)
       updateUser({ ...user!, ...data })
+      setAvatarPending(null) // clear pending once saved
       toast({ type: 'success', title: 'Account updated' })
     } catch (error) {
       toast({ type: 'error', title: 'Could not update account', message: errorMessage(error) })
@@ -139,9 +155,27 @@ export default function JobSeekerProfilePage() {
 
       {/* ── Header ────────────────────────────────────────────────────── */}
       <div className="mb-6 flex items-center gap-4">
-        <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-pink-500 to-pink-700 text-xl font-bold text-white shadow-md">
-          {avatarInitials}
-        </div>
+        {/* Avatar with camera-overlay upload trigger */}
+        <label className="group relative h-16 w-16 shrink-0 cursor-pointer">
+          <div className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-pink-500 to-pink-700 text-xl font-bold text-white shadow-md">
+            {avatarPreview
+              ? <img src={avatarPreview} alt="Profile photo" className="h-full w-full object-cover" />
+              : avatarInitials}
+          </div>
+          {/* Camera overlay on hover */}
+          <div className="absolute inset-0 flex items-center justify-center rounded-full bg-black/40 opacity-0 transition-opacity group-hover:opacity-100">
+            <Camera size={18} className="text-white" />
+          </div>
+          <input
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={(e) => pickAvatar(e.target.files?.[0])}
+          />
+          {avatarPending && (
+            <span className="absolute -bottom-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-amber-400 ring-2 ring-white" title="Unsaved — click 'Save account details'" />
+          )}
+        </label>
         <div>
           <h1 className="text-2xl font-bold text-slate-950">{displayLabel}</h1>
           <div className="mt-1 flex flex-wrap items-center gap-2">

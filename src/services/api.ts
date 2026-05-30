@@ -226,8 +226,9 @@ export const adminApi = {
 }
 
 export const userApi = {
-  /** Update display name, phone and/or country for the current authenticated user. */
-  updateProfile: (payload: { displayName?: string; phone?: string; country?: string }) =>
+  /** Update display name, phone, country and/or avatar for the current authenticated user.
+   *  avatarUrl must be a base64 data-URL (client-compressed to ~80×80 JPEG). */
+  updateProfile: (payload: { displayName?: string; phone?: string; country?: string; avatarUrl?: string }) =>
     api.patch<User>('/user/profile', payload),
 }
 

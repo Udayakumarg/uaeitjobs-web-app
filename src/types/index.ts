@@ -10,6 +10,8 @@ export interface User {
   country?: string | null
   verified?: boolean
   createdAt?: string
+  /** Client-compressed base64 JPEG (~80×80 px). Present only when the user has uploaded a photo. */
+  avatarUrl?: string | null
 }
 
 export interface AuthResponse {
