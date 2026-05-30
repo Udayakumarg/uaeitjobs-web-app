@@ -484,6 +484,14 @@ function FilterBar(props: SharedFilterProps & { onMobileOpen: () => void }) {
         <div className="flex items-center justify-center gap-1">
 
           {/* Group 1 — who / what */}
+          <FilterDropdown label="Source"   count={sources.size}         open={openPanel === 'source'}  onToggle={() => tog('source')}  onClose={close}>
+            <CheckboxPanel
+              options={publishers.map(p => ({ value: p.key, label: p.count > 0 ? `${p.label} (${p.count})` : p.label }))}
+              selected={sources}
+              onToggle={v => onSourcesChange(toggleSet(sources, v))}
+            />
+          </FilterDropdown>
+
           <FilterDropdown label="Emirate"  count={emirates.size}        open={openPanel === 'emirate'} onToggle={() => tog('emirate')} onClose={close}>
             <CheckboxPanel options={EMIRATES} selected={emirates as Set<string>} onToggle={v => onEmiratesChange(toggleSet(emirates, v as Emirate))} />
           </FilterDropdown>
@@ -498,14 +506,6 @@ function FilterBar(props: SharedFilterProps & { onMobileOpen: () => void }) {
 
           <FilterDropdown label="Job Type" count={jobTypes.size}        open={openPanel === 'type'}    onToggle={() => tog('type')}    onClose={close}>
             <CheckboxPanel options={JOB_TYPES} selected={jobTypes} onToggle={v => onJobTypesChange(toggleSet(jobTypes, v))} />
-          </FilterDropdown>
-
-          <FilterDropdown label="Source"   count={sources.size}         open={openPanel === 'source'}  onToggle={() => tog('source')}  onClose={close}>
-            <CheckboxPanel
-              options={publishers.map(p => ({ value: p.key, label: p.label }))}
-              selected={sources}
-              onToggle={v => onSourcesChange(toggleSet(sources, v))}
-            />
           </FilterDropdown>
 
           <Sep />
@@ -597,6 +597,21 @@ function MobileFilterSheet(props: SharedFilterProps & { open: boolean; onClose: 
 
         <div className="flex-1 overflow-y-auto px-5 py-4 space-y-7">
 
+          <SheetSection label="Source">
+            <div className="grid grid-cols-2 gap-2">
+              {publishers.map(({ key, label, count }) => (
+                <label key={key}
+                  className="flex items-center gap-2.5 p-2.5 border cursor-pointer transition-colors rounded"
+                  style={sources.has(key) ? { borderColor: PINK, background: PINK_BG } : { borderColor: '#E5E7EB' }}>
+                  <input type="checkbox" checked={sources.has(key)} onChange={() => onSourcesChange(toggleSet(sources, key))} />
+                  <span className="text-sm font-medium" style={{ color: sources.has(key) ? PINK : '#374151' }}>
+                    {label}{count > 0 ? <span className="ml-1 font-normal text-gray-400">({count})</span> : null}
+                  </span>
+                </label>
+              ))}
+            </div>
+          </SheetSection>
+
           <SheetSection label="Emirate">
             <div className="grid grid-cols-2 gap-2">
               {EMIRATES.map(({ value, label }) => (
@@ -643,19 +658,6 @@ function MobileFilterSheet(props: SharedFilterProps & { open: boolean; onClose: 
                   style={jobTypes.has(value) ? { background: PINK, color: '#fff', borderColor: PINK } : { borderColor: '#E5E7EB', color: '#374151', background: '#fff' }}>
                   {label}
                 </button>
-              ))}
-            </div>
-          </SheetSection>
-
-          <SheetSection label="Source">
-            <div className="grid grid-cols-2 gap-2">
-              {publishers.map(({ key, label }) => (
-                <label key={key}
-                  className="flex items-center gap-2.5 p-2.5 border cursor-pointer transition-colors rounded"
-                  style={sources.has(key) ? { borderColor: PINK, background: PINK_BG } : { borderColor: '#E5E7EB' }}>
-                  <input type="checkbox" checked={sources.has(key)} onChange={() => onSourcesChange(toggleSet(sources, key))} />
-                  <span className="text-sm font-medium" style={{ color: sources.has(key) ? PINK : '#374151' }}>{label}</span>
-                </label>
               ))}
             </div>
           </SheetSection>
