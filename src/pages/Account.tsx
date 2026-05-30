@@ -1,7 +1,7 @@
 import { BadgeCheck, Camera, KeyRound, Phone, ShieldCheck } from 'lucide-react'
 import { useState } from 'react'
 import { PasswordInput } from '../components/PasswordInput'
-import { PASSWORD_RULES, PasswordStrength, passwordMeetsAllRules } from '../components/PasswordStrength'
+import { PasswordStrength, passwordMeetsAllRules } from '../components/PasswordStrength'
 import { useToastStore } from '../components/Toast'
 import { Button, Card, Field, Input, Select } from '../components/ui'
 import { errorMessage, userApi } from '../services/api'
