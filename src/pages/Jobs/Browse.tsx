@@ -481,65 +481,68 @@ function FilterBar(props: SharedFilterProps & { onMobileOpen: () => void }) {
         </button>
       </div>
 
-      {/* ── Filter row (desktop only) ────────────────────────────── */}
-      <div className="hidden md:flex items-center gap-1.5 overflow-x-auto scrollbar-none border-t border-gray-100 px-4 py-2">
+      {/* ── Filter row (desktop only) ─────────────────────────────────────────
+           overflow must NOT be set here — it would clip the absolutely-positioned
+           dropdown panels. Centering is via justify-center on the inner flex row. */}
+      <div className="hidden md:block border-t border-gray-100 px-4 py-2">
+        <div className="flex items-center justify-center gap-1.5">
 
-        {/* Primary filters */}
-        <FilterDropdown label="Source"   count={sources.size}         open={openPanel === 'source'}  onToggle={() => tog('source')}  onClose={close}>
-          <CheckboxPanel
-            options={publishers.map(p => ({ value: p.key, label: p.count > 0 ? `${p.label} (${p.count})` : p.label }))}
-            selected={sources}
-            onToggle={v => onSourcesChange(toggleSet(sources, v))}
-          />
-        </FilterDropdown>
+          {/* Primary filters */}
+          <FilterDropdown label="Source"   count={sources.size}         open={openPanel === 'source'}  onToggle={() => tog('source')}  onClose={close}>
+            <CheckboxPanel
+              options={publishers.map(p => ({ value: p.key, label: p.count > 0 ? `${p.label} (${p.count})` : p.label }))}
+              selected={sources}
+              onToggle={v => onSourcesChange(toggleSet(sources, v))}
+            />
+          </FilterDropdown>
 
-        <FilterDropdown label="Emirate"  count={emirates.size}        open={openPanel === 'emirate'} onToggle={() => tog('emirate')} onClose={close}>
-          <CheckboxPanel options={EMIRATES} selected={emirates as Set<string>} onToggle={v => onEmiratesChange(toggleSet(emirates, v as Emirate))} />
-        </FilterDropdown>
+          <FilterDropdown label="Emirate"  count={emirates.size}        open={openPanel === 'emirate'} onToggle={() => tog('emirate')} onClose={close}>
+            <CheckboxPanel options={EMIRATES} selected={emirates as Set<string>} onToggle={v => onEmiratesChange(toggleSet(emirates, v as Emirate))} />
+          </FilterDropdown>
 
-        <FilterDropdown label="Stack"    count={jobCats.size}         open={openPanel === 'stack'}   onToggle={() => tog('stack')}   onClose={close}>
-          <CheckboxPanel options={JOB_CATEGORIES.map(c => ({ value: c.value, label: c.label }))} selected={jobCats as Set<string>} onToggle={v => onJobCatsChange(toggleSet(jobCats, v as JobCategory))} />
-        </FilterDropdown>
+          <FilterDropdown label="Stack"    count={jobCats.size}         open={openPanel === 'stack'}   onToggle={() => tog('stack')}   onClose={close}>
+            <CheckboxPanel options={JOB_CATEGORIES.map(c => ({ value: c.value, label: c.label }))} selected={jobCats as Set<string>} onToggle={v => onJobCatsChange(toggleSet(jobCats, v as JobCategory))} />
+          </FilterDropdown>
 
-        <Sep />
+          <Sep />
 
-        {/* Secondary filters */}
-        <FilterDropdown label="Level"    count={levels.size}          open={openPanel === 'level'}   onToggle={() => tog('level')}   onClose={close}>
-          <CheckboxPanel options={LEVELS} selected={levels} onToggle={v => onLevelsChange(toggleSet(levels, v))} />
-        </FilterDropdown>
+          {/* Secondary filters */}
+          <FilterDropdown label="Level"    count={levels.size}          open={openPanel === 'level'}   onToggle={() => tog('level')}   onClose={close}>
+            <CheckboxPanel options={LEVELS} selected={levels} onToggle={v => onLevelsChange(toggleSet(levels, v))} />
+          </FilterDropdown>
 
-        <FilterDropdown label="Job Type" count={jobTypes.size}        open={openPanel === 'type'}    onToggle={() => tog('type')}    onClose={close}>
-          <CheckboxPanel options={JOB_TYPES} selected={jobTypes} onToggle={v => onJobTypesChange(toggleSet(jobTypes, v))} />
-        </FilterDropdown>
+          <FilterDropdown label="Job Type" count={jobTypes.size}        open={openPanel === 'type'}    onToggle={() => tog('type')}    onClose={close}>
+            <CheckboxPanel options={JOB_TYPES} selected={jobTypes} onToggle={v => onJobTypesChange(toggleSet(jobTypes, v))} />
+          </FilterDropdown>
 
-        <FilterDropdown label="Posted"   count={posted ? 1 : 0}       open={openPanel === 'posted'}  onToggle={() => tog('posted')}  onClose={close}>
-          <RadioPanel options={POSTED_OPTIONS} selected={posted} onSelect={onPostedChange} />
-        </FilterDropdown>
+          <FilterDropdown label="Posted"   count={posted ? 1 : 0}       open={openPanel === 'posted'}  onToggle={() => tog('posted')}  onClose={close}>
+            <RadioPanel options={POSTED_OPTIONS} selected={posted} onSelect={onPostedChange} />
+          </FilterDropdown>
 
-        <FilterDropdown label="Salary"   count={salaryBucket ? 1 : 0} open={openPanel === 'salary'}  onToggle={() => tog('salary')}  onClose={close}>
-          <RadioPanel options={SALARY_OPTIONS} selected={salaryBucket} onSelect={onSalaryChange} />
-        </FilterDropdown>
+          <FilterDropdown label="Salary"   count={salaryBucket ? 1 : 0} open={openPanel === 'salary'}  onToggle={() => tog('salary')}  onClose={close}>
+            <RadioPanel options={SALARY_OPTIONS} selected={salaryBucket} onSelect={onSalaryChange} />
+          </FilterDropdown>
 
-        <Sep />
+          <Sep />
 
-        {/* Sort */}
-        <FilterDropdown
-          label={SORT_OPTIONS.find(s => s.value === sortBy)?.label ?? 'Sort'}
-          count={0} noHighlight
-          open={openPanel === 'sort'} onToggle={() => tog('sort')} onClose={close}
-        >
-          <RadioPanel options={SORT_OPTIONS} selected={sortBy} onSelect={v => { onSortChange(v); close() }} />
-        </FilterDropdown>
+          {/* Sort */}
+          <FilterDropdown
+            label={SORT_OPTIONS.find(s => s.value === sortBy)?.label ?? 'Sort'}
+            count={0} noHighlight
+            open={openPanel === 'sort'} onToggle={() => tog('sort')} onClose={close}
+          >
+            <RadioPanel options={SORT_OPTIONS} selected={sortBy} onSelect={v => { onSortChange(v); close() }} />
+          </FilterDropdown>
 
-        {hasFilters && (
           <button
             onClick={onClearAll}
-            className="ml-0.5 shrink-0 inline-flex h-[30px] items-center gap-1 rounded-full px-3 font-sans text-[11.5px] font-medium text-gray-400 transition-all hover:text-rose-500 hover:bg-rose-50"
+            disabled={!hasFilters}
+            className="ml-0.5 shrink-0 inline-flex h-[30px] items-center gap-1 rounded-full px-3 font-sans text-[11.5px] font-medium transition-all disabled:cursor-not-allowed disabled:text-gray-300 text-gray-400 hover:enabled:text-rose-500 hover:enabled:bg-rose-50"
           >
             <X size={10} strokeWidth={2.5} />
             Clear
           </button>
-        )}
+        </div>
       </div>
 
       {/* ── Active filter chips ───────────────────────────────────────────────── */}
