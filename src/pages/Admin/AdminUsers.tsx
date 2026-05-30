@@ -1,9 +1,24 @@
-import { Mail, Plus, Search, Trash2, UserCheck, Users } from 'lucide-react'
+import {
+  Calendar,
+  Clock,
+  Globe2,
+  Hash,
+  Mail,
+  Phone,
+  Plus,
+  Search,
+  Trash2,
+  UserCheck,
+  Users,
+  X,
+} from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useToastStore } from '../../components/Toast'
 import { Button, Card } from '../../components/ui'
 import { adminApi, errorMessage, fieldErrors } from '../../services/api'
 import type { AdminUser } from '../../types'
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
 
 const ROLE_COLORS: Record<string, string> = {
   admin:      'bg-red-100 text-red-700',
@@ -19,21 +34,158 @@ function RoleBadge({ role }: { role: string }) {
   )
 }
 
+function fmt(iso: string | null | undefined, fallback = '—') {
+  if (!iso) return fallback
+  return new Date(iso).toLocaleString('en-GB', {
+    day: '2-digit', month: 'short', year: 'numeric',
+    hour: '2-digit', minute: '2-digit',
+  })
+}
+
+function timeAgo(iso: string | null | undefined) {
+  if (!iso) return null
+  const ms = Date.now() - new Date(iso).getTime()
+  const m = Math.floor(ms / 60_000)
+  if (m < 1)  return 'just now'
+  if (m < 60) return `${m}m ago`
+  const h = Math.floor(m / 60)
+  if (h < 24) return `${h}h ago`
+  return `${Math.floor(h / 24)}d ago`
+}
+
+// ── Detail row ────────────────────────────────────────────────────────────────
+
+function DetailRow({ icon: Icon, label, value }: { icon: React.ElementType; label: string; value: React.ReactNode }) {
+  return (
+    <div className="flex items-start gap-3 py-2.5">
+      <Icon size={14} className="mt-0.5 shrink-0 text-slate-400" />
+      <span className="w-24 shrink-0 text-xs font-semibold text-slate-500">{label}</span>
+      <span className="text-sm text-slate-800 break-all">{value}</span>
+    </div>
+  )
+}
+
+// ── User detail modal ─────────────────────────────────────────────────────────
+
+interface UserDetailModalProps {
+  user: AdminUser
+  onClose: () => void
+  onResend: (u: AdminUser) => void
+  onDelete: (u: AdminUser) => void
+  resendingId: number | null
+  deletingId: number | null
+}
+
+function UserDetailModal({ user, onClose, onResend, onDelete, resendingId, deletingId }: UserDetailModalProps) {
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
+      onClick={onClose}
+    >
+      <div
+        className="relative w-full max-w-md rounded-2xl border border-slate-200 bg-white shadow-2xl"
+        onClick={e => e.stopPropagation()}
+      >
+        {/* Close */}
+        <button
+          onClick={onClose}
+          className="absolute right-4 top-4 rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition-colors"
+        >
+          <X size={16} />
+        </button>
+
+        {/* Header */}
+        <div className="flex items-center gap-4 border-b border-slate-100 px-6 py-5">
+          <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-slate-200 to-slate-300 text-xl font-bold text-slate-600 uppercase">
+            {user.email[0]}
+          </span>
+          <div className="min-w-0">
+            {user.displayName && (
+              <p className="truncate text-base font-semibold text-slate-900">{user.displayName}</p>
+            )}
+            <p className="truncate text-sm text-slate-500">{user.email}</p>
+            <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+              <RoleBadge role={user.userType} />
+              {user.verified ? (
+                <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-semibold text-emerald-700">
+                  <UserCheck size={11} /> Verified
+                </span>
+              ) : (
+                <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-[11px] font-semibold text-amber-600">
+                  Pending verification
+                </span>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Details */}
+        <div className="divide-y divide-slate-50 px-6 py-1">
+          <DetailRow icon={Hash}     label="User ID"    value={`#${user.id}`} />
+          <DetailRow icon={Globe2}   label="Country"    value={user.country  || '—'} />
+          <DetailRow icon={Phone}    label="Phone"      value={user.phone    || '—'} />
+          <DetailRow icon={Calendar} label="Joined"     value={fmt(user.createdAt)} />
+          <DetailRow
+            icon={Clock}
+            label="Last login"
+            value={
+              user.lastLogin
+                ? <span>{fmt(user.lastLogin)} <span className="ml-1 text-xs text-slate-400">({timeAgo(user.lastLogin)})</span></span>
+                : <span className="text-slate-400">Never signed in</span>
+            }
+          />
+        </div>
+
+        {/* Actions */}
+        <div className="flex gap-2 border-t border-slate-100 px-6 py-4">
+          {!user.verified && (
+            <Button
+              size="sm"
+              variant="secondary"
+              disabled={resendingId === user.id}
+              onClick={() => onResend(user)}
+              className="flex-1 gap-1.5"
+            >
+              <Mail size={13} />
+              {resendingId === user.id ? 'Sending…' : 'Resend activation'}
+            </Button>
+          )}
+          <Button
+            size="sm"
+            variant="secondary"
+            disabled={deletingId === user.id}
+            onClick={() => onDelete(user)}
+            className={`flex-1 gap-1.5 border-red-200 text-red-500 hover:bg-red-50 ${user.verified ? 'flex-1' : ''}`}
+          >
+            <Trash2 size={13} />
+            {deletingId === user.id ? 'Deleting…' : 'Delete user'}
+          </Button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ── Create form ───────────────────────────────────────────────────────────────
+
 interface CreateForm {
   email: string
   password: string
   userType: 'admin' | 'hr' | 'job_seeker'
 }
 
+// ── Page ─────────────────────────────────────────────────────────────────────
+
 export default function AdminUsers() {
-  const [users, setUsers]       = useState<AdminUser[]>([])
-  const [total, setTotal]       = useState(0)
-  const [search, setSearch]     = useState('')
-  const [loading, setLoading]   = useState(false)
-  const [showModal, setShowModal] = useState(false)
-  const [form, setForm]         = useState<CreateForm>({ email: '', password: '', userType: 'admin' })
-  const [saving, setSaving]     = useState(false)
-  const [errors, setErrors]     = useState<Record<string, string>>({})
+  const [users, setUsers]           = useState<AdminUser[]>([])
+  const [total, setTotal]           = useState(0)
+  const [search, setSearch]         = useState('')
+  const [loading, setLoading]       = useState(false)
+  const [showCreate, setShowCreate] = useState(false)
+  const [selectedUser, setSelectedUser] = useState<AdminUser | null>(null)
+  const [form, setForm]             = useState<CreateForm>({ email: '', password: '', userType: 'admin' })
+  const [saving, setSaving]         = useState(false)
+  const [errors, setErrors]         = useState<Record<string, string>>({})
   const [deletingId, setDeletingId] = useState<number | null>(null)
   const [resendingId, setResendingId] = useState<number | null>(null)
   const { add: toast } = useToastStore()
@@ -62,7 +214,7 @@ export default function AdminUsers() {
     try {
       const { data } = await adminApi.createUser(form)
       toast({ type: 'success', title: 'User created', message: `${data.email} (${data.userType}) created successfully.` })
-      setShowModal(false)
+      setShowCreate(false)
       setForm({ email: '', password: '', userType: 'admin' })
       load()
     } catch (e) {
@@ -82,6 +234,7 @@ export default function AdminUsers() {
       toast({ type: 'success', title: 'User deleted', message: user.email })
       setUsers(prev => prev.filter(u => u.id !== user.id))
       setTotal(t => t - 1)
+      setSelectedUser(null)
     } catch (e) {
       toast({ type: 'error', title: 'Failed to delete', message: errorMessage(e) })
     } finally {
@@ -112,7 +265,7 @@ export default function AdminUsers() {
           </h1>
           <p className="mt-1 text-sm text-slate-500">{total.toLocaleString()} registered users</p>
         </div>
-        <Button onClick={() => setShowModal(true)} size="sm">
+        <Button onClick={() => setShowCreate(true)} size="sm">
           <Plus size={14} /> Create User
         </Button>
       </div>
@@ -154,7 +307,11 @@ export default function AdminUsers() {
                 <tr><td colSpan={5} className="py-16 text-center text-sm text-slate-400">No users found</td></tr>
               )}
               {users.map(u => (
-                <tr key={u.id} className="border-b border-slate-100 last:border-0 hover:bg-slate-50/60 transition-colors">
+                <tr
+                  key={u.id}
+                  onClick={() => setSelectedUser(u)}
+                  className="border-b border-slate-100 last:border-0 hover:bg-slate-50/80 transition-colors cursor-pointer"
+                >
                   <td className="py-3 px-4">
                     <div className="flex items-center gap-2.5">
                       <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-100 text-sm font-semibold text-slate-600 uppercase">
@@ -170,13 +327,13 @@ export default function AdminUsers() {
                   <td className="py-3 px-4">
                     {u.verified
                       ? <span className="flex items-center gap-1 text-xs text-emerald-600"><UserCheck size={13} /> Verified</span>
-                      : <span className="text-xs text-slate-400">Pending</span>}
+                      : <span className="text-xs text-amber-500 font-medium">Pending</span>}
                   </td>
                   <td className="py-3 px-4 text-xs text-slate-500 whitespace-nowrap">
-                    {u.createdAt ? new Date(u.createdAt).toLocaleDateString() : '—'}
+                    {u.createdAt ? new Date(u.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '—'}
                   </td>
                   <td className="py-3 px-4 text-right">
-                    <div className="flex items-center justify-end gap-1">
+                    <div className="flex items-center justify-end gap-1" onClick={e => e.stopPropagation()}>
                       {!u.verified && (
                         <button
                           onClick={() => handleResend(u)}
@@ -204,8 +361,20 @@ export default function AdminUsers() {
         </div>
       </Card>
 
+      {/* User detail modal */}
+      {selectedUser && (
+        <UserDetailModal
+          user={selectedUser}
+          onClose={() => setSelectedUser(null)}
+          onResend={handleResend}
+          onDelete={handleDelete}
+          resendingId={resendingId}
+          deletingId={deletingId}
+        />
+      )}
+
       {/* Create User Modal */}
-      {showModal && (
+      {showCreate && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
           <Card className="w-full max-w-md p-6 shadow-2xl">
             <h2 className="text-lg font-bold text-slate-900 mb-1">Create User</h2>
@@ -259,7 +428,7 @@ export default function AdminUsers() {
                 <Button
                   type="button"
                   variant="secondary"
-                  onClick={() => { setShowModal(false); setErrors({}) }}
+                  onClick={() => { setShowCreate(false); setErrors({}) }}
                   className="flex-1"
                 >
                   Cancel

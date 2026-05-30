@@ -179,6 +179,9 @@ export interface AdminUser {
   verified?: boolean
   createdAt?: string
   displayName?: string | null
+  phone?: string | null
+  country?: string | null
+  lastLogin?: string | null
 }
 
 export interface UserRow {
