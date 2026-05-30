@@ -26,6 +26,8 @@ const NotFound = lazy(() => import('./pages/NotFound'))
 const IngestDashboard = lazy(() => import('./pages/Admin/IngestDashboard'))
 const AdminJobs = lazy(() => import('./pages/Admin/AdminJobs'))
 const AdminUsers = lazy(() => import('./pages/Admin/AdminUsers'))
+const AdminActivity = lazy(() => import('./pages/Admin/AdminActivity'))
+const Contact = lazy(() => import('./pages/Contact'))
 
 export default function App() {
   return (
@@ -43,6 +45,7 @@ export default function App() {
               <Route path="verify-email" element={<VerifyEmail />} />
               <Route path="forgot-password" element={<ForgotPassword />} />
               <Route path="reset-password" element={<ResetPassword />} />
+              <Route path="contact" element={<Contact />} />
               <Route path="access-denied" element={<AccessDenied />} />
 
               <Route element={<ProtectedRoute roles={['job_seeker']} />}>
@@ -64,6 +67,7 @@ export default function App() {
                 <Route path="admin/ingest" element={<IngestDashboard />} />
                 <Route path="admin/jobs" element={<AdminJobs />} />
                 <Route path="admin/users" element={<AdminUsers />} />
+                <Route path="admin/activity" element={<AdminActivity />} />
               </Route>
 
               <Route path="dashboard" element={<Navigate to="/seeker" replace />} />

@@ -181,6 +181,37 @@ export interface AdminUser {
   displayName?: string | null
 }
 
+export interface UserRow {
+  id: number
+  email: string
+  userType: string
+  verified: boolean
+  createdAt: string | null
+  lastLogin: string | null
+}
+
+export interface CountryCount {
+  country: string
+  count: number
+}
+
+export interface UserActivityStats {
+  totalUsers: number
+  verifiedUsers: number
+  pendingUsers: number
+  activeToday: number
+  activeLast7Days: number
+  activeLast30Days: number
+  neverLoggedIn: number
+  newLast7Days: number
+  newLast30Days: number
+  activeSessions: number
+  stuckPending: UserRow[]
+  recentSignups: UserRow[]
+  neverReturned: UserRow[]
+  topCountries: CountryCount[]
+}
+
 export interface IngestRunLog {
   id: number
   source: string

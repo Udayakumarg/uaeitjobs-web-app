@@ -1,4 +1,4 @@
-import { Bookmark, Briefcase, LayoutDashboard, LogIn, Menu, Search, UserRound, Users, Users2, X, Zap } from 'lucide-react'
+import { Activity, Bookmark, Briefcase, LayoutDashboard, LogIn, Menu, Search, UserRound, Users, Users2, X, Zap } from 'lucide-react'
 import { useState } from 'react'
 import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { useAuthStore } from '../store/authStore'
@@ -60,6 +60,10 @@ export function Layout() {
           <NavLink to="/admin/users" className={navClass}>
             <Users className="h-4 w-4" />
             Users
+          </NavLink>
+          <NavLink to="/admin/activity" className={navClass}>
+            <Activity className="h-4 w-4" />
+            Activity
           </NavLink>
         </>
       ) : null}
@@ -235,9 +239,9 @@ export function Layout() {
               </p>
               <ul className="mt-4 grid gap-2 text-sm">
                 <li>
-                  <a href="mailto:hello@uaeitjobs.com" className="text-slate-700 hover:text-pink-700">
+                  <Link to="/contact" className="text-slate-700 hover:text-pink-700">
                     Contact
-                  </a>
+                  </Link>
                 </li>
                 <li>
                   <a href="mailto:hello@uaeitjobs.com?subject=Privacy%20enquiry" className="text-slate-700 hover:text-pink-700">
