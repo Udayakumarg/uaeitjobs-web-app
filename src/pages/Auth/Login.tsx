@@ -111,10 +111,15 @@ export default function Login() {
             />
           </Field>
 
-          <label className="inline-flex items-center gap-2 text-sm text-slate-700">
-            <input type="checkbox" className="h-4 w-4 rounded border-slate-300 text-pink-700 focus:ring-pink-600" {...register('remember')} />
-            Remember me
-          </label>
+          <div className="flex items-center justify-between">
+            <label className="inline-flex items-center gap-2 text-sm text-slate-700">
+              <input type="checkbox" className="h-4 w-4 rounded border-slate-300 text-pink-700 focus:ring-pink-600" {...register('remember')} />
+              Remember me
+            </label>
+            <Link className="text-sm font-semibold text-pink-700 hover:text-pink-800" to="/forgot-password">
+              Forgot password?
+            </Link>
+          </div>
 
           {serverError ? (
             <p className="flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700" role="alert">
@@ -123,7 +128,7 @@ export default function Login() {
             </p>
           ) : null}
 
-          <Button size="lg" disabled={isSubmitting} className="mt-2 bg-slate-950 hover:bg-slate-800">
+          <Button size="lg" disabled={isSubmitting} className="mt-2 bg-[#BE185D] hover:bg-[#9D174D]">
             {isSubmitting ? 'Signing in...' : 'Sign in'}
             <ArrowRight size={18} />
           </Button>

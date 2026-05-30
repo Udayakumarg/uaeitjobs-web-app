@@ -9,6 +9,8 @@ const AccessDenied = lazy(() => import('./pages/AccessDenied'))
 const Login = lazy(() => import('./pages/Auth/Login'))
 const Register = lazy(() => import('./pages/Auth/Register'))
 const VerifyEmail = lazy(() => import('./pages/Auth/VerifyEmail'))
+const ForgotPassword = lazy(() => import('./pages/Auth/ForgotPassword'))
+const ResetPassword = lazy(() => import('./pages/Auth/ResetPassword'))
 const HRApplicants = lazy(() => import('./pages/HR/Applicants'))
 const HRDashboard = lazy(() => import('./pages/HR/Dashboard'))
 const LinkedInImport = lazy(() => import('./pages/HR/LinkedInImport'))
@@ -39,6 +41,8 @@ export default function App() {
               <Route path="login" element={<Login />} />
               <Route path="register" element={<Register />} />
               <Route path="verify-email" element={<VerifyEmail />} />
+              <Route path="forgot-password" element={<ForgotPassword />} />
+              <Route path="reset-password" element={<ResetPassword />} />
               <Route path="access-denied" element={<AccessDenied />} />
 
               <Route element={<ProtectedRoute roles={['job_seeker']} />}>

@@ -130,6 +130,8 @@ export const authApi = {
     api.post('/auth/register', payload),
   login: (payload: { email: string; password: string }) => api.post<AuthResponse>('/auth/login', payload),
   verifyEmail: (token: string) => api.post('/auth/verify-email', { token }),
+  forgotPassword: (email: string) => api.post('/auth/forgot-password', { email }),
+  resetPassword: (token: string, newPassword: string) => api.post('/auth/reset-password', { token, newPassword }),
   // Refresh token is in the httpOnly cookie — no body needed.
   refresh: () => api.post<AuthResponse>('/auth/refresh'),
   // Logout revokes the cookie server-side — no token arg needed.
