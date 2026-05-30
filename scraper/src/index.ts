@@ -42,7 +42,8 @@ async function main() {
 
   // Stealth plugin already patches webdriver — this is a belt-and-suspenders backup
   await context.addInitScript(() => {
-    try { Object.defineProperty((globalThis as Record<string, unknown>).navigator, 'webdriver', { get: () => undefined }) } catch (_e) { /* noop */ }
+    // eslint-disable-next-line no-empty
+    try { Object.defineProperty((globalThis as Record<string, unknown>).navigator, 'webdriver', { get: () => undefined }) } catch {}
   })
 
   const page = await context.newPage()
