@@ -160,13 +160,13 @@ export default function AdminJobs() {
       {/* Pagination */}
       {total > 20 && (
         <div className="flex items-center justify-center gap-2">
-          <Button size="sm" variant="outline" disabled={page === 0} onClick={() => setPage(p => p - 1)}>
+          <Button size="sm" variant="secondary" disabled={page === 0} onClick={() => setPage(p => p - 1)}>
             Previous
           </Button>
           <span className="text-sm text-slate-500">
             Page {page + 1} of {Math.ceil(total / 20)}
           </span>
-          <Button size="sm" variant="outline" disabled={(page + 1) * 20 >= total} onClick={() => setPage(p => p + 1)}>
+          <Button size="sm" variant="secondary" disabled={(page + 1) * 20 >= total} onClick={() => setPage(p => p + 1)}>
             Next
           </Button>
         </div>
