@@ -140,7 +140,7 @@ export default function AdminJobs() {
                 <td className="px-4 py-3 text-right">
                   <Button
                     size="sm"
-                    variant={job.active ? 'outline' : 'primary'}
+                    variant={job.active ? 'secondary' : 'primary'}
                     onClick={() => toggleActive(job)}
                     disabled={busy === job.id}
                   >
