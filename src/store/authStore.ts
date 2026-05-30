@@ -5,6 +5,7 @@ interface AuthState {
   accessToken: string | null
   user: User | null
   setSession: (session: AuthResponse) => void
+  updateUser: (user: User) => void
   logout: () => void
 }
 
@@ -33,6 +34,11 @@ export const useAuthStore = create<AuthState>((set) => ({
     // older version of the app.
     localStorage.removeItem('uaeitjobs.refreshToken')
     set({ accessToken: session.accessToken, user: session.user })
+  },
+
+  updateUser: (user) => {
+    localStorage.setItem('uaeitjobs.user', JSON.stringify(user))
+    set({ user })
   },
 
   logout: () => {

@@ -13,6 +13,7 @@ const ForgotPassword = lazy(() => import('./pages/Auth/ForgotPassword'))
 const ResetPassword = lazy(() => import('./pages/Auth/ResetPassword'))
 const HRApplicants = lazy(() => import('./pages/HR/Applicants'))
 const HRDashboard = lazy(() => import('./pages/HR/Dashboard'))
+const HRProfile = lazy(() => import('./pages/HR/Profile'))
 const LinkedInImport = lazy(() => import('./pages/HR/LinkedInImport'))
 const PostJob = lazy(() => import('./pages/HR/PostJob'))
 const JobSeekerApplications = lazy(() => import('./pages/JobSeeker/Applications'))
@@ -57,6 +58,7 @@ export default function App() {
 
               <Route element={<ProtectedRoute roles={['hr']} />}>
                 <Route path="hr" element={<HRDashboard />} />
+                <Route path="hr/profile" element={<HRProfile />} />
                 <Route path="hr/jobs/new" element={<PostJob />} />
                 <Route path="hr/jobs/:id/edit" element={<PostJob />} />
                 <Route path="hr/linkedin-import" element={<LinkedInImport />} />

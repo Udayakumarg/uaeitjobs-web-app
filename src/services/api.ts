@@ -1,7 +1,7 @@
 import axios, { AxiosError, type InternalAxiosRequestConfig } from 'axios'
 import { useToastStore } from '../components/Toast'
 import { useAuthStore } from '../store/authStore'
-import type { AdminUser, Application, ApplicationStatus, AuthResponse, HRProfile, IngestStatus, Job, JobRequest, JobSeekerProfile, Page, UserActivityStats, UserType } from '../types'
+import type { AdminUser, Application, ApplicationStatus, AuthResponse, HRProfile, IngestStatus, Job, JobRequest, JobSeekerProfile, Page, User, UserActivityStats, UserType } from '../types'
 
 const configuredApiUrl = import.meta.env.VITE_API_URL
 
@@ -223,6 +223,12 @@ export const adminApi = {
     api.post(`/admin/users/${id}/resend-verification`),
   activity: () =>
     api.get<UserActivityStats>('/admin/users/activity'),
+}
+
+export const userApi = {
+  /** Update display name, phone and/or country for the current authenticated user. */
+  updateProfile: (payload: { displayName?: string; phone?: string; country?: string }) =>
+    api.patch<User>('/user/profile', payload),
 }
 
 export const contactApi = {
