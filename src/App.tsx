@@ -29,6 +29,7 @@ const AdminJobs = lazy(() => import('./pages/Admin/AdminJobs'))
 const AdminUsers = lazy(() => import('./pages/Admin/AdminUsers'))
 const AdminActivity = lazy(() => import('./pages/Admin/AdminActivity'))
 const Contact = lazy(() => import('./pages/Contact'))
+const AccountPage = lazy(() => import('./pages/Account'))
 
 export default function App() {
   return (
@@ -48,6 +49,11 @@ export default function App() {
               <Route path="reset-password" element={<ResetPassword />} />
               <Route path="contact" element={<Contact />} />
               <Route path="access-denied" element={<AccessDenied />} />
+
+              {/* Account settings — accessible to every authenticated user */}
+              <Route element={<ProtectedRoute />}>
+                <Route path="account" element={<AccountPage />} />
+              </Route>
 
               <Route element={<ProtectedRoute roles={['job_seeker']} />}>
                 <Route path="seeker" element={<JobSeekerDashboard />} />

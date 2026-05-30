@@ -1,20 +1,13 @@
-import { BadgeCheck, Building2, Camera, FileText, GraduationCap, Phone, Plus, Tag, Upload, User, X } from 'lucide-react'
+import { BadgeCheck, Building2, FileText, GraduationCap, Plus, Tag, Upload, User, X } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { CardSkeleton } from '../../components/Skeleton'
 import { useToastStore } from '../../components/Toast'
 import { Button, Card, Field, Input, Select, Textarea } from '../../components/ui'
-import { errorMessage, seekerApi, userApi } from '../../services/api'
+import { errorMessage, seekerApi } from '../../services/api'
 import { useAuthStore } from '../../store/authStore'
 import type { JobSeekerProfile } from '../../types'
-import { compressAvatar, initials, parseSkills } from '../../utils/format'
-
-const COUNTRIES = [
-  'United Arab Emirates', 'India', 'Pakistan', 'Philippines', 'Egypt',
-  'Saudi Arabia', 'Qatar', 'Kuwait', 'Bahrain', 'Oman',
-  'Lebanon', 'Jordan', 'Bangladesh', 'Sri Lanka', 'Nepal',
-  'United Kingdom', 'United States', 'Canada', 'Australia',
-  'France', 'Germany', 'Nigeria', 'Kenya', 'South Africa', 'Other',
-]
+import { initials, parseSkills } from '../../utils/format'
 
 const VISA_OPTIONS = [
   { value: '', label: 'Not specified' },
@@ -49,22 +42,13 @@ function SectionHeading({ icon: Icon, title }: { icon: React.ElementType; title:
 
 export default function JobSeekerProfilePage() {
   const toast = useToastStore((s) => s.add)
-  const { user, updateUser } = useAuthStore()
+  const { user } = useAuthStore()
 
-  // Job seeker profile state
   const [profile, setProfile] = useState<JobSeekerProfile>(initial)
   const [skills, setSkills] = useState<string[]>([])
   const [skillInput, setSkillInput] = useState('')
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
-
-  // Account state (user-level fields)
-  const [displayName, setDisplayName] = useState(user?.displayName ?? '')
-  const [phone, setPhone] = useState(user?.phone ?? '')
-  const [country, setCountry] = useState(user?.country ?? '')
-  const [avatarPreview, setAvatarPreview] = useState<string | null>(user?.avatarUrl ?? null)
-  const [avatarPending, setAvatarPending] = useState<string | null>(null) // compressed, not yet saved
-  const [savingAccount, setSavingAccount] = useState(false)
 
   const skillInputRef = useRef<HTMLInputElement>(null)
 
@@ -109,33 +93,6 @@ export default function JobSeekerProfilePage() {
     }
   }
 
-  async function pickAvatar(file?: File) {
-    if (!file) return
-    try {
-      const compressed = await compressAvatar(file)
-      setAvatarPending(compressed)
-      setAvatarPreview(compressed)
-    } catch {
-      toast({ type: 'error', title: 'Could not process image', message: 'Please try a different photo.' })
-    }
-  }
-
-  async function saveAccount() {
-    setSavingAccount(true)
-    try {
-      const payload: Parameters<typeof userApi.updateProfile>[0] = { displayName, phone, country }
-      if (avatarPending !== null) payload.avatarUrl = avatarPending
-      const { data } = await userApi.updateProfile(payload)
-      updateUser({ ...user!, ...data })
-      setAvatarPending(null) // clear pending once saved
-      toast({ type: 'success', title: 'Account updated' })
-    } catch (error) {
-      toast({ type: 'error', title: 'Could not update account', message: errorMessage(error) })
-    } finally {
-      setSavingAccount(false)
-    }
-  }
-
   async function uploadCv(file?: File) {
     if (!file) return
     try {
@@ -148,34 +105,24 @@ export default function JobSeekerProfilePage() {
   }
 
   const avatarInitials = initials(user?.displayName || user?.email)
-  const displayLabel = user?.displayName || user?.email || 'Job Seeker'
+  const displayLabel   = user?.displayName || user?.email || 'Job Seeker'
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-8">
 
       {/* ── Header ────────────────────────────────────────────────────── */}
       <div className="mb-6 flex items-center gap-4">
-        {/* Avatar with camera-overlay upload trigger */}
-        <label className="group relative h-16 w-16 shrink-0 cursor-pointer">
-          <div className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-pink-500 to-pink-700 text-xl font-bold text-white shadow-md">
-            {avatarPreview
-              ? <img src={avatarPreview} alt="Profile photo" className="h-full w-full object-cover" />
+        {/* Avatar — click goes to /account to edit */}
+        <Link to="/account" title="Edit photo & account details" className="group relative h-16 w-16 shrink-0">
+          <div className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-pink-500 to-pink-700 text-xl font-bold text-white shadow-md ring-2 ring-transparent transition group-hover:ring-pink-300">
+            {user?.avatarUrl
+              ? <img src={user.avatarUrl} alt="Profile photo" className="h-full w-full object-cover" />
               : avatarInitials}
           </div>
-          {/* Camera overlay on hover */}
-          <div className="absolute inset-0 flex items-center justify-center rounded-full bg-black/40 opacity-0 transition-opacity group-hover:opacity-100">
-            <Camera size={18} className="text-white" />
+          <div className="absolute inset-0 flex items-center justify-center rounded-full bg-black/35 opacity-0 transition-opacity group-hover:opacity-100">
+            <User size={16} className="text-white" />
           </div>
-          <input
-            type="file"
-            accept="image/*"
-            className="hidden"
-            onChange={(e) => pickAvatar(e.target.files?.[0])}
-          />
-          {avatarPending && (
-            <span className="absolute -bottom-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-amber-400 ring-2 ring-white" title="Unsaved — click 'Save account details'" />
-          )}
-        </label>
+        </Link>
         <div>
           <h1 className="text-2xl font-bold text-slate-950">{displayLabel}</h1>
           <div className="mt-1 flex flex-wrap items-center gap-2">
@@ -186,14 +133,10 @@ export default function JobSeekerProfilePage() {
               <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-semibold text-emerald-700 ring-1 ring-inset ring-emerald-200">
                 <BadgeCheck size={11} /> Verified
               </span>
-            ) : (
-              <span className="inline-flex items-center rounded-full bg-amber-50 px-2.5 py-0.5 text-xs font-semibold text-amber-700 ring-1 ring-inset ring-amber-200">
-                Unverified
-              </span>
-            )}
+            ) : null}
             {profile.yearsExperience ? (
               <span className="inline-flex items-center rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-semibold text-slate-600">
-                {profile.yearsExperience} yr{profile.yearsExperience !== 1 ? 's' : ''} experience
+                {profile.yearsExperience} yr{profile.yearsExperience !== 1 ? 's' : ''} exp
               </span>
             ) : null}
           </div>
@@ -208,7 +151,7 @@ export default function JobSeekerProfilePage() {
       ) : (
         <div className="grid gap-5">
 
-          {/* ── Professional profile ──────────────────────────────────────── */}
+          {/* ── Professional profile ─────────────────────────────────────── */}
           <Card>
             <SectionHeading icon={User} title="Professional profile" />
             <div className="grid gap-4 md:grid-cols-2">
@@ -217,15 +160,13 @@ export default function JobSeekerProfilePage() {
                   <Input
                     value={profile.headline ?? ''}
                     onChange={(e) => update('headline', e.target.value)}
-                    placeholder="e.g. Senior React Developer with 5 years UAE experience"
+                    placeholder="e.g. Senior React Developer · 5 yrs UAE experience"
                   />
                 </Field>
               </div>
               <Field label="Years of experience">
                 <Input
-                  type="number"
-                  min={0}
-                  max={50}
+                  type="number" min={0} max={50}
                   value={profile.yearsExperience ?? 0}
                   onChange={(e) => update('yearsExperience', Number(e.target.value))}
                 />
@@ -235,9 +176,7 @@ export default function JobSeekerProfilePage() {
                   value={profile.visaStatus ?? ''}
                   onChange={(e) => update('visaStatus', e.target.value)}
                 >
-                  {VISA_OPTIONS.map((o) => (
-                    <option key={o.value} value={o.value}>{o.label}</option>
-                  ))}
+                  {VISA_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
                 </Select>
               </Field>
             </div>
@@ -253,7 +192,7 @@ export default function JobSeekerProfilePage() {
             </div>
           </Card>
 
-          {/* ── Skills ───────────────────────────────────────────────────── */}
+          {/* ── Skills ─────────────────────────────────────────────────────── */}
           <Card>
             <SectionHeading icon={Tag} title="Skills" />
             <div className="flex flex-wrap gap-2">
@@ -266,16 +205,14 @@ export default function JobSeekerProfilePage() {
                   <button
                     type="button"
                     onClick={() => removeSkill(skill)}
-                    className="ml-0.5 rounded-full p-0.5 hover:bg-pink-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pink-500"
+                    className="ml-0.5 rounded-full p-0.5 hover:bg-pink-200 focus-visible:outline-none"
                     aria-label={`Remove ${skill}`}
                   >
                     <X size={11} />
                   </button>
                 </span>
               ))}
-              {skills.length === 0 && (
-                <p className="text-sm text-slate-400">No skills added yet.</p>
-              )}
+              {skills.length === 0 && <p className="text-sm text-slate-400">No skills added yet.</p>}
             </div>
             <div className="mt-4 flex gap-2">
               <Input
@@ -292,7 +229,7 @@ export default function JobSeekerProfilePage() {
             </div>
           </Card>
 
-          {/* ── Experience ───────────────────────────────────────────────── */}
+          {/* ── Work experience ─────────────────────────────────────────────── */}
           <Card>
             <SectionHeading icon={Building2} title="Work experience" />
             <Field label="">
@@ -305,7 +242,7 @@ export default function JobSeekerProfilePage() {
             </Field>
           </Card>
 
-          {/* ── Education ────────────────────────────────────────────────── */}
+          {/* ── Education ──────────────────────────────────────────────────── */}
           <Card>
             <SectionHeading icon={GraduationCap} title="Education" />
             <Field label="">
@@ -318,26 +255,16 @@ export default function JobSeekerProfilePage() {
             </Field>
           </Card>
 
-          {/* ── CV ───────────────────────────────────────────────────────── */}
+          {/* ── CV ─────────────────────────────────────────────────────────── */}
           <Card>
             <SectionHeading icon={FileText} title="CV / Résumé" />
             <div className="flex flex-wrap items-center gap-3">
               <label className="inline-flex min-h-10 cursor-pointer items-center gap-2 rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-900 hover:bg-slate-50">
                 <Upload size={15} /> Upload CV
-                <input
-                  type="file"
-                  accept=".pdf,.doc,.docx"
-                  className="hidden"
-                  onChange={(e) => uploadCv(e.target.files?.[0])}
-                />
+                <input type="file" accept=".pdf,.doc,.docx" className="hidden" onChange={(e) => uploadCv(e.target.files?.[0])} />
               </label>
               {profile.cvUrl ? (
-                <a
-                  className="inline-flex items-center gap-1.5 text-sm font-semibold text-pink-700 hover:underline"
-                  href={profile.cvUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                >
+                <a className="inline-flex items-center gap-1.5 text-sm font-semibold text-pink-700 hover:underline" href={profile.cvUrl} target="_blank" rel="noreferrer">
                   <FileText size={14} /> View current CV
                 </a>
               ) : (
@@ -347,48 +274,14 @@ export default function JobSeekerProfilePage() {
             <p className="mt-3 text-xs text-slate-400">Accepted formats: PDF, DOC, DOCX · Max 5 MB</p>
           </Card>
 
-          {/* Save profile button */}
-          <div className="flex justify-end">
+          <div className="flex items-center justify-between gap-4">
+            <Link to="/account" className="text-sm text-slate-500 hover:text-pink-700 hover:underline">
+              ← Account settings (name, photo, password)
+            </Link>
             <Button onClick={saveProfile} disabled={saving} className="px-8">
               {saving ? 'Saving…' : 'Save profile'}
             </Button>
           </div>
-
-          {/* ── Account details ───────────────────────────────────────────── */}
-          <Card>
-            <SectionHeading icon={Phone} title="Account details" />
-            <div className="grid gap-4 md:grid-cols-2">
-              <Field label="Email address">
-                <Input value={user?.email ?? ''} disabled className="bg-slate-50 text-slate-500 cursor-not-allowed" />
-              </Field>
-              <Field label="Display name">
-                <Input
-                  value={displayName ?? ''}
-                  onChange={(e) => setDisplayName(e.target.value)}
-                  placeholder="Your name as shown in the app"
-                />
-              </Field>
-              <Field label="Phone number">
-                <Input
-                  value={phone ?? ''}
-                  onChange={(e) => setPhone(e.target.value)}
-                  placeholder="+971 50 000 0000"
-                  type="tel"
-                />
-              </Field>
-              <Field label="Country">
-                <Select value={country ?? ''} onChange={(e) => setCountry(e.target.value)}>
-                  <option value="">Select country</option>
-                  {COUNTRIES.map((c) => <option key={c}>{c}</option>)}
-                </Select>
-              </Field>
-            </div>
-            <div className="mt-5 flex justify-end">
-              <Button variant="secondary" onClick={saveAccount} disabled={savingAccount}>
-                {savingAccount ? 'Saving…' : 'Save account details'}
-              </Button>
-            </div>
-          </Card>
 
         </div>
       )}

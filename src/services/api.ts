@@ -230,6 +230,9 @@ export const userApi = {
    *  avatarUrl must be a base64 data-URL (client-compressed to ~80×80 JPEG). */
   updateProfile: (payload: { displayName?: string; phone?: string; country?: string; avatarUrl?: string }) =>
     api.patch<User>('/user/profile', payload),
+  /** Change password — requires current password. Revokes all other sessions on success. */
+  changePassword: (currentPassword: string, newPassword: string) =>
+    api.post('/user/change-password', { currentPassword, newPassword }),
 }
 
 export const contactApi = {

@@ -106,7 +106,10 @@ export function Layout() {
           <div className="hidden items-center gap-2 md:flex">
             {user ? (
               <>
-                <span className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-700">
+                <Link
+                  to="/account"
+                  className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-200 hover:text-slate-950"
+                >
                   {user.avatarUrl ? (
                     <img
                       src={user.avatarUrl}
@@ -117,7 +120,7 @@ export function Layout() {
                     <UserRound className="h-3.5 w-3.5" />
                   )}
                   {user.displayName || user.email}
-                </span>
+                </Link>
                 <Button variant="secondary" size="sm" onClick={handleLogout}>
                   Logout
                 </Button>
