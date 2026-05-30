@@ -807,6 +807,7 @@ function CheckboxPanel({ options, selected, onToggle }: {
         return (
           <label
             key={value}
+            onClick={() => onToggle(value)}
             className="flex items-center gap-2.5 px-3.5 py-2.5 cursor-pointer select-none transition-colors duration-100 hover:bg-gray-50 group"
           >
             {/* Custom checkbox */}
