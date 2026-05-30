@@ -44,10 +44,52 @@ export async function scrapeNaukrigulf(page: Page): Promise<ScrapedJob[]> {
       console.log(`  [naukrigulf] "${term}" p${pageNum}`)
 
       try {
+        // Intercept NaukriGulf's internal job-search API calls
+        const apiJobs: ScrapedJob[] = []
+        const captureHandler = async (response: import('playwright').Response) => {
+          const rUrl = response.url()
+          if (!rUrl.includes('naukrigulf') || !rUrl.includes('search')) return
+          try {
+            const json = await response.json()
+            // NaukriGulf API typically returns { jobDetails: [...] } or similar
+            const list: any[] = json?.jobDetails ?? json?.jobs ?? json?.data?.jobs ?? []
+            for (const j of list) {
+              const title = j.title ?? j.designation
+              const jobId = String(j.jobId ?? j.id ?? '')
+              const applyUrl = j.jdURL ?? j.applyUrl ?? `https://www.naukrigulf.com/job-${jobId}`
+              if (!title || !jobId || seen.has(`naukrigulf_${jobId}`)) continue
+              seen.add(`naukrigulf_${jobId}`)
+              const company = j.companyName ?? j.company ?? 'Unknown'
+              const location = j.location ?? j.city ?? 'United Arab Emirates'
+              apiJobs.push({
+                externalId: jobId,
+                title,
+                company,
+                description: j.jobDescription ?? j.snippets ?? title,
+                location: location.includes('AE') || location.toLowerCase().includes('emirates') ? location : `${location}, AE`,
+                emirate: inferEmirate(location),
+                applyUrl,
+                publisher: 'NaukriGulf',
+                postedAt: j.postedDate?.substring(0, 10),
+                remoteUae: location.toLowerCase().includes('remote'),
+              })
+            }
+            if (list.length > 0) console.log(`  [naukrigulf] API intercepted ${list.length} jobs from ${rUrl.split('?')[0]}`)
+          } catch { /* not JSON or wrong format */ }
+        }
+        page.on('response', captureHandler)
+
         const resp = await page.goto(url, { waitUntil: 'load', timeout: 45_000 })
-        // Wait for job content to render — NaukriGulf is a JS-heavy SPA
-        await page.waitForTimeout(4000)
-        console.log(`  [naukrigulf] HTTP ${resp?.status()} title="${await page.title()}" url=${page.url()}`)
+        await page.waitForTimeout(5000)
+        page.off('response', captureHandler)
+        console.log(`  [naukrigulf] HTTP ${resp?.status()} — API captured: ${apiJobs.length} jobs`)
+
+        if (apiJobs.length > 0) {
+          jobs.push(...apiJobs)
+          console.log(`  [naukrigulf] "${term}" p${pageNum}: +${apiJobs.length} new (via API)`)
+          await page.waitForTimeout(1000)
+          continue
+        }
 
         // Job cards: try multiple selector patterns
         const CARD_SELECTORS = [
