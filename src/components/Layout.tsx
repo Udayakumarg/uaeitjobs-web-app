@@ -1,4 +1,4 @@
-import { Bookmark, LayoutDashboard, LogIn, Menu, Search, UserRound, Users, Users2, X, Zap } from 'lucide-react'
+import { Bookmark, Briefcase, LayoutDashboard, LogIn, Menu, Search, UserRound, Users, Users2, X, Zap } from 'lucide-react'
 import { useState } from 'react'
 import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { useAuthStore } from '../store/authStore'
@@ -52,6 +52,10 @@ export function Layout() {
           <NavLink to="/admin/ingest" className={navClass}>
             <Zap className="h-4 w-4" />
             Ingest
+          </NavLink>
+          <NavLink to="/admin/jobs" className={navClass}>
+            <Briefcase className="h-4 w-4" />
+            Jobs
           </NavLink>
           <NavLink to="/admin/users" className={navClass}>
             <Users className="h-4 w-4" />

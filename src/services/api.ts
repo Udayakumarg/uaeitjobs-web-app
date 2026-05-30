@@ -211,4 +211,10 @@ export const adminApi = {
     api.post<AdminUser>('/admin/users', payload),
   deleteUser: (id: number) =>
     api.delete(`/admin/users/${id}`),
+  /** Archive a job (set is_active=false) or restore it (is_active=true). */
+  setJobActive: (id: number, active: boolean) =>
+    api.patch(`/admin/jobs/${id}/approve`, null, { params: { active } }),
+  /** Admin job list — includes archived jobs, supports search + active filter. */
+  jobs: (params: { q?: string; active?: boolean; page?: number; size?: number }) =>
+    api.get<Page<Job>>('/admin/jobs', { params }),
 }

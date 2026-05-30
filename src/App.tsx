@@ -22,6 +22,7 @@ const JobDetail = lazy(() => import('./pages/Jobs/Detail'))
 const Landing = lazy(() => import('./pages/Landing'))
 const NotFound = lazy(() => import('./pages/NotFound'))
 const IngestDashboard = lazy(() => import('./pages/Admin/IngestDashboard'))
+const AdminJobs = lazy(() => import('./pages/Admin/AdminJobs'))
 const AdminUsers = lazy(() => import('./pages/Admin/AdminUsers'))
 
 export default function App() {
@@ -57,6 +58,7 @@ export default function App() {
 
               <Route element={<ProtectedRoute roles={['admin']} />}>
                 <Route path="admin/ingest" element={<IngestDashboard />} />
+                <Route path="admin/jobs" element={<AdminJobs />} />
                 <Route path="admin/users" element={<AdminUsers />} />
               </Route>
 
