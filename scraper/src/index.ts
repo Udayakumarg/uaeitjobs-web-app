@@ -1,7 +1,7 @@
 import 'dotenv/config'
-// eslint-disable-next-line @typescript-eslint/no-var-requires
+// eslint-disable-next-line @typescript-eslint/no-require-imports
 const { chromium } = require('playwright-extra')
-// eslint-disable-next-line @typescript-eslint/no-var-requires
+// eslint-disable-next-line @typescript-eslint/no-require-imports
 const StealthPlugin = require('puppeteer-extra-plugin-stealth')
 chromium.use(StealthPlugin())
 
@@ -42,13 +42,13 @@ async function main() {
 
   // Stealth plugin already patches webdriver — this is a belt-and-suspenders backup
   await context.addInitScript(() => {
-    try { Object.defineProperty((globalThis as any).navigator, 'webdriver', { get: () => undefined }) } catch {}
+    try { Object.defineProperty((globalThis as Record<string, unknown>).navigator, 'webdriver', { get: () => undefined }) } catch (_e) { /* noop */ }
   })
 
   const page = await context.newPage()
 
   // Block only media — keep CSS/JS so pages render correctly
-  await page.route('**/*.{mp4,mp3,ogg,wav}', (r: any) => r.abort())
+  await page.route('**/*.{mp4,mp3,ogg,wav}', (r: import('playwright').Route) => r.abort())
 
   const summary: Record<string, object> = {}
 

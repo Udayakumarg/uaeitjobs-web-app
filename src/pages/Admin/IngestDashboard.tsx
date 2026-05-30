@@ -24,11 +24,12 @@ function SourceBadge({ source }: { source: string }) {
 }
 
 function RunRow({ run }: { run: IngestRunLog }) {
+  const [now] = useState(Date.now)
   const dupes = run.duplicatesL1 + run.duplicatesL2 + run.duplicatesL3
   const duration = run.finishedAt
     ? Math.round((new Date(run.finishedAt).getTime() - new Date(run.startedAt).getTime()) / 1000)
     : null
-  const isStale = !run.finishedAt && (Date.now() - new Date(run.startedAt).getTime()) > 10 * 60 * 1000
+  const isStale = !run.finishedAt && (now - new Date(run.startedAt).getTime()) > 10 * 60 * 1000
   const insertRate = run.fetched > 0 ? Math.round((run.inserted / run.fetched) * 100) : null
 
   return (

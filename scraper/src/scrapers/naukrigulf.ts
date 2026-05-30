@@ -16,6 +16,23 @@ const SEARCH_TERMS = [
 
 const MAX_PAGES = parseInt(process.env.MAX_PAGES ?? '3', 10)
 
+interface NaukriJob {
+  designation?: string
+  title?: string
+  jobId?: string | number
+  id?: string | number
+  jdURL?: string
+  applyUrl?: string
+  company?: string | { name?: string }
+  companyName?: string
+  location?: string | { label?: string; name?: string }
+  description?: string
+  jobInfo?: string
+  latestPostedDate?: string
+  postedDate?: string
+  snippets?: unknown
+}
+
 function inferEmirate(text: string): string | undefined {
   const t = text.toLowerCase()
   if (t.includes('dubai'))           return 'dubai'
@@ -52,7 +69,10 @@ export async function scrapeNaukrigulf(page: Page): Promise<ScrapedJob[]> {
           try {
             const json = await response.json()
             // NaukriGulf API typically returns { jobDetails: [...] } or similar
-            const list: any[] = json?.jobDetails ?? json?.jobs ?? json?.data?.jobs ?? []
+            const list: NaukriJob[] = (json as Record<string, NaukriJob[]>)?.jobDetails
+              ?? (json as Record<string, NaukriJob[]>)?.jobs
+              ?? (json as { data?: Record<string, NaukriJob[]> })?.data?.jobs
+              ?? []
             for (const j of list) {
               const title = j.designation ?? j.title
               const jobId = String(j.jobId ?? j.id ?? '')

@@ -32,7 +32,7 @@ export default function AdminJobs() {
     } finally {
       setLoading(false)
     }
-  }, [page, filter, search])
+  }, [page, filter, search, toast])
 
   useEffect(() => { load() }, [load])
 
