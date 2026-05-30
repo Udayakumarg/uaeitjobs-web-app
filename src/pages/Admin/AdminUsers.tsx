@@ -1,4 +1,4 @@
-import { Plus, Search, Trash2, UserCheck, Users } from 'lucide-react'
+import { Mail, Plus, Search, Trash2, UserCheck, Users } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useToastStore } from '../../components/Toast'
 import { Button, Card } from '../../components/ui'
@@ -35,6 +35,7 @@ export default function AdminUsers() {
   const [saving, setSaving]     = useState(false)
   const [errors, setErrors]     = useState<Record<string, string>>({})
   const [deletingId, setDeletingId] = useState<number | null>(null)
+  const [resendingId, setResendingId] = useState<number | null>(null)
   const { add: toast } = useToastStore()
 
   const load = async (q = search) => {
@@ -85,6 +86,18 @@ export default function AdminUsers() {
       toast({ type: 'error', title: 'Failed to delete', message: errorMessage(e) })
     } finally {
       setDeletingId(null)
+    }
+  }
+
+  const handleResend = async (user: AdminUser) => {
+    setResendingId(user.id)
+    try {
+      await adminApi.resendVerification(user.id)
+      toast({ type: 'success', title: 'Email sent', message: `Activation email resent to ${user.email}` })
+    } catch (e) {
+      toast({ type: 'error', title: 'Failed to resend', message: errorMessage(e) })
+    } finally {
+      setResendingId(null)
     }
   }
 
@@ -163,14 +176,26 @@ export default function AdminUsers() {
                     {u.createdAt ? new Date(u.createdAt).toLocaleDateString() : '—'}
                   </td>
                   <td className="py-3 px-4 text-right">
-                    <button
-                      onClick={() => handleDelete(u)}
-                      disabled={deletingId === u.id}
-                      className="rounded p-1.5 text-slate-400 hover:bg-red-50 hover:text-red-500 transition-colors disabled:opacity-40"
-                      title="Delete user"
-                    >
-                      <Trash2 size={14} />
-                    </button>
+                    <div className="flex items-center justify-end gap-1">
+                      {!u.verified && (
+                        <button
+                          onClick={() => handleResend(u)}
+                          disabled={resendingId === u.id}
+                          className="rounded p-1.5 text-slate-400 hover:bg-sky-50 hover:text-sky-500 transition-colors disabled:opacity-40"
+                          title="Resend activation email"
+                        >
+                          <Mail size={14} />
+                        </button>
+                      )}
+                      <button
+                        onClick={() => handleDelete(u)}
+                        disabled={deletingId === u.id}
+                        className="rounded p-1.5 text-slate-400 hover:bg-red-50 hover:text-red-500 transition-colors disabled:opacity-40"
+                        title="Delete user"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}

@@ -219,4 +219,6 @@ export const adminApi = {
   /** Admin job list — includes archived jobs, supports search + active filter. */
   jobs: (params: { q?: string; active?: boolean; page?: number; size?: number }) =>
     api.get<Page<Job>>('/admin/jobs', { params }),
+  resendVerification: (id: number) =>
+    api.post(`/admin/users/${id}/resend-verification`),
 }
