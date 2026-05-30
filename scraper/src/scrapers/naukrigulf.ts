@@ -44,8 +44,9 @@ export async function scrapeNaukrigulf(page: Page): Promise<ScrapedJob[]> {
       console.log(`  [naukrigulf] "${term}" p${pageNum}`)
 
       try {
-        await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30_000 })
-        await page.waitForTimeout(2000)
+        await page.goto(url, { waitUntil: 'load', timeout: 45_000 })
+        // Wait for job content to render — NaukriGulf is a JS-heavy SPA
+        await page.waitForTimeout(4000)
 
         // Job cards: try multiple selector patterns
         const CARD_SELECTORS = [
@@ -63,8 +64,8 @@ export async function scrapeNaukrigulf(page: Page): Promise<ScrapedJob[]> {
 
         if (cards.length === 0) {
           // Dump page HTML snippet for diagnosis
-          const bodyHtml = await page.evaluate(() => document.body.innerHTML.substring(0, 1500))
-          console.log(`  [naukrigulf] No cards found — page HTML:\n${bodyHtml}`)
+          const bodyHtml = await page.evaluate(() => document.body.innerHTML.substring(0, 3000))
+          console.log(`  [naukrigulf] No cards — page HTML:\n${bodyHtml}`)
           break
         }
         console.log(`  [naukrigulf] Found ${cards.length} cards via: ${usedSel}`)
