@@ -54,23 +54,32 @@ export async function scrapeNaukrigulf(page: Page): Promise<ScrapedJob[]> {
             // NaukriGulf API typically returns { jobDetails: [...] } or similar
             const list: any[] = json?.jobDetails ?? json?.jobs ?? json?.data?.jobs ?? []
             for (const j of list) {
-              const title = j.title ?? j.designation
+              const title = j.designation ?? j.title
               const jobId = String(j.jobId ?? j.id ?? '')
               const applyUrl = j.jdURL ?? j.applyUrl ?? `https://www.naukrigulf.com/job-${jobId}`
               if (!title || !jobId || seen.has(`naukrigulf_${jobId}`)) continue
               seen.add(`naukrigulf_${jobId}`)
-              const company = j.companyName ?? j.company ?? 'Unknown'
-              const location = j.location ?? j.city ?? 'United Arab Emirates'
+              // company may be a nested object { name, id } or a plain string
+              const company = typeof j.company === 'string' ? j.company
+                : j.company?.name ?? j.companyName ?? 'Unknown'
+              // location may be a nested object or string
+              const locationRaw = typeof j.location === 'string' ? j.location
+                : j.location?.label ?? j.location?.name ?? 'United Arab Emirates'
+              const location = locationRaw || 'United Arab Emirates'
+              // description is a string field
+              const description = typeof j.description === 'string' && j.description
+                ? j.description
+                : (typeof j.jobInfo === 'string' ? j.jobInfo : title)
               apiJobs.push({
                 externalId: jobId,
                 title,
                 company,
-                description: j.jobDescription ?? j.snippets ?? title,
-                location: location.includes('AE') || location.toLowerCase().includes('emirates') ? location : `${location}, AE`,
+                description,
+                location: location.toLowerCase().includes('ae') || location.toLowerCase().includes('emirates') ? location : `${location}, AE`,
                 emirate: inferEmirate(location),
                 applyUrl,
                 publisher: 'NaukriGulf',
-                postedAt: j.postedDate?.substring(0, 10),
+                postedAt: (j.latestPostedDate ?? j.postedDate ?? '')?.substring(0, 10) || undefined,
                 remoteUae: location.toLowerCase().includes('remote'),
               })
             }
