@@ -74,7 +74,15 @@ export async function scrapeNaukrigulf(page: Page): Promise<ScrapedJob[]> {
                 remoteUae: location.toLowerCase().includes('remote'),
               })
             }
-            if (list.length > 0) console.log(`  [naukrigulf] API intercepted ${list.length} jobs from ${rUrl.split('?')[0]}`)
+            if (list.length > 0) {
+              console.log(`  [naukrigulf] API intercepted ${list.length} jobs from ${rUrl.split('?')[0]}`)
+              // Log first job keys to identify field names
+              if (apiJobs.length === 0 && list.length > 0) {
+                const sample = list[0]
+                console.log(`  [naukrigulf] sample job keys: ${Object.keys(sample).join(', ')}`)
+                console.log(`  [naukrigulf] sample: title=${sample.title ?? sample.designation}, snippets type=${typeof sample.snippets}`)
+              }
+            }
           } catch { /* not JSON or wrong format */ }
         }
         page.on('response', captureHandler)
