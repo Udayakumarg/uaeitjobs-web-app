@@ -44,9 +44,10 @@ export async function scrapeNaukrigulf(page: Page): Promise<ScrapedJob[]> {
       console.log(`  [naukrigulf] "${term}" p${pageNum}`)
 
       try {
-        await page.goto(url, { waitUntil: 'load', timeout: 45_000 })
+        const resp = await page.goto(url, { waitUntil: 'load', timeout: 45_000 })
         // Wait for job content to render — NaukriGulf is a JS-heavy SPA
         await page.waitForTimeout(4000)
+        console.log(`  [naukrigulf] HTTP ${resp?.status()} title="${await page.title()}" url=${page.url()}`)
 
         // Job cards: try multiple selector patterns
         const CARD_SELECTORS = [
