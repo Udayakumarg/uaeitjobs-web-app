@@ -76,24 +76,26 @@ export async function scrapeBayt(page: Page): Promise<ScrapedJob[]> {
         }
         console.log(`  [bayt] Found ${cards.length} cards via selector: ${usedSelector}`)
 
-        // Dump first card HTML once so we can diagnose selector mismatches
-        if (!debugDone && cards.length > 0) {
-          const firstCardHtml = await cards[0].innerHTML()
-          console.log(`  [bayt] first card HTML snippet:\n${firstCardHtml.substring(0, 800)}`)
-        }
-
         let newOnPage = 0
         for (const card of cards) {
           try {
-            const jobId = await card.getAttribute('data-js-job') ?? await card.getAttribute('data-job-id')
-            if (!jobId || seen.has(`bayt_${jobId}`)) continue
-            seen.add(`bayt_${jobId}`)
+            // Extract job ID — try data attribute first, fall back to href slug
+            let jobId = await card.getAttribute('data-js-job') ?? await card.getAttribute('data-job-id')
 
-            const titleEl = await card.$('h2 a, .jb-title a, h3 a, a[data-automation-id="job-title"], a[class*="title"], a[id*="title"]')
+            const titleEl = await card.$('h2 a, .jb-title a, h3 a, a[data-js-aid="jobID"]')
             if (!titleEl) continue
             const title = (await titleEl.innerText()).trim()
             const href = await titleEl.getAttribute('href')
             if (!title || !href) continue
+
+            // Fall back to extracting ID from the URL slug: /jobs/senior-accountant-5458959/
+            if (!jobId) {
+              const match = href.match(/-(\d{5,})(?:\/|$)/)
+              jobId = match ? match[1] : null
+            }
+            if (!jobId || seen.has(`bayt_${jobId}`)) continue
+            seen.add(`bayt_${jobId}`)
+
             const applyUrl = href.startsWith('http') ? href : `https://www.bayt.com${href}`
 
             const companyEl = await card.$('.t-default, .jb-company, [data-automation-id="company-name"], .company-name')
