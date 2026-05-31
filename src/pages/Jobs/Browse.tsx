@@ -164,6 +164,9 @@ export default function JobBrowse() {
   const savedIdsRef               = useRef<Set<number>>(new Set())
   useEffect(() => { savedIdsRef.current = savedIds }, [savedIds])
 
+  // applied job IDs — read-only; loaded once when user logs in
+  const [appliedIds, setAppliedIds] = useState<Set<number>>(new Set())
+
   // Sync filter state → URL (replace so individual filter toggles don't pile up in history).
   // Initialised from URL above so bookmarks/shared links restore the exact view.
   useEffect(() => {
@@ -234,15 +237,22 @@ export default function JobBrowse() {
       .catch(() => {}).finally(() => setDetailLoading(false))
   }, [selectedId])
 
-  // Load saved job IDs — job seekers only.
-  // HR and admin users do not have a saved-jobs list; calling the endpoint as
+  // Load saved + applied job IDs — job seekers only.
+  // HR and admin users do not have these lists; calling the endpoints as
   // an HR user returns 401/403 which would incorrectly trigger the refresh
   // interceptor and produce a spurious "Session expired" toast.
   useEffect(() => {
-    if (!user || user.userType !== 'job_seeker') { setSavedIds(new Set()); return }
+    if (!user || user.userType !== 'job_seeker') {
+      setSavedIds(new Set())
+      setAppliedIds(new Set())
+      return
+    }
     seekerApi.savedJobs()
       .then(({ data }) => setSavedIds(new Set(data.map(s => s.job.id))))
-      .catch(() => {}) // graceful — state stays empty if endpoint is unavailable
+      .catch(() => {})
+    seekerApi.appliedJobIds()
+      .then(({ data }) => setAppliedIds(new Set(data)))
+      .catch(() => {})
   }, [user])
 
   function clearAll() {
@@ -342,20 +352,62 @@ export default function JobBrowse() {
                   <div className="font-mono text-[10px] uppercase tracking-widest text-gray-300 mb-2">No results</div>
                   <button onClick={clearAll} className="text-xs hover:underline font-mono" style={{ color: PINK }}>Clear filters</button>
                 </div>
-              ) : (
-                <div className="divide-y divide-[#E5E7EB]">
-                  {jobs.map(job => (
-                    <JobListItem
-                      key={job.id}
-                      job={job}
-                      active={job.id === selectedId}
-                      isSaved={savedIds.has(job.id)}
-                      onSave={saveJob}
-                      onClick={handleJobClick}
-                    />
-                  ))}
-                </div>
-              )}
+              ) : (() => {
+                  const appliedJobs    = jobs.filter(j => appliedIds.has(j.id))
+                  const availableJobs  = jobs.filter(j => !appliedIds.has(j.id))
+                  const showSections   = appliedJobs.length > 0
+
+                  return (
+                    <div>
+                      {showSections && (
+                        <>
+                          {/* Applied section */}
+                          <div className="px-4 pt-3 pb-1.5 flex items-center gap-2">
+                            <span className="font-mono text-[9.5px] font-bold uppercase tracking-[0.16em] text-emerald-600">
+                              Applied ({appliedJobs.length})
+                            </span>
+                            <span className="flex-1 h-px bg-emerald-100" />
+                          </div>
+                          <div className="divide-y divide-[#E5E7EB]">
+                            {appliedJobs.map(job => (
+                              <JobListItem
+                                key={job.id}
+                                job={job}
+                                active={job.id === selectedId}
+                                isSaved={savedIds.has(job.id)}
+                                isApplied
+                                onSave={saveJob}
+                                onClick={handleJobClick}
+                              />
+                            ))}
+                          </div>
+                          {/* Available section header */}
+                          {availableJobs.length > 0 && (
+                            <div className="px-4 pt-4 pb-1.5 flex items-center gap-2">
+                              <span className="font-mono text-[9.5px] font-bold uppercase tracking-[0.16em] text-gray-400">
+                                Available ({availableJobs.length})
+                              </span>
+                              <span className="flex-1 h-px bg-gray-100" />
+                            </div>
+                          )}
+                        </>
+                      )}
+                      <div className="divide-y divide-[#E5E7EB]">
+                        {availableJobs.map(job => (
+                          <JobListItem
+                            key={job.id}
+                            job={job}
+                            active={job.id === selectedId}
+                            isSaved={savedIds.has(job.id)}
+                            isApplied={false}
+                            onSave={saveJob}
+                            onClick={handleJobClick}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  )
+                })()}
             </div>
           </aside>
 
@@ -372,7 +424,7 @@ export default function JobBrowse() {
                 <div className="h-3 w-1/2 shimmer" /><div className="h-24 shimmer mt-6" />
               </div>
             ) : detail ? (
-              <DetailPanel job={detail} onSave={saveJob} isSaved={savedIds.has(detail.id)} />
+              <DetailPanel job={detail} onSave={saveJob} isSaved={savedIds.has(detail.id)} isApplied={appliedIds.has(detail.id)} />
             ) : null}
           </main>
 
@@ -887,7 +939,7 @@ function SheetSection({ label, children }: { label: string; children: React.Reac
 }
 
 // ── Detail panel ──────────────────────────────────────────────────────────────
-function DetailPanel({ job, onSave, isSaved }: { job: Job; onSave: (id: number, e: React.MouseEvent) => void; isSaved: boolean }) {
+function DetailPanel({ job, onSave, isSaved, isApplied }: { job: Job; onSave: (id: number, e: React.MouseEvent) => void; isSaved: boolean; isApplied?: boolean }) {
   const { user }     = useAuthStore()
   const skills       = parseSkills(job.skills)
   const salary       = money(job.salaryMin, job.salaryMax, job.salaryCurrency)
@@ -910,7 +962,14 @@ function DetailPanel({ job, onSave, isSaved }: { job: Job; onSave: (id: number, 
           </div>
           <h1 className="text-3xl font-bold tracking-tight text-black leading-tight">{job.title}</h1>
         </div>
-        <div className="flex gap-2 shrink-0 mt-1">
+        <div className="flex items-center gap-2 shrink-0 mt-1 flex-wrap justify-end">
+          {/* Applied badge — shown above the button, never disables it */}
+          {isApplied && (
+            <span className="w-full text-right font-mono text-[10px] font-bold uppercase tracking-wider text-emerald-600 flex items-center justify-end gap-1 mb-1">
+              <svg width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M2 6.5L4.8 9L10 3" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>
+              Applied
+            </span>
+          )}
           {isGated ? (
             <Link to="/login" state={{ from: `/jobs/${job.id}` }}
               className="inline-flex items-center gap-2 text-white font-sans text-sm font-bold px-5 py-2.5 rounded-lg transition-colors"
@@ -927,7 +986,7 @@ function DetailPanel({ job, onSave, isSaved }: { job: Job; onSave: (id: number, 
               onMouseEnter={e => (e.currentTarget as HTMLAnchorElement).style.background = PINK_HOV}
               onMouseLeave={e => (e.currentTarget as HTMLAnchorElement).style.background = PINK}
             >
-              Apply Now
+              {isApplied ? 'Apply Again' : 'Apply Now'}
             </Link>
           ) : (
             <a href={applyUrl!} target="_blank" rel="noopener noreferrer"
@@ -936,7 +995,7 @@ function DetailPanel({ job, onSave, isSaved }: { job: Job; onSave: (id: number, 
               onMouseEnter={e => (e.currentTarget as HTMLAnchorElement).style.background = PINK_HOV}
               onMouseLeave={e => (e.currentTarget as HTMLAnchorElement).style.background = PINK}
             >
-              <ExternalLink size={14} /> Apply Now
+              <ExternalLink size={14} /> {isApplied ? 'Apply Again' : 'Apply Now'}
             </a>
           )}
           <button
@@ -1014,9 +1073,9 @@ function DetailPanel({ job, onSave, isSaved }: { job: Job; onSave: (id: number, 
 
 // ── JobListItem — memoized so filter changes don't re-render unchanged cards ──
 const JobListItem = memo(function JobListItem({
-  job, active, isSaved, onSave, onClick,
+  job, active, isSaved, isApplied, onSave, onClick,
 }: {
-  job: Job; active: boolean; isSaved: boolean
+  job: Job; active: boolean; isSaved: boolean; isApplied?: boolean
   onSave: (id: number, e: React.MouseEvent) => void
   onClick: (j: Job) => void
 }) {
@@ -1058,6 +1117,12 @@ const JobListItem = memo(function JobListItem({
           {skills.length ? skills.join(', ') : (job.locationUae ?? 'UAE')}
         </span>
         <div className="flex items-center gap-1.5 shrink-0">
+          {isApplied && (
+            <span className="font-mono text-[9px] uppercase tracking-wider font-bold text-emerald-600 flex items-center gap-0.5">
+              <svg width="9" height="9" viewBox="0 0 12 12" fill="none"><path d="M2 6.5L4.8 9L10 3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+              Applied
+            </span>
+          )}
           {isLinkedIn && (
             <span className="font-mono text-[9px] uppercase tracking-wider font-bold" style={{ color: '#0A66C2' }}>LinkedIn</span>
           )}

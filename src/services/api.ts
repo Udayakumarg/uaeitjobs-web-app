@@ -173,6 +173,8 @@ export const seekerApi = {
   updateSkills: (skills: string) => api.patch<JobSeekerProfile>('/job-seeker/skills', { skills }),
   apply: (payload: { jobId: number; coverLetter?: string }) => api.post<Application>('/applications', payload),
   applications: (page = 0, size = 20) => api.get<Page<Application>>('/applications', { params: { page, size } }),
+  /** Returns the set of job IDs the user has applied to — lightweight, IDs only. */
+  appliedJobIds: () => api.get<number[]>('/applications/job-ids'),
   savedJobs: () => api.get<Array<{ id: number; job: Job; savedAt: string }>>('/saved-jobs'),
   saveJob: (id: number) => api.post(`/saved-jobs/${id}`),
   unsaveJob: (id: number) => api.delete(`/saved-jobs/${id}`),
