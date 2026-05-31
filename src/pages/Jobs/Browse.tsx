@@ -424,7 +424,13 @@ export default function JobBrowse() {
                 <div className="h-3 w-1/2 shimmer" /><div className="h-24 shimmer mt-6" />
               </div>
             ) : detail ? (
-              <DetailPanel job={detail} onSave={saveJob} isSaved={savedIds.has(detail.id)} isApplied={appliedIds.has(detail.id)} />
+              <DetailPanel
+            job={detail}
+            onSave={saveJob}
+            isSaved={savedIds.has(detail.id)}
+            isApplied={appliedIds.has(detail.id)}
+            onApply={(id) => setAppliedIds(prev => new Set([...prev, id]))}
+          />
             ) : null}
           </main>
 
@@ -939,7 +945,13 @@ function SheetSection({ label, children }: { label: string; children: React.Reac
 }
 
 // ── Detail panel ──────────────────────────────────────────────────────────────
-function DetailPanel({ job, onSave, isSaved, isApplied }: { job: Job; onSave: (id: number, e: React.MouseEvent) => void; isSaved: boolean; isApplied?: boolean }) {
+function DetailPanel({ job, onSave, isSaved, isApplied, onApply }: {
+  job: Job
+  onSave: (id: number, e: React.MouseEvent) => void
+  isSaved: boolean
+  isApplied?: boolean
+  onApply?: (id: number) => void
+}) {
   const { user }     = useAuthStore()
   const skills       = parseSkills(job.skills)
   const salary       = money(job.salaryMin, job.salaryMax, job.salaryCurrency)
@@ -989,11 +1001,21 @@ function DetailPanel({ job, onSave, isSaved, isApplied }: { job: Job; onSave: (i
               {isApplied ? 'Apply Again' : 'Apply Now'}
             </Link>
           ) : (
-            <a href={applyUrl!} target="_blank" rel="noopener noreferrer"
+            <a
+              href={applyUrl!}
+              target="_blank"
+              rel="noopener noreferrer"
               className="inline-flex items-center gap-2 text-white font-sans text-sm font-bold px-5 py-2.5 rounded-lg transition-colors"
               style={{ background: PINK }}
               onMouseEnter={e => (e.currentTarget as HTMLAnchorElement).style.background = PINK_HOV}
               onMouseLeave={e => (e.currentTarget as HTMLAnchorElement).style.background = PINK}
+              onClick={() => {
+                // Track the apply click — fire-and-forget, never blocks the navigation
+                if (user?.userType === 'job_seeker') {
+                  onApply?.(job.id)
+                  seekerApi.trackApply(job.id).catch(() => {})
+                }
+              }}
             >
               <ExternalLink size={14} /> {isApplied ? 'Apply Again' : 'Apply Now'}
             </a>

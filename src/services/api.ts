@@ -175,6 +175,8 @@ export const seekerApi = {
   applications: (page = 0, size = 20) => api.get<Page<Application>>('/applications', { params: { page, size } }),
   /** Returns the set of job IDs the user has applied to — lightweight, IDs only. */
   appliedJobIds: () => api.get<number[]>('/applications/job-ids'),
+  /** Idempotent click tracker — call when user clicks Apply Now on an external link. */
+  trackApply: (jobId: number) => api.post('/applications/track', { jobId }),
   savedJobs: () => api.get<Array<{ id: number; job: Job; savedAt: string }>>('/saved-jobs'),
   saveJob: (id: number) => api.post(`/saved-jobs/${id}`),
   unsaveJob: (id: number) => api.delete(`/saved-jobs/${id}`),
