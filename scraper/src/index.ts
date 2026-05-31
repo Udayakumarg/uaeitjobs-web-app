@@ -12,6 +12,7 @@ chromium.use(StealthPlugin())
 import { scrapeBayt } from './scrapers/bayt'
 import { scrapeNaukrigulf } from './scrapers/naukrigulf'
 import { scrapeGulfTalent } from './scrapers/gulftalent'
+import { scrapeLinkedIn } from './scrapers/linkedin'
 import { postJobs } from './api'
 import { pickProxy } from './utils/proxy'
 import { applyContextStealth } from './utils/stealth'
@@ -93,6 +94,9 @@ async function main() {
         jobs = await scrapeNaukrigulf(page)
       } else if (source === 'gulftalent') {
         jobs = await scrapeGulfTalent()
+      } else if (source === 'linkedin') {
+        // LinkedIn needs the full context (for session cookies + API interception)
+        jobs = await scrapeLinkedIn(context)
       } else {
         console.warn(`  Unknown source "${source}" — skipping`)
         continue

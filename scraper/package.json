@@ -8,14 +8,19 @@
     "scrape:naukrigulf": "ts-node src/index.ts --source=naukrigulf",
     "scrape:gulftalent": "ts-node src/index.ts --source=gulftalent",
     "scrape:all": "ts-node src/index.ts --source=gulftalent,bayt,naukrigulf",
+    "scrape:linkedin": "ts-node src/index.ts --source=linkedin",
     "install:browsers": "npx playwright install chromium"
   },
   "dependencies": {
+    "@types/mailparser": "^3.4.6",
     "axios": "^1.16.1",
     "cheerio": "^1.2.0",
     "dotenv": "^16.4.5",
+    "imapflow": "^1.3.4",
+    "mailparser": "^3.9.9",
     "playwright": "^1.44.0",
     "playwright-extra": "^4.3.6",
+    "puppeteer-extra-plugin-recaptcha": "^3.6.8",
     "puppeteer-extra-plugin-stealth": "^2.11.2"
   },
   "devDependencies": {
