@@ -352,62 +352,21 @@ export default function JobBrowse() {
                   <div className="font-mono text-[10px] uppercase tracking-widest text-gray-300 mb-2">No results</div>
                   <button onClick={clearAll} className="text-xs hover:underline font-mono" style={{ color: PINK }}>Clear filters</button>
                 </div>
-              ) : (() => {
-                  const appliedJobs    = jobs.filter(j => appliedIds.has(j.id))
-                  const availableJobs  = jobs.filter(j => !appliedIds.has(j.id))
-                  const showSections   = appliedJobs.length > 0
-
-                  return (
-                    <div>
-                      {showSections && (
-                        <>
-                          {/* Applied section */}
-                          <div className="px-4 pt-3 pb-1.5 flex items-center gap-2">
-                            <span className="font-mono text-[9.5px] font-bold uppercase tracking-[0.16em] text-emerald-600">
-                              Applied ({appliedJobs.length})
-                            </span>
-                            <span className="flex-1 h-px bg-emerald-100" />
-                          </div>
-                          <div className="divide-y divide-[#E5E7EB]">
-                            {appliedJobs.map(job => (
-                              <JobListItem
-                                key={job.id}
-                                job={job}
-                                active={job.id === selectedId}
-                                isSaved={savedIds.has(job.id)}
-                                isApplied
-                                onSave={saveJob}
-                                onClick={handleJobClick}
-                              />
-                            ))}
-                          </div>
-                          {/* Available section header */}
-                          {availableJobs.length > 0 && (
-                            <div className="px-4 pt-4 pb-1.5 flex items-center gap-2">
-                              <span className="font-mono text-[9.5px] font-bold uppercase tracking-[0.16em] text-gray-400">
-                                Available ({availableJobs.length})
-                              </span>
-                              <span className="flex-1 h-px bg-gray-100" />
-                            </div>
-                          )}
-                        </>
-                      )}
-                      <div className="divide-y divide-[#E5E7EB]">
-                        {availableJobs.map(job => (
-                          <JobListItem
-                            key={job.id}
-                            job={job}
-                            active={job.id === selectedId}
-                            isSaved={savedIds.has(job.id)}
-                            isApplied={false}
-                            onSave={saveJob}
-                            onClick={handleJobClick}
-                          />
-                        ))}
-                      </div>
-                    </div>
-                  )
-                })()}
+              ) : (
+                <div className="divide-y divide-[#E5E7EB]">
+                  {jobs.map(job => (
+                    <JobListItem
+                      key={job.id}
+                      job={job}
+                      active={job.id === selectedId}
+                      isSaved={savedIds.has(job.id)}
+                      isApplied={appliedIds.has(job.id)}
+                      onSave={saveJob}
+                      onClick={handleJobClick}
+                    />
+                  ))}
+                </div>
+              )}
             </div>
           </aside>
 
