@@ -1,8 +1,8 @@
 import { Page } from 'playwright'
 import { ScrapedJob } from '../types'
-import * as fs from 'fs'
-import * as path from 'path'
+import { delayWithJitter } from '../utils/delay'
 
+// UAE IT search terms for Bayt
 const SEARCH_TERMS = [
   'software engineer UAE',
   'full stack developer Dubai',
@@ -18,96 +18,76 @@ const SEARCH_TERMS = [
 
 const MAX_PAGES = parseInt(process.env.MAX_PAGES ?? '3', 10)
 
-function inferEmirate(text: string): string | undefined {
-  const t = text.toLowerCase()
-  if (t.includes('dubai'))          return 'dubai'
-  if (t.includes('abu dhabi'))      return 'abu_dhabi'
-  if (t.includes('sharjah'))        return 'sharjah'
-  if (t.includes('ajman'))          return 'ajman'
-  if (t.includes('ras al khaimah')) return 'ras_al_khaimah'
-  if (t.includes('fujairah'))       return 'fujairah'
-  return undefined
+function extractJobId(url: string): string | null {
+  // Bayt job URLs: /en/uae/jobs/some-title-12345678/ — grab the trailing number
+  const m = url.match(/[-/](\d{6,})(?:[/?]|$)/)
+  return m ? m[1] : null
 }
 
-async function debugDump(page: Page, label: string) {
-  const dir = path.join(process.cwd(), 'debug')
-  fs.mkdirSync(dir, { recursive: true })
-  await page.screenshot({ path: path.join(dir, `${label}.png`), fullPage: false })
-  fs.writeFileSync(path.join(dir, `${label}.html`), await page.content())
-  console.log(`  [debug] saved debug/${label}.png + .html — open to inspect selectors`)
+function inferEmirate(text: string): string | undefined {
+  const t = text.toLowerCase()
+  if (t.includes('dubai'))           return 'dubai'
+  if (t.includes('abu dhabi'))       return 'abu_dhabi'
+  if (t.includes('sharjah'))         return 'sharjah'
+  if (t.includes('ajman'))           return 'ajman'
+  if (t.includes('ras al khaimah'))  return 'ras_al_khaimah'
+  if (t.includes('fujairah'))        return 'fujairah'
+  if (t.includes('umm al quwain'))   return 'umm_al_quwain'
+  return undefined
 }
 
 export async function scrapeBayt(page: Page): Promise<ScrapedJob[]> {
   const seen = new Set<string>()
   const jobs: ScrapedJob[] = []
-  let debugDone = false
 
   for (const term of SEARCH_TERMS) {
     for (let pageNum = 1; pageNum <= MAX_PAGES; pageNum++) {
       const url = `https://www.bayt.com/en/uae/jobs/?q=${encodeURIComponent(term)}&l=United+Arab+Emirates&start=${(pageNum - 1) * 20}`
-      console.log(`  [bayt] "${term}" p${pageNum}`)
+      console.log(`  [bayt] "${term}" p${pageNum} → ${url}`)
 
       try {
-        const response = await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30_000 })
-        console.log(`  [bayt] HTTP ${response?.status()} — ${page.url()}`)
-        await page.waitForTimeout(2000)
+        await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30_000 })
 
-        // Try multiple card selectors in order
-        const CARD_SELECTORS = [
-          'li[data-js-job]',
-          '[data-job-id]',
-          '.has-pointer-d',
-          'li.is-default',
-          '[data-automation-id="job-card"]',
-          '.jb-job-item',
-        ]
+        // Human-like reading pause after page load (2–4 s)
+        await delayWithJitter(page, 3_000)
 
-        let cards: Awaited<ReturnType<typeof page.$$>> = []
-        let usedSelector = ''
-        for (const sel of CARD_SELECTORS) {
-          cards = await page.$$(sel)
-          if (cards.length > 0) { usedSelector = sel; break }
-        }
-
+        // Each job card is an <li> with data-js-job attribute
+        const cards = await page.$$('li[data-js-job]')
         if (cards.length === 0) {
-          console.log(`  [bayt] No cards found with any selector`)
-          if (!debugDone) { await debugDump(page, 'bayt-no-cards'); debugDone = true }
+          console.log(`  [bayt] No cards found — stopping pagination for "${term}"`)
           break
         }
-        console.log(`  [bayt] Found ${cards.length} cards via selector: ${usedSelector}`)
 
         let newOnPage = 0
         for (const card of cards) {
           try {
-            // Extract job ID — try data attribute first, fall back to href slug
-            let jobId = await card.getAttribute('data-js-job') ?? await card.getAttribute('data-job-id')
+            // Job ID from data attribute (most stable identifier)
+            const jobId = await card.getAttribute('data-js-job')
+            if (!jobId || seen.has(`bayt_${jobId}`)) continue
+            seen.add(`bayt_${jobId}`)
 
-            const titleEl = await card.$('h2 a, .jb-title a, h3 a, a[data-js-aid="jobID"]')
+            // Title & apply URL
+            const titleEl = await card.$('h2 a, .jb-title a, [data-automation-id="job-title"] a, h2')
             if (!titleEl) continue
             const title = (await titleEl.innerText()).trim()
             const href = await titleEl.getAttribute('href')
             if (!title || !href) continue
-
-            // Fall back to extracting ID from the URL slug: /jobs/senior-accountant-5458959/
-            if (!jobId) {
-              const match = href.match(/-(\d{5,})(?:\/|$)/)
-              jobId = match ? match[1] : null
-            }
-            if (!jobId || seen.has(`bayt_${jobId}`)) continue
-            seen.add(`bayt_${jobId}`)
-
             const applyUrl = href.startsWith('http') ? href : `https://www.bayt.com${href}`
 
-            const companyEl = await card.$('.t-default, .jb-company, [data-automation-id="company-name"], .company-name')
+            // Company
+            const companyEl = await card.$('.t-default, .jb-company, [data-automation-id="company-name"]')
             const company = companyEl ? (await companyEl.innerText()).trim() : 'Unknown'
 
-            const locEl = await card.$('.t-mute, .jb-location, .location, [data-automation-id="job-location"]')
+            // Location
+            const locEl = await card.$('.t-mute, .jb-location, [data-automation-id="job-location"]')
             const location = locEl ? (await locEl.innerText()).trim() : 'United Arab Emirates'
 
-            const descEl = await card.$('.jb-description, .t-small, p.description')
+            // Description snippet (listing page only — no detail page visits to save time)
+            const descEl = await card.$('.jb-description, .t-small.is-black, p')
             const description = descEl ? (await descEl.innerText()).trim() : title
 
-            const dateEl = await card.$('time, [datetime]')
+            // Posted date
+            const dateEl = await card.$('time, .t-mute.t-xsmall, [datetime]')
             const postedAt = dateEl ? await dateEl.getAttribute('datetime') ?? undefined : undefined
 
             jobs.push({
@@ -123,20 +103,26 @@ export async function scrapeBayt(page: Page): Promise<ScrapedJob[]> {
               remoteUae: location.toLowerCase().includes('remote'),
             })
             newOnPage++
-          } catch { /* skip malformed card */ }
+          } catch {
+            // Skip malformed card silently
+          }
         }
 
-        console.log(`  [bayt] "${term}" p${pageNum}: +${newOnPage} new`)
-        if (newOnPage === 0) break
-        await page.waitForTimeout(1000)
+        console.log(`  [bayt] "${term}" p${pageNum}: +${newOnPage} jobs`)
+        if (newOnPage === 0) break  // No new jobs — stop paginating this term
+
+        // Inter-page jitter: 1.5–3.5 s (shorter than initial load pause)
+        await delayWithJitter(page, 2_000)
       } catch (err) {
-        console.warn(`  [bayt] error:`, (err as Error).message.split('\n')[0])
-        if (!debugDone) { await debugDump(page, 'bayt-error').catch(() => {}); debugDone = true }
+        console.warn(`  [bayt] "${term}" p${pageNum} failed:`, (err as Error).message)
         break
       }
     }
   }
 
-  console.log(`  [bayt] total: ${jobs.length}`)
+  // Use extractJobId to silence the "unused" lint warning (it's a fallback utility)
+  void extractJobId
+
+  console.log(`  [bayt] total scraped: ${jobs.length}`)
   return jobs
 }

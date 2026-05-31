@@ -1,5 +1,6 @@
 import { Page } from 'playwright'
 import { ScrapedJob } from '../types'
+import { delayWithJitter } from '../utils/delay'
 
 const SEARCH_TERMS = [
   'software engineer',
@@ -15,23 +16,6 @@ const SEARCH_TERMS = [
 ]
 
 const MAX_PAGES = parseInt(process.env.MAX_PAGES ?? '3', 10)
-
-interface NaukriJob {
-  designation?: string
-  title?: string
-  jobId?: string | number
-  id?: string | number
-  jdURL?: string
-  applyUrl?: string
-  company?: string | { name?: string }
-  companyName?: string
-  location?: string | { label?: string; name?: string }
-  description?: string
-  jobInfo?: string
-  latestPostedDate?: string
-  postedDate?: string
-  snippets?: unknown
-}
 
 function inferEmirate(text: string): string | undefined {
   const t = text.toLowerCase()
@@ -61,97 +45,16 @@ export async function scrapeNaukrigulf(page: Page): Promise<ScrapedJob[]> {
       console.log(`  [naukrigulf] "${term}" p${pageNum}`)
 
       try {
-        // Intercept NaukriGulf's internal job-search API calls
-        const apiJobs: ScrapedJob[] = []
-        const captureHandler = async (response: import('playwright').Response) => {
-          const rUrl = response.url()
-          if (!rUrl.includes('naukrigulf') || !rUrl.includes('search')) return
-          try {
-            const json = await response.json()
-            // NaukriGulf API typically returns { jobDetails: [...] } or similar
-            const list: NaukriJob[] = (json as Record<string, NaukriJob[]>)?.jobDetails
-              ?? (json as Record<string, NaukriJob[]>)?.jobs
-              ?? (json as { data?: Record<string, NaukriJob[]> })?.data?.jobs
-              ?? []
-            for (const j of list) {
-              const title = j.designation ?? j.title
-              const jobId = String(j.jobId ?? j.id ?? '')
-              const applyUrl = j.jdURL ?? j.applyUrl ?? `https://www.naukrigulf.com/job-${jobId}`
-              if (!title || !jobId || seen.has(`naukrigulf_${jobId}`)) continue
-              seen.add(`naukrigulf_${jobId}`)
-              // company may be a nested object { name, id } or a plain string
-              const company = typeof j.company === 'string' ? j.company
-                : j.company?.name ?? j.companyName ?? 'Unknown'
-              // location may be a nested object or string
-              const locationRaw = typeof j.location === 'string' ? j.location
-                : j.location?.label ?? j.location?.name ?? 'United Arab Emirates'
-              const location = locationRaw || 'United Arab Emirates'
-              // description is a string field
-              const description = typeof j.description === 'string' && j.description
-                ? j.description
-                : (typeof j.jobInfo === 'string' ? j.jobInfo : title)
-              apiJobs.push({
-                externalId: jobId,
-                title,
-                company,
-                description,
-                location: location.toLowerCase().includes('ae') || location.toLowerCase().includes('emirates') ? location : `${location}, AE`,
-                emirate: inferEmirate(location),
-                applyUrl,
-                publisher: 'NaukriGulf',
-                postedAt: (j.latestPostedDate ?? j.postedDate ?? '')?.substring(0, 10) || undefined,
-                remoteUae: location.toLowerCase().includes('remote'),
-              })
-            }
-            if (list.length > 0) {
-              console.log(`  [naukrigulf] API intercepted ${list.length} jobs from ${rUrl.split('?')[0]}`)
-              // Log first job keys to identify field names
-              if (apiJobs.length === 0 && list.length > 0) {
-                const sample = list[0]
-                console.log(`  [naukrigulf] sample job keys: ${Object.keys(sample).join(', ')}`)
-                console.log(`  [naukrigulf] sample: title=${sample.title ?? sample.designation}, snippets type=${typeof sample.snippets}`)
-              }
-            }
-          } catch { /* not JSON or wrong format */ }
-        }
-        page.on('response', captureHandler)
+        await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30_000 })
 
-        const resp = await page.goto(url, { waitUntil: 'load', timeout: 45_000 })
-        await page.waitForTimeout(5000)
-        page.off('response', captureHandler)
-        console.log(`  [naukrigulf] HTTP ${resp?.status()} — API captured: ${apiJobs.length} jobs`)
+        // Human-like reading pause after page load (2.5–4.5 s)
+        await delayWithJitter(page, 3_500)
 
-        if (apiJobs.length > 0) {
-          jobs.push(...apiJobs)
-          console.log(`  [naukrigulf] "${term}" p${pageNum}: +${apiJobs.length} new (via API)`)
-          await page.waitForTimeout(1000)
-          continue
-        }
-
-        // Job cards: try multiple selector patterns
-        const CARD_SELECTORS = [
-          '.ni-job-tuple', '.jobTuple', '[data-job-id]',
-          'article', '.job-card', '.job-listing', '.srp-jobtuple-wrapper',
-          '[class*="jobTuple"]', '[class*="job-card"]', '[class*="JobCard"]',
-          'li[class*="job"]', 'div[class*="job-item"]',
-        ]
-        let cards: Awaited<ReturnType<typeof page.$$>> = []
-        let usedSel = ''
-        for (const sel of CARD_SELECTORS) {
-          cards = await page.$$(sel)
-          if (cards.length > 0) { usedSel = sel; break }
-        }
-
+        // Job cards: .ni-job-tuple or .jobTuple
+        const cards = await page.$$('.ni-job-tuple, .jobTuple, [data-job-id]')
         if (cards.length === 0) {
-          // Dump page HTML snippet for diagnosis
-          const bodyHtml = await page.evaluate(() => document.body.innerHTML.substring(0, 3000))
-          console.log(`  [naukrigulf] No cards — page HTML:\n${bodyHtml}`)
+          console.log(`  [naukrigulf] No cards found — stopping for "${term}"`)
           break
-        }
-        console.log(`  [naukrigulf] Found ${cards.length} cards via: ${usedSel}`)
-        if (pageNum === 1 && term === SEARCH_TERMS[0]) {
-          const html = await cards[0].innerHTML()
-          console.log(`  [naukrigulf] first card snippet:\n${html.substring(0, 600)}`)
         }
 
         let newOnPage = 0
@@ -210,7 +113,9 @@ export async function scrapeNaukrigulf(page: Page): Promise<ScrapedJob[]> {
 
         console.log(`  [naukrigulf] "${term}" p${pageNum}: +${newOnPage} jobs`)
         if (newOnPage === 0) break
-        await page.waitForTimeout(1000)
+
+        // Inter-page jitter: 1.5–3.5 s
+        await delayWithJitter(page, 2_000)
       } catch (err) {
         console.warn(`  [naukrigulf] "${term}" p${pageNum} failed:`, (err as Error).message)
         break
