@@ -9,17 +9,132 @@ import { adminApi, errorMessage } from '../../services/api'
 import type { IngestRunLog, IngestStatus } from '../../types'
 
 const SOURCE_COLORS: Record<string, string> = {
-  jsearch:   'bg-violet-100 text-violet-700',
-  adzuna:    'bg-sky-100 text-sky-700',
-  remoteok:  'bg-emerald-100 text-emerald-700',
-  himalayas: 'bg-amber-100 text-amber-700',
+  jsearch:    'bg-violet-100 text-violet-700',
+  adzuna:     'bg-sky-100 text-sky-700',
+  remoteok:   'bg-emerald-100 text-emerald-700',
+  himalayas:  'bg-amber-100 text-amber-700',
+  bayt:       'bg-rose-100 text-rose-700',
+  naukrigulf: 'bg-orange-100 text-orange-700',
+  gulftalent: 'bg-teal-100 text-teal-700',
 }
+
+const SCRAPER_SOURCES = ['bayt', 'naukrigulf', 'gulftalent'] as const
 
 function SourceBadge({ source }: { source: string }) {
   return (
     <span className={`inline-block rounded-full px-2 py-0.5 text-[11px] font-semibold ${SOURCE_COLORS[source] ?? 'bg-slate-100 text-slate-600'}`}>
       {source}
     </span>
+  )
+}
+
+function timeAgo(dateStr: string): string {
+  const ms = Date.now() - new Date(dateStr).getTime()
+  const mins = Math.floor(ms / 60_000)
+  if (mins < 1)  return 'just now'
+  if (mins < 60) return `${mins}m ago`
+  const hrs = Math.floor(mins / 60)
+  if (hrs < 24)  return `${hrs}h ago`
+  return `${Math.floor(hrs / 24)}d ago`
+}
+
+function computeSourceHealth(runs: IngestRunLog[], source: string) {
+  const sourceRuns = runs.filter(r => r.source === source)
+  if (sourceRuns.length === 0) {
+    return { lastRun: null, lastStatus: 'never' as const, lastError: null, todayFetched: 0, todayInserted: 0 }
+  }
+  const sorted = [...sourceRuns].sort(
+    (a, b) => new Date(b.startedAt).getTime() - new Date(a.startedAt).getTime()
+  )
+  const last = sorted[0]
+  const today = new Date().toDateString()
+  const todayRuns = sourceRuns.filter(r => new Date(r.startedAt).toDateString() === today)
+
+  const lastStatus = last.error
+    ? ('error' as const)
+    : !last.finishedAt
+      ? ('running' as const)
+      : ('ok' as const)
+
+  return {
+    lastRun:      last.startedAt,
+    lastStatus,
+    lastError:    last.error ?? null,
+    todayFetched: todayRuns.reduce((s, r) => s + r.fetched,   0),
+    todayInserted:todayRuns.reduce((s, r) => s + r.inserted,  0),
+  }
+}
+
+function ScraperSourceCard({ source, runs }: { source: string; runs: IngestRunLog[] }) {
+  const h = computeSourceHealth(runs, source)
+
+  const statusColor =
+    h.lastStatus === 'ok'      ? 'text-emerald-600' :
+    h.lastStatus === 'error'   ? 'text-red-500'     :
+    h.lastStatus === 'running' ? 'text-amber-500'   :
+                                 'text-slate-400'
+
+  const statusLabel =
+    h.lastStatus === 'ok'      ? '● OK'      :
+    h.lastStatus === 'error'   ? '● Error'   :
+    h.lastStatus === 'running' ? '● Running' :
+                                 'Never ran'
+
+  const insertRate = h.todayFetched > 0
+    ? Math.round((h.todayInserted / h.todayFetched) * 100)
+    : null
+
+  return (
+    <Card className="p-4 flex flex-col gap-3">
+      <div className="flex items-center justify-between">
+        <SourceBadge source={source} />
+        <span className={`text-xs font-semibold ${statusColor}`}>{statusLabel}</span>
+      </div>
+
+      {h.lastRun ? (
+        <>
+          <p className="text-xs text-slate-500">
+            Last run: <span className="font-medium text-slate-700">{timeAgo(h.lastRun)}</span>
+          </p>
+
+          {h.lastError && (
+            <p className="text-[11px] text-red-500 truncate" title={h.lastError}>
+              {h.lastError}
+            </p>
+          )}
+
+          <div className="grid grid-cols-2 gap-2">
+            <div className="rounded-lg bg-slate-50 py-2.5 text-center">
+              <p className="text-xl font-bold tabular-nums text-slate-800">{h.todayInserted}</p>
+              <p className="text-[10px] text-slate-400 mt-0.5">saved today</p>
+            </div>
+            <div className="rounded-lg bg-slate-50 py-2.5 text-center">
+              <p className="text-xl font-bold tabular-nums text-slate-800">{h.todayFetched}</p>
+              <p className="text-[10px] text-slate-400 mt-0.5">fetched today</p>
+            </div>
+          </div>
+
+          {insertRate !== null && h.todayFetched > 0 && (
+            <div>
+              <div className="flex justify-between text-[10px] text-slate-400 mb-1">
+                <span>Insert rate</span>
+                <span className={insertRate >= 30 ? 'text-emerald-600 font-medium' : insertRate >= 10 ? 'text-amber-600' : 'text-red-400'}>
+                  {insertRate}%
+                </span>
+              </div>
+              <div className="h-1.5 rounded-full bg-slate-100 overflow-hidden">
+                <div
+                  className={`h-full rounded-full transition-all ${insertRate >= 30 ? 'bg-emerald-500' : insertRate >= 10 ? 'bg-amber-400' : 'bg-red-400'}`}
+                  style={{ width: `${Math.min(100, insertRate)}%` }}
+                />
+              </div>
+            </div>
+          )}
+        </>
+      ) : (
+        <p className="text-xs text-slate-400 text-center py-3">No runs in last 100</p>
+      )}
+    </Card>
   )
 }
 
@@ -93,6 +208,14 @@ function StatCard({
         {sub && <p className="text-[11px] text-slate-400 mt-0.5">{sub}</p>}
       </div>
     </Card>
+  )
+}
+
+function SectionLabel({ children }: { children: React.ReactNode }) {
+  return (
+    <p className="text-[11px] font-bold uppercase tracking-widest text-slate-400 mb-3">
+      {children}
+    </p>
   )
 }
 
@@ -267,6 +390,16 @@ export default function IngestDashboard() {
         </Card>
       )}
 
+      {/* Playwright scrapers */}
+      <div>
+        <SectionLabel>Playwright Scrapers</SectionLabel>
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+          {SCRAPER_SOURCES.map(src => (
+            <ScraperSourceCard key={src} source={src} runs={recent} />
+          ))}
+        </div>
+      </div>
+
       {/* Tabs */}
       <Card className="overflow-hidden p-0">
         <div className="border-b border-slate-100 px-4 flex items-center justify-between">
@@ -281,7 +414,7 @@ export default function IngestDashboard() {
                     : 'border-transparent text-slate-500 hover:text-slate-700'
                 }`}
               >
-                {t === 'runs' ? 'Recent Runs' : 'Keyword Performance'}
+                {t === 'runs' ? 'Recent Runs' : 'API Keywords'}
               </button>
             ))}
           </div>
@@ -332,7 +465,7 @@ export default function IngestDashboard() {
               </thead>
               <tbody>
                 {kwStats.length === 0 && (
-                  <tr><td colSpan={6} className="py-16 text-center text-sm text-slate-400">No keyword data yet</td></tr>
+                  <tr><td colSpan={6} className="py-16 text-center text-sm text-slate-400">No JSearch keyword data yet</td></tr>
                 )}
                 {kwStats.map(k => (
                   <tr key={k.keyword} className="border-b border-slate-100 last:border-0 hover:bg-slate-50/60">
