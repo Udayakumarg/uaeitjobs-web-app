@@ -81,15 +81,15 @@ async function performLogin(context: BrowserContext): Promise<void> {
 
   try {
     await page.goto('https://www.linkedin.com/login', {
-      waitUntil: 'networkidle',
+      waitUntil: 'domcontentloaded',
       timeout: 30_000,
     })
 
-    console.log(`  [li-session] Landed on: ${page.url()}`)
+    // LinkedIn has persistent background polling — networkidle never fires.
+    // Wait explicitly for the form input instead.
+    await page.waitForSelector('#username, input[name="session_key"]', { timeout: 40_000 })
 
-    // Wait for the login form to be present — LinkedIn sometimes shows
-    // a CAPTCHA or challenge page before the actual form
-    await page.waitForSelector('#username, input[name="session_key"]', { timeout: 30_000 })
+    console.log(`  [li-session] Landed on: ${page.url()}`)
 
     // ── Fill credentials ──────────────────────────────────────────────────
     const usernameSelector = await page.$('#username') ? '#username' : 'input[name="session_key"]'
