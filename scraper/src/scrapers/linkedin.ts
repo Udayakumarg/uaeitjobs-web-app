@@ -11,7 +11,7 @@
  * avoiding the need for full SPA rendering just to get a list of job IDs.
  * Detail pages are then fetched individually so we get the richest possible data.
  */
-import type { Page, BrowserContext, Route, Request } from 'playwright'
+import type { BrowserContext, Route, Request } from 'playwright'
 import { ScrapedJob } from '../types'
 import { delayWithJitter } from '../utils/delay'
 import { ensureLinkedInSession } from '../utils/linkedin-session'

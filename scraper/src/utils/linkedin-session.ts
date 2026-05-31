@@ -12,7 +12,7 @@
  *   LI_EMAIL    — LinkedIn account e-mail
  *   LI_PASSWORD — LinkedIn account password
  */
-import type { BrowserContext, Page } from 'playwright'
+import type { BrowserContext } from 'playwright'
 import * as fs   from 'fs'
 import * as path from 'path'
 import { fetchLinkedInVerificationCode } from './gmail-code'
@@ -97,8 +97,8 @@ async function performLogin(context: BrowserContext): Promise<void> {
     await page.waitForTimeout(400 + Math.floor(Math.random() * 400))
     await page.locator('input[type="password"]').first().fill(LI_PASSWORD, { force: true })
     await page.waitForTimeout(600 + Math.floor(Math.random() * 500))
-    await page.click('button[type="submit"]')
-    await page.waitForTimeout(4_000)
+    await page.locator('button[type="submit"]').first().click({ force: true })
+    await page.waitForTimeout(5_000)
 
     // ── Verification code screen ──────────────────────────────────────────
     // LinkedIn may show a PIN/OTP screen after login
@@ -113,8 +113,8 @@ async function performLogin(context: BrowserContext): Promise<void> {
         code,
       )
       await page.waitForTimeout(500)
-      await page.click('button[type="submit"], button[aria-label="Submit"]')
-      await page.waitForTimeout(4_000)
+      await page.locator('button[type="submit"]').first().click({ force: true })
+      await page.waitForTimeout(5_000)
     }
 
     // ── Verify success ────────────────────────────────────────────────────
