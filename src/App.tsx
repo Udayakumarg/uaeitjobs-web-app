@@ -27,7 +27,7 @@ const NotFound = lazy(() => import('./pages/NotFound'))
 const IngestDashboard = lazy(() => import('./pages/Admin/IngestDashboard'))
 const AdminJobs = lazy(() => import('./pages/Admin/AdminJobs'))
 const AdminUsers = lazy(() => import('./pages/Admin/AdminUsers'))
-const AdminActivity = lazy(() => import('./pages/Admin/AdminActivity'))
+const AdminActivity = lazy(() => import('./pages/Admin/Activity'))
 const Contact = lazy(() => import('./pages/Contact'))
 const AccountPage = lazy(() => import('./pages/Account'))
 

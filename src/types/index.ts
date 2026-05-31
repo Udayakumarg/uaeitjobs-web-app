@@ -200,6 +200,30 @@ export interface CountryCount {
   count: number
 }
 
+export interface LoginHealthToday {
+  attempts: number
+  successes: number
+  failures: number
+  successRate: number
+  /** Maps LoginFailureReason name → count, e.g. { INVALID_PASSWORD: 12, USER_NOT_FOUND: 3 } */
+  failureBreakdown: Record<string, number>
+}
+
+export interface FrictionSignal {
+  userId: number
+  email: string
+  userType: string
+  /** REPEATED_FAILURES | EMPLOYER_INACTIVE | VERIFIED_NEVER_LOGIN | STUCK_PENDING_LONG */
+  signalType: string
+  /** HIGH | MEDIUM | LOW */
+  severity: string
+  message: string
+  daysSinceCreated: number
+  failedLoginAttempts24h: number
+  /** RESET_PASSWORD | SEND_WELCOME | RESEND_VERIFICATION | REVIEW */
+  suggestedAction: string
+}
+
 export interface UserActivityStats {
   totalUsers: number
   verifiedUsers: number
@@ -215,6 +239,7 @@ export interface UserActivityStats {
   recentSignups: UserRow[]
   neverReturned: UserRow[]
   topCountries: CountryCount[]
+  loginHealthToday: LoginHealthToday
 }
 
 export interface IngestRunLog {

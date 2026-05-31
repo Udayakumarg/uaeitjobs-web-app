@@ -1,7 +1,7 @@
 import axios, { AxiosError, type InternalAxiosRequestConfig } from 'axios'
 import { useToastStore } from '../components/Toast'
 import { useAuthStore } from '../store/authStore'
-import type { AdminUser, Application, ApplicationStatus, AuthResponse, HRProfile, IngestStatus, Job, JobRequest, JobSeekerProfile, Page, User, UserActivityStats, UserType } from '../types'
+import type { AdminUser, Application, ApplicationStatus, AuthResponse, FrictionSignal, HRProfile, IngestStatus, Job, JobRequest, JobSeekerProfile, Page, User, UserActivityStats, UserType } from '../types'
 
 const configuredApiUrl = import.meta.env.VITE_API_URL
 
@@ -221,6 +221,12 @@ export const adminApi = {
     api.get<Page<Job>>('/admin/jobs', { params }),
   resendVerification: (id: number) =>
     api.post(`/admin/users/${id}/resend-verification`),
+  /** Proactively detected friction signals — accounts that may need a nudge. */
+  frictionSignals: () =>
+    api.get<FrictionSignal[]>('/admin/users/friction-signals'),
+  /** Send a proactive welcome / onboarding email to a user. */
+  sendWelcome: (id: number) =>
+    api.post(`/admin/users/${id}/send-welcome`),
   activity: () =>
     api.get<UserActivityStats>('/admin/users/activity'),
 }
