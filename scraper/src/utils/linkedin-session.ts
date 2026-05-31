@@ -85,18 +85,16 @@ async function performLogin(context: BrowserContext): Promise<void> {
       timeout: 30_000,
     })
 
-    // LinkedIn has persistent background polling — networkidle never fires.
-    // Wait explicitly for the form input instead.
-    await page.waitForSelector('#username, input[name="session_key"]', { timeout: 40_000 })
+    // LinkedIn's React app generates dynamic IDs (":r0:", ":r1:" etc.) that
+    // change between renders — select by stable type attributes instead.
+    await page.waitForSelector('input[type="email"]', { timeout: 40_000 })
 
     console.log(`  [li-session] Landed on: ${page.url()}`)
 
     // ── Fill credentials ──────────────────────────────────────────────────
-    const usernameSelector = await page.$('#username') ? '#username' : 'input[name="session_key"]'
-    await page.fill(usernameSelector, LI_EMAIL)
+    await page.fill('input[type="email"]', LI_EMAIL)
     await page.waitForTimeout(400 + Math.floor(Math.random() * 400))
-    const passwordSelector = await page.$('#password') ? '#password' : 'input[name="session_password"]'
-    await page.fill(passwordSelector, LI_PASSWORD)
+    await page.fill('input[type="password"]', LI_PASSWORD)
     await page.waitForTimeout(600 + Math.floor(Math.random() * 500))
     await page.click('button[type="submit"]')
     await page.waitForTimeout(4_000)
