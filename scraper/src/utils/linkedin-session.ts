@@ -85,16 +85,17 @@ async function performLogin(context: BrowserContext): Promise<void> {
       timeout: 30_000,
     })
 
-    // LinkedIn's React app generates dynamic IDs (":r0:", ":r1:" etc.) that
-    // change between renders — select by stable type attributes instead.
-    await page.waitForSelector('input[type="email"]', { timeout: 40_000 })
+    // Give React time to finish rendering the form
+    await page.waitForTimeout(3_000)
 
     console.log(`  [li-session] Landed on: ${page.url()}`)
 
-    // ── Fill credentials ──────────────────────────────────────────────────
-    await page.fill('input[type="email"]', LI_EMAIL)
+    // LinkedIn's React app uses dynamic IDs and may keep inputs in the DOM
+    // before they're "visible" (CSS animation / lazy mount). Use force:true
+    // to fill regardless of visibility state.
+    await page.locator('input[type="email"]').first().fill(LI_EMAIL, { force: true })
     await page.waitForTimeout(400 + Math.floor(Math.random() * 400))
-    await page.fill('input[type="password"]', LI_PASSWORD)
+    await page.locator('input[type="password"]').first().fill(LI_PASSWORD, { force: true })
     await page.waitForTimeout(600 + Math.floor(Math.random() * 500))
     await page.click('button[type="submit"]')
     await page.waitForTimeout(4_000)
