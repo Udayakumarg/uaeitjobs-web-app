@@ -1,5 +1,5 @@
 import {
-  Activity, AlertCircle, CheckCircle, Clock, Play,
+  Activity, AlertCircle, CheckCircle, Clock, Globe, Play,
   RefreshCw, Repeat2, TrendingUp, Zap
 } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
@@ -219,6 +219,147 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
   )
 }
 
+// ─── Manual Trigger Panel ────────────────────────────────────────────────────
+
+const PLAYWRIGHT_SOURCES = [
+  { key: 'linkedin',   label: 'LinkedIn',   color: 'bg-blue-100 text-blue-700',   ring: 'hover:ring-blue-300'   },
+  { key: 'bayt',       label: 'Bayt',       color: 'bg-rose-100 text-rose-700',   ring: 'hover:ring-rose-300'   },
+  { key: 'naukrigulf', label: 'NaukriGulf', color: 'bg-orange-100 text-orange-700', ring: 'hover:ring-orange-300' },
+  { key: 'gulftalent', label: 'GulfTalent', color: 'bg-teal-100 text-teal-700',   ring: 'hover:ring-teal-300'   },
+]
+
+const API_SOURCES = [
+  { key: 'jsearch',   label: 'JSearch',   color: 'bg-violet-100 text-violet-700' },
+  { key: 'adzuna',    label: 'Adzuna',    color: 'bg-sky-100 text-sky-700'       },
+  { key: 'remoteok',  label: 'RemoteOK',  color: 'bg-emerald-100 text-emerald-700' },
+  { key: 'himalayas', label: 'Himalayas', color: 'bg-amber-100 text-amber-700'   },
+]
+
+function ManualTriggerPanel({
+  onApiRun,
+  apiRunning,
+}: {
+  onApiRun: () => void
+  apiRunning: boolean
+}) {
+  const { add: toast } = useToastStore()
+  const [triggering,  setTriggering]  = useState<string | null>(null)
+  const [scraperStatus, setScraperStatus] = useState<Record<string, string>>({})
+  const [serverUp,    setServerUp]    = useState<boolean | null>(null)
+
+  const loadStatus = async () => {
+    try {
+      const { data } = await adminApi.scraperStatus()
+      setServerUp(data.serverReachable)
+      setScraperStatus(data.sources ?? {})
+    } catch {
+      setServerUp(false)
+    }
+  }
+
+  useEffect(() => { loadStatus() }, [])
+
+  const triggerPlaywright = async (source: string) => {
+    setTriggering(source)
+    try {
+      const { data } = await adminApi.triggerScraper(source)
+      if (data.status === 'already_running') {
+        toast({ type: 'info',    title: `${source} already running`, message: data.message })
+      } else {
+        toast({ type: 'success', title: `${source} started`,         message: 'Scraper running in background' })
+      }
+      setTimeout(loadStatus, 2000)
+    } catch (e) {
+      toast({ type: 'error', title: 'Trigger failed', message: errorMessage(e) })
+    } finally {
+      setTriggering(null)
+    }
+  }
+
+  return (
+    <Card className="p-5">
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="text-sm font-bold text-slate-700 flex items-center gap-2">
+          <Play size={14} className="text-violet-500" /> Manual Trigger
+        </h2>
+        <button onClick={loadStatus} className="text-slate-400 hover:text-slate-600 transition-colors">
+          <RefreshCw size={13} />
+        </button>
+      </div>
+
+      {/* ── Playwright Scrapers ─────────────────────────────────── */}
+      <div className="mb-4">
+        <p className="text-[11px] font-bold uppercase tracking-widest text-slate-400 mb-2.5 flex items-center gap-1.5">
+          <Globe size={11} /> Playwright Scrapers
+          {serverUp === false && (
+            <span className="ml-auto text-[10px] font-normal text-red-400 normal-case tracking-normal">
+              trigger server offline
+            </span>
+          )}
+          {serverUp === true && (
+            <span className="ml-auto text-[10px] font-normal text-emerald-500 normal-case tracking-normal">
+              server online
+            </span>
+          )}
+        </p>
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+          {PLAYWRIGHT_SOURCES.map(({ key, label, color, ring }) => {
+            const status   = scraperStatus[key]
+            const isActive = status === 'running' || triggering === key
+            return (
+              <button
+                key={key}
+                disabled={isActive || serverUp === false}
+                onClick={() => triggerPlaywright(key)}
+                className={`
+                  relative flex flex-col items-center gap-1.5 rounded-xl border border-slate-100
+                  px-3 py-3 text-center transition-all ring-2 ring-transparent
+                  ${ring} hover:border-slate-200 hover:shadow-sm
+                  disabled:opacity-50 disabled:cursor-not-allowed
+                `}
+              >
+                <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${color}`}>
+                  {label}
+                </span>
+                {isActive ? (
+                  <span className="text-[10px] text-amber-500 animate-pulse font-medium">running…</span>
+                ) : (
+                  <span className="text-[10px] text-slate-400">
+                    {serverUp === false ? 'offline' : 'click to run'}
+                  </span>
+                )}
+              </button>
+            )
+          })}
+        </div>
+      </div>
+
+      {/* ── API Sources ────────────────────────────────────────── */}
+      <div>
+        <p className="text-[11px] font-bold uppercase tracking-widest text-slate-400 mb-2.5">
+          API Sources (all keywords)
+        </p>
+        <div className="flex flex-wrap items-center gap-2">
+          {API_SOURCES.map(({ key, label, color }) => (
+            <span key={key} className={`rounded-full px-2.5 py-1 text-[11px] font-semibold ${color}`}>
+              {label}
+            </span>
+          ))}
+          <Button
+            size="sm"
+            disabled={apiRunning}
+            onClick={onApiRun}
+            className="ml-auto"
+          >
+            <Play size={12} />
+            {apiRunning ? 'Running…' : 'Run all API sources'}
+          </Button>
+        </div>
+      </div>
+    </Card>
+  )
+}
+
 function keywordStats(runs: IngestRunLog[]) {
   const map = new Map<string, { fetched: number; inserted: number; runs: number }>()
   for (const r of runs) {
@@ -313,16 +454,14 @@ export default function IngestDashboard() {
           <Button onClick={load} variant="secondary" size="sm">
             <RefreshCw size={13} /> Refresh
           </Button>
-          <Button
-            onClick={trigger}
-            disabled={triggering || !!status?.running}
-            size="sm"
-          >
-            <Play size={13} />
-            {triggering ? 'Starting…' : status?.running ? 'Running…' : 'Run Now'}
-          </Button>
         </div>
       </div>
+
+      {/* Manual trigger panel */}
+      <ManualTriggerPanel
+        onApiRun={trigger}
+        apiRunning={triggering || !!status?.running}
+      />
 
       {/* Summary cards */}
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">

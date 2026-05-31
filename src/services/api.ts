@@ -229,6 +229,10 @@ export const adminApi = {
     api.post(`/admin/users/${id}/send-welcome`),
   activity: () =>
     api.get<UserActivityStats>('/admin/users/activity'),
+  triggerScraper: (source: string) =>
+    api.post<{ status: string; message: string; source: string }>(`/admin/scraper/trigger/${source}`),
+  scraperStatus: () =>
+    api.get<{ serverReachable: boolean; sources: Record<string, string> }>('/admin/scraper/status'),
 }
 
 export const userApi = {

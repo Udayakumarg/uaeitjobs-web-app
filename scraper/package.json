@@ -9,6 +9,7 @@
     "scrape:gulftalent": "ts-node src/index.ts --source=gulftalent",
     "scrape:all": "ts-node src/index.ts --source=gulftalent,bayt,naukrigulf",
     "scrape:linkedin": "ts-node src/index.ts --source=linkedin",
+    "trigger-server": "ts-node src/trigger-server.ts",
     "install:browsers": "npx playwright install chromium"
   },
   "dependencies": {
