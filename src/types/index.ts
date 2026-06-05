@@ -262,3 +262,57 @@ export interface IngestStatus {
   running: boolean
   recent: IngestRunLog[]
 }
+
+// ── Hiring-companies directory ────────────────────────────────────────────
+export type HiringCompanyStatus = 'PENDING' | 'APPROVED' | 'REJECTED'
+export type HiringActivity = 'ACTIVE_HIRING' | 'FREQUENT_HIRING' | 'OCCASIONAL'
+
+/** Public-facing payload — no PII, no moderation fields. */
+export interface HiringCompany {
+  id: number
+  name: string
+  slug: string
+  category: string | null
+  city: string | null
+  careersUrl: string
+  websiteUrl: string | null
+  description: string | null
+  techFocus: string | null
+  hiringStatus: HiringActivity
+  featured: boolean
+  urlVerified: boolean
+}
+
+/** Admin-only payload — adds moderation queue + audit fields. */
+export interface HiringCompanyAdmin extends HiringCompany {
+  status: HiringCompanyStatus
+  rejectionReason: string | null
+  submittedByEmail: string | null
+  createdAt: string
+  approvedAt: string | null
+}
+
+export interface HiringCompanyFilters {
+  cities: string[]
+  categories: string[]
+}
+
+/** Body for POST /companies/submit — minimal per product spec. */
+export interface HiringCompanySubmitBody {
+  name: string
+  careersUrl: string
+}
+
+/** Body for PATCH/approval — every field optional. */
+export interface HiringCompanyPatchBody {
+  name?: string
+  category?: string | null
+  city?: string | null
+  careersUrl?: string
+  websiteUrl?: string | null
+  description?: string | null
+  techFocus?: string | null
+  hiringStatus?: HiringActivity
+  featured?: boolean
+  urlVerified?: boolean
+}

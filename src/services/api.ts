@@ -1,7 +1,7 @@
 import axios, { AxiosError, type InternalAxiosRequestConfig } from 'axios'
 import { useToastStore } from '../components/Toast'
 import { useAuthStore } from '../store/authStore'
-import type { AdminUser, Application, ApplicationStatus, AuthResponse, FrictionSignal, HRProfile, IngestStatus, Job, JobRequest, JobSeekerProfile, Page, User, UserActivityStats, UserType } from '../types'
+import type { AdminUser, Application, ApplicationStatus, AuthResponse, FrictionSignal, HiringCompany, HiringCompanyAdmin, HiringCompanyFilters, HiringCompanyPatchBody, HiringCompanyStatus, HiringCompanySubmitBody, HRProfile, IngestStatus, Job, JobRequest, JobSeekerProfile, Page, User, UserActivityStats, UserType } from '../types'
 
 const configuredApiUrl = import.meta.env.VITE_API_URL
 
@@ -252,4 +252,34 @@ export const userApi = {
 export const contactApi = {
   send: (payload: { name: string; email: string; subject: string; message: string }) =>
     api.post('/contact', payload),
+}
+
+// ── Hiring-companies directory ────────────────────────────────────────────
+// Public list/detail/filters + authenticated submit. Admin moderation lives
+// under adminApi (see below).
+export const companiesApi = {
+  list: (params: { q?: string; city?: string; category?: string; page?: number; size?: number }) =>
+    api.get<Page<HiringCompany>>('/companies', { params }),
+  detail: (slug: string) =>
+    api.get<HiringCompany>(`/companies/${slug}`),
+  filters: () =>
+    api.get<HiringCompanyFilters>('/companies/filters'),
+  submit: (body: HiringCompanySubmitBody) =>
+    api.post<HiringCompany>('/companies/submit', body),
+}
+
+// Admin moderation endpoints for the hiring-companies directory.
+// Bolted onto adminApi (rather than a separate object) so it matches how
+// other admin endpoints are organised in this file.
+export const adminCompaniesApi = {
+  list: (status?: HiringCompanyStatus, page = 0, size = 20) =>
+    api.get<Page<HiringCompanyAdmin>>('/admin/companies', { params: { status, page, size } }),
+  approve: (id: number, overrides?: HiringCompanyPatchBody) =>
+    api.post<HiringCompanyAdmin>(`/admin/companies/${id}/approve`, overrides ?? {}),
+  reject: (id: number, reason?: string) =>
+    api.post<HiringCompanyAdmin>(`/admin/companies/${id}/reject`, { reason: reason ?? null }),
+  patch: (id: number, body: HiringCompanyPatchBody) =>
+    api.patch<HiringCompanyAdmin>(`/admin/companies/${id}`, body),
+  remove: (id: number) =>
+    api.delete(`/admin/companies/${id}`),
 }

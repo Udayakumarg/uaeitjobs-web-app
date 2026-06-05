@@ -28,8 +28,12 @@ const IngestDashboard = lazy(() => import('./pages/Admin/IngestDashboard'))
 const AdminJobs = lazy(() => import('./pages/Admin/AdminJobs'))
 const AdminUsers = lazy(() => import('./pages/Admin/AdminUsers'))
 const AdminActivity = lazy(() => import('./pages/Admin/Activity'))
+const AdminCompanies = lazy(() => import('./pages/Admin/AdminCompanies'))
 const Contact = lazy(() => import('./pages/Contact'))
 const AccountPage = lazy(() => import('./pages/Account'))
+const CompaniesDirectory = lazy(() => import('./pages/Companies/Directory'))
+const CompanyDetail = lazy(() => import('./pages/Companies/Detail'))
+const CompanySubmit = lazy(() => import('./pages/Companies/Submit'))
 
 export default function App() {
   return (
@@ -50,9 +54,14 @@ export default function App() {
               <Route path="contact" element={<Contact />} />
               <Route path="access-denied" element={<AccessDenied />} />
 
-              {/* Account settings — accessible to every authenticated user */}
+              {/* Hiring Companies directory — public list + detail */}
+              <Route path="companies" element={<CompaniesDirectory />} />
+              <Route path="companies/:slug" element={<CompanyDetail />} />
+
+              {/* Account settings + company submission — any authenticated user */}
               <Route element={<ProtectedRoute />}>
                 <Route path="account" element={<AccountPage />} />
+                <Route path="companies/submit" element={<CompanySubmit />} />
               </Route>
 
               <Route element={<ProtectedRoute roles={['job_seeker']} />}>
@@ -76,6 +85,7 @@ export default function App() {
                 <Route path="admin/jobs" element={<AdminJobs />} />
                 <Route path="admin/users" element={<AdminUsers />} />
                 <Route path="admin/activity" element={<AdminActivity />} />
+                <Route path="admin/companies" element={<AdminCompanies />} />
               </Route>
 
               <Route path="dashboard" element={<Navigate to="/seeker" replace />} />

@@ -1,4 +1,4 @@
-import { Activity, Bookmark, Briefcase, LayoutDashboard, LogIn, Menu, Search, UserCog, UserRound, Users, Users2, X, Zap } from 'lucide-react'
+import { Activity, Bookmark, Briefcase, Building2, LayoutDashboard, LogIn, Menu, Search, UserCog, UserRound, Users, Users2, X, Zap } from 'lucide-react'
 import { useState } from 'react'
 import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { useAuthStore } from '../store/authStore'
@@ -28,6 +28,10 @@ export function Layout() {
       <NavLink to="/jobs" className={navClass}>
         <Search className="h-4 w-4" />
         Browse jobs
+      </NavLink>
+      <NavLink to="/companies" className={navClass}>
+        <Building2 className="h-4 w-4" />
+        Companies
       </NavLink>
       {user?.userType === 'job_seeker' ? (
         <>
@@ -74,6 +78,10 @@ export function Layout() {
           <NavLink to="/admin/activity" className={navClass}>
             <Activity className="h-4 w-4" />
             Activity
+          </NavLink>
+          <NavLink to="/admin/companies" className={navClass}>
+            <Building2 className="h-4 w-4" />
+            Companies
           </NavLink>
         </>
       ) : null}
