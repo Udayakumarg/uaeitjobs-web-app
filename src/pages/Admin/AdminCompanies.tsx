@@ -31,7 +31,7 @@ export default function AdminCompanies() {
   const [page, setPage]       = useState(0)
   const [loading, setLoading] = useState(false)
   const [editingId, setEditingId] = useState<number | null>(null)
-  const toast = useToastStore()
+  const addToast = useToastStore((s) => s.add)
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -41,17 +41,17 @@ export default function AdminCompanies() {
       setItems(data.content)
       setTotal(data.totalElements)
     } catch (e) {
-      toast.add({ type: 'error', title: 'Failed to load companies', message: errorMessage(e) })
+      addToast({ type: 'error', title: 'Failed to load companies', message: errorMessage(e) })
     } finally {
       setLoading(false)
     }
-  }, [tab, page, toast])
+  }, [tab, page, addToast])
 
   useEffect(() => { load() }, [load])
 
   /** Common refresh-after-action helper. */
   const after = (title: string, c: HiringCompanyAdmin) => {
-    toast.add({ type: 'success', title, message: c.name })
+    addToast({ type: 'success', title, message: c.name })
     setEditingId(null)
     load()
   }
@@ -61,7 +61,7 @@ export default function AdminCompanies() {
       await adminCompaniesApi.approve(c.id, overrides)
       after('Approved', c)
     } catch (e) {
-      toast.add({ type: 'error', title: 'Approve failed', message: errorMessage(e) })
+      addToast({ type: 'error', title: 'Approve failed', message: errorMessage(e) })
     }
   }
   const reject = async (c: HiringCompanyAdmin) => {
@@ -70,7 +70,7 @@ export default function AdminCompanies() {
       await adminCompaniesApi.reject(c.id, reason)
       after('Rejected', c)
     } catch (e) {
-      toast.add({ type: 'error', title: 'Reject failed', message: errorMessage(e) })
+      addToast({ type: 'error', title: 'Reject failed', message: errorMessage(e) })
     }
   }
   const remove = async (c: HiringCompanyAdmin) => {
@@ -79,7 +79,7 @@ export default function AdminCompanies() {
       await adminCompaniesApi.remove(c.id)
       after('Deleted', c)
     } catch (e) {
-      toast.add({ type: 'error', title: 'Delete failed', message: errorMessage(e) })
+      addToast({ type: 'error', title: 'Delete failed', message: errorMessage(e) })
     }
   }
   const togglePatch = async (c: HiringCompanyAdmin, body: HiringCompanyPatchBody) => {
@@ -87,7 +87,7 @@ export default function AdminCompanies() {
       await adminCompaniesApi.patch(c.id, body)
       load()
     } catch (e) {
-      toast.add({ type: 'error', title: 'Update failed', message: errorMessage(e) })
+      addToast({ type: 'error', title: 'Update failed', message: errorMessage(e) })
     }
   }
 

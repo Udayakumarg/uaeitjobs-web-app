@@ -35,7 +35,7 @@ type FormValues = z.infer<typeof schema>
 
 export default function CompanySubmit() {
   const navigate = useNavigate()
-  const toast = useToastStore()
+  const addToast = useToastStore((s) => s.add)
   const [sent, setSent] = useState(false)
 
   const {
@@ -52,13 +52,13 @@ export default function CompanySubmit() {
     try {
       await companiesApi.submit(values)
       setSent(true)
-      toast.add({
+      addToast({
         type: 'success',
         title: 'Submission received',
         message: 'An admin will review your company shortly.',
       })
     } catch (e) {
-      toast.add({ type: 'error', title: 'Submission failed', message: errorMessage(e) })
+      addToast({ type: 'error', title: 'Submission failed', message: errorMessage(e) })
     }
   }
 

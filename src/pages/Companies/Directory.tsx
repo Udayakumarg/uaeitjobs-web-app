@@ -42,8 +42,12 @@ export default function CompaniesDirectory() {
   const [filters, setFilters] = useState<HiringCompanyFilters>({ cities: [], categories: [] })
   const [loading, setLoading] = useState(false)
 
-  const toast = useToastStore()
-  const user  = useAuthStore((s) => s.user)
+  // IMPORTANT: select just `add` (a stable function ref) — calling
+  // `useToastStore()` with no selector returns a new object on every
+  // store change, which would re-create `load` and infinite-loop the
+  // fetch on every failed request.
+  const addToast = useToastStore((s) => s.add)
+  const user     = useAuthStore((s) => s.user)
 
   // ── SEO meta ──────────────────────────────────────────────────────────
   useEffect(() => {
@@ -77,11 +81,11 @@ export default function CompaniesDirectory() {
       setItems(data.content)
       setTotal(data.totalElements)
     } catch (e) {
-      toast.add({ type: 'error', title: 'Failed to load companies', message: errorMessage(e) })
+      addToast({ type: 'error', title: 'Failed to load companies', message: errorMessage(e) })
     } finally {
       setLoading(false)
     }
-  }, [q, city, category, page, toast])
+  }, [q, city, category, page, addToast])
 
   // Debounce search input — avoid hammering the API on every keystroke.
   useEffect(() => {

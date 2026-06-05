@@ -28,7 +28,9 @@ const ACTIVITY_TONE: Record<HiringActivity, 'green' | 'teal' | 'slate'> = {
  */
 export default function CompanyDetail() {
   const { slug = '' } = useParams<{ slug: string }>()
-  const toast = useToastStore()
+  // Select the stable `add` function — see Directory.tsx for the
+  // infinite-loop trap with `useToastStore()`.
+  const addToast = useToastStore((s) => s.add)
 
   const [company, setCompany] = useState<HiringCompany | null>(null)
   const [loading, setLoading] = useState(true)
@@ -43,11 +45,11 @@ export default function CompanyDetail() {
       .catch((e) => {
         if (cancelled) return
         if (statusCode(e) === 404) setNotFound(true)
-        else toast.add({ type: 'error', title: 'Failed to load', message: errorMessage(e) })
+        else addToast({ type: 'error', title: 'Failed to load', message: errorMessage(e) })
       })
       .finally(() => { if (!cancelled) setLoading(false) })
     return () => { cancelled = true }
-  }, [slug, toast])
+  }, [slug, addToast])
 
   // ── SEO meta ──────────────────────────────────────────────────────────
   useEffect(() => {
