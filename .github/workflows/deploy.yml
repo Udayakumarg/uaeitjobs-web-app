@@ -46,4 +46,7 @@ jobs:
           script: |
             cd /opt/apps
             docker compose pull uaeitjobs-frontend
-            docker compose up -d --no-deps --no-build uaeitjobs-frontend
+            # --force-recreate mirrors the backend workflow — avoids
+            # "container name already in use" when the image digest
+            # changes but compose doesn't detect a service config diff.
+            docker compose up -d --no-deps --no-build --force-recreate uaeitjobs-frontend
