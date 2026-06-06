@@ -284,7 +284,7 @@ function CompanyRow({
             </Select>
             <Select value={draft.category ?? ''} onChange={(e) => setDraft({ ...draft, category: e.target.value || null })} className="sm:col-span-2">
               <option value="">— Category —</option>
-              {['Software & Product','Cloud & DevOps','Data & AI','Cybersecurity','Enterprise IT','Banking & FinTech','E-commerce & Marketplace','Telecom','Aviation & Travel','Logistics','Government & Smart Cities','Energy & Utilities','Healthcare','Real Estate','Consulting & Services','Recruitment & Staffing','AI & Technology'].map((x) => (
+              {['Software & Product','Cloud & DevOps','Data & AI','Cybersecurity','Enterprise IT','Banking & FinTech','E-commerce & Marketplace','Telecom','Aviation & Travel','Logistics','Government & Smart Cities','Energy & Utilities','Healthcare','Real Estate','Hospitality','Retail','Consulting & Services','Recruitment & Staffing','AI & Technology'].map((x) => (
                 <option key={x} value={x}>{x}</option>
               ))}
             </Select>
