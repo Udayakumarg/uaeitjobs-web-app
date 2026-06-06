@@ -48,3 +48,31 @@ export function pickProxy(): ProxyConfig | undefined {
     return undefined
   }
 }
+
+/**
+ * LinkedIn-specific proxy override.
+ *
+ * LinkedIn aggressively blocks datacenter IPs at login, so the VPS cannot
+ * complete a fresh login without a residential proxy. These env vars let
+ * you point only LinkedIn runs at a residential pool (Webshare, IPRoyal,
+ * etc.) without affecting the other scrapers:
+ *
+ *   LINKEDIN_PROXY_SERVER   — e.g. "http://gw.webshare.io:80"
+ *   LINKEDIN_PROXY_USERNAME — proxy account username (optional)
+ *   LINKEDIN_PROXY_PASSWORD — proxy account password (optional)
+ *
+ * Returns undefined when LINKEDIN_PROXY_SERVER is unset, allowing the
+ * caller to fall back to the generic PROXIES pool or a direct connection.
+ *
+ * Note: prefer residential providers for LinkedIn — datacenter proxies
+ * fail the same fingerprint check the bare VPS IP does.
+ */
+export function pickLinkedInProxy(): ProxyConfig | undefined {
+  const server = process.env.LINKEDIN_PROXY_SERVER?.trim()
+  if (!server) return undefined
+  return {
+    server,
+    username: process.env.LINKEDIN_PROXY_USERNAME?.trim() || undefined,
+    password: process.env.LINKEDIN_PROXY_PASSWORD?.trim() || undefined,
+  }
+}
