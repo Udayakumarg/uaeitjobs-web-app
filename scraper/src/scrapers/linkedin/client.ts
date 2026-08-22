@@ -20,9 +20,20 @@ const USER_AGENTS = [
   'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
 ]
 
-const MAX_ATTEMPTS = intEnv('LI_MAX_ATTEMPTS', 4)
+const MAX_ATTEMPTS = intEnv('LI_MAX_ATTEMPTS', 6)
 const BASE_BACKOFF_MS = intEnv('LI_BACKOFF_MS', 1_000)
 const TIMEOUT_MS = intEnv('LI_TIMEOUT_MS', 20_000)
+
+/**
+ * Throttling gets its own, much longer backoff.
+ *
+ * Observed in a full sweep: LinkedIn tolerates short bursts happily but starts
+ * returning 429 under sustained load, and a 1s-based backoff exhausts its
+ * retries long before the throttle lifts. Since exhausting retries abandons
+ * the rest of that query's pages, an under-sized backoff turns a temporary
+ * slowdown into permanent missing coverage.
+ */
+const RATE_LIMIT_BACKOFF_MS = intEnv('LI_RATE_LIMIT_BACKOFF_MS', 8_000)
 
 /**
  * Signals the caller asked for a page past the end of the result set.
@@ -68,11 +79,12 @@ export async function fetchHtml(url: string): Promise<string> {
       // 429 = explicit throttle, 999 = LinkedIn's bot challenge, 5xx = flaky.
       if (status === 429 || status === 999 || status >= 500) {
         lastError = `HTTP ${status}`
+        const throttled = status === 429 || status === 999
         const retryAfter = Number(response.headers['retry-after'])
         await sleep(
           Number.isFinite(retryAfter) && retryAfter > 0
             ? retryAfter * 1_000
-            : backoff(attempt),
+            : backoff(attempt, throttled ? RATE_LIMIT_BACKOFF_MS : BASE_BACKOFF_MS),
         )
         continue
       }
@@ -133,9 +145,9 @@ export function sleep(ms: number): Promise<void> {
 }
 
 /** Exponential backoff with full jitter — spreads retries instead of syncing them. */
-function backoff(attempt: number): number {
-  const ceiling = BASE_BACKOFF_MS * 2 ** (attempt - 1)
-  return Math.floor(Math.random() * ceiling) + BASE_BACKOFF_MS / 2
+function backoff(attempt: number, base: number = BASE_BACKOFF_MS): number {
+  const ceiling = base * 2 ** (attempt - 1)
+  return Math.floor(Math.random() * ceiling) + base / 2
 }
 
 function describe(err: AxiosError): string {
