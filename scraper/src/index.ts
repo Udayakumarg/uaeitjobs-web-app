@@ -13,6 +13,7 @@ import { scrapeBayt } from './scrapers/bayt'
 import { scrapeNaukrigulf } from './scrapers/naukrigulf'
 import { scrapeGulfTalent } from './scrapers/gulftalent'
 import { scrapeLinkedIn } from './scrapers/linkedin'
+import { scrapeIndeed } from './scrapers/indeed'
 import { postJobs } from './api'
 import { pickProxy } from './utils/proxy'
 import { applyContextStealth } from './utils/stealth'
@@ -100,6 +101,8 @@ async function main() {
       } else if (source === 'linkedin') {
         // LinkedIn uses the guest API over plain HTTP — no browser, no session.
         jobs = await scrapeLinkedIn()
+      } else if (source === 'indeed') {
+        jobs = await scrapeIndeed(page)
       } else {
         console.warn(`  Unknown source "${source}" — skipping`)
         continue

@@ -16,9 +16,10 @@ const SOURCE_COLORS: Record<string, string> = {
   bayt:       'bg-rose-100 text-rose-700',
   naukrigulf: 'bg-orange-100 text-orange-700',
   gulftalent: 'bg-teal-100 text-teal-700',
+  indeed:     'bg-indigo-100 text-indigo-700',
 }
 
-const SCRAPER_SOURCES = ['bayt', 'naukrigulf', 'gulftalent'] as const
+const SCRAPER_SOURCES = ['bayt', 'naukrigulf', 'gulftalent', 'indeed'] as const
 
 function SourceBadge({ source }: { source: string }) {
   return (
@@ -226,6 +227,7 @@ const PLAYWRIGHT_SOURCES = [
   { key: 'bayt',       label: 'Bayt',       color: 'bg-rose-100 text-rose-700',   ring: 'hover:ring-rose-300'   },
   { key: 'naukrigulf', label: 'NaukriGulf', color: 'bg-orange-100 text-orange-700', ring: 'hover:ring-orange-300' },
   { key: 'gulftalent', label: 'GulfTalent', color: 'bg-teal-100 text-teal-700',   ring: 'hover:ring-teal-300'   },
+  { key: 'indeed',     label: 'Indeed',     color: 'bg-indigo-100 text-indigo-700', ring: 'hover:ring-indigo-300' },
 ]
 
 const API_SOURCES = [
@@ -302,7 +304,7 @@ function ManualTriggerPanel({
             </span>
           )}
         </p>
-        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
           {PLAYWRIGHT_SOURCES.map(({ key, label, color, ring }) => {
             const status   = scraperStatus[key]
             const isActive = status === 'running' || triggering === key
@@ -532,7 +534,7 @@ export default function IngestDashboard() {
       {/* Playwright scrapers */}
       <div>
         <SectionLabel>Playwright Scrapers</SectionLabel>
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-4">
           {SCRAPER_SOURCES.map(src => (
             <ScraperSourceCard key={src} source={src} runs={recent} />
           ))}

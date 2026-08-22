@@ -26,7 +26,7 @@ import * as cron     from 'node-cron'
 const PORT   = parseInt(process.env.TRIGGER_PORT   ?? '3001', 10)
 const SECRET = process.env.TRIGGER_SECRET ?? ''
 
-const VALID_SOURCES = new Set(['bayt', 'naukrigulf', 'gulftalent', 'linkedin'])
+const VALID_SOURCES = new Set(['bayt', 'naukrigulf', 'gulftalent', 'linkedin', 'indeed'])
 
 // Track which source is currently running so we don't double-launch — shared
 // between the HTTP trigger and the cron schedule below, so an admin clicking
@@ -73,24 +73,31 @@ function launchSource(source: string, envOverrides: Record<string, string> = {})
 
 // ─── Daily schedule ─────────────────────────────────────────────────────────
 //
-// UTC times, staggered ~20 min apart so the four sources never overlap and
-// don't burst all their requests at once. Chosen to land in the small hours
-// Gulf Standard Time (UTC+4) — 01:00 UTC = 05:00 GST — ahead of the backend's
+// UTC times, staggered ~20 min apart so sources never overlap and don't
+// burst all their requests at once. Chosen to land in the small hours Gulf
+// Standard Time (UTC+4) — 01:00 UTC = 05:00 GST — ahead of the backend's
 // own 02:00/02:15 UTC maintenance crons (expire-stale-jobs / refresh-active-jobs),
 // so a job discovered tonight is already in the database before those run.
 //
 // | Source     | UTC   | GST (UTC+4) | Notes                                    |
 // |------------|-------|-------------|-------------------------------------------|
-// | bayt       | 01:00 | 05:00       | Currently 403-blocked from this IP — see  |
-// | naukrigulf | 01:20 | 05:20       | note below. Scheduling them anyway means  |
-// | gulftalent | 01:40 | 05:40       | the day a proxy fixes access, ingest      |
-// | linkedin   | 02:00 | 06:00       | resumes with no further changes needed.   |
+// | bayt       | 01:00 | 05:00       | Genuinely IP/ASN-blocked (Cloudflare) —   |
+// | naukrigulf | 01:20 | 05:20       | see note below. Still scheduled so a      |
+// | gulftalent | 01:40 | 05:40       | future proxy fix resumes ingest with no   |
+// | linkedin   | 02:00 | 06:00       | further changes needed.                   |
+// | indeed     | 02:20 | 06:20       | Low-volume by design — see indeed.ts.     |
 //
-// Bayt and GulfTalent return HTTP 403 from this VPS's IP (verified against
-// their own sitemap.xml, not just the search pages — an IP/ASN-level block,
-// not a selector problem). Scheduling still runs them daily; each run simply
-// logs 0 results until a residential/rotating proxy is configured via
-// LINKEDIN_PROXY_SERVER-style env vars for those sources.
+// Bayt remains genuinely blocked (verified against its own sitemap.xml, not
+// just the search pages — an IP/ASN-level Cloudflare block, not a selector
+// problem) — each run logs 0 results until a residential/rotating proxy is
+// configured via LINKEDIN_PROXY_SERVER-style env vars. GulfTalent's block
+// was a WAF rule on a Chrome-spoofed User-Agent, not an IP block — fixed
+// 2026-08 by dropping that header (see gulftalent.ts); it now returns real
+// results daily. Indeed sits behind Cloudflare Bot Management that
+// escalates to an unsolvable interactive challenge after a handful of
+// requests — indeed.ts runs deliberately small to reduce (not eliminate)
+// the chance of hitting that on the scheduled run; some days will
+// legitimately return 0.
 const SCHEDULE_ENABLED      = process.env.SCHEDULE_ENABLED !== 'false'
 const SCHEDULE_LI_FRESHNESS = process.env.SCHEDULE_LI_FRESHNESS ?? 'r90000'
 
@@ -111,7 +118,8 @@ if (SCHEDULE_ENABLED) {
     LI_FRESHNESS: SCHEDULE_LI_FRESHNESS,
     LI_FETCH_DETAIL: 'true',
   }), { timezone: 'UTC' })
-  console.log('[trigger] Daily schedule armed: bayt 01:00, naukrigulf 01:20, gulftalent 01:40, linkedin 02:00 UTC')
+  cron.schedule('20 2 * * *', () => launchSource('indeed'),     { timezone: 'UTC' })
+  console.log('[trigger] Daily schedule armed: bayt 01:00, naukrigulf 01:20, gulftalent 01:40, linkedin 02:00, indeed 02:20 UTC')
 } else {
   console.log('[trigger] SCHEDULE_ENABLED=false — daily cron disabled, manual triggers only')
 }
