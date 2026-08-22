@@ -14,6 +14,12 @@ export interface ScrapedJob {
   salaryCurrency?: string
   remoteUae?: boolean
   publisher: string
+  /**
+   * LinkedIn's own Easy Apply flag: true when LinkedIn lets the candidate
+   * apply without leaving LinkedIn, false when LinkedIn redirects to the
+   * employer's site. Omit for every non-LinkedIn source.
+   */
+  linkedinEasyApply?: boolean
 }
 
 export interface IngestResult {

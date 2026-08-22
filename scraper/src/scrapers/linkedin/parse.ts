@@ -27,6 +27,15 @@ export interface JobDetail {
   employmentType?: string
   jobFunction?: string
   industries?: string
+  /**
+   * LinkedIn's own apply-flow classification: true when the apply button's
+   * tracking name is "...apply-link-onsite" (LinkedIn Easy Apply — the
+   * candidate never leaves LinkedIn), false when it's "...apply-link-offsite"
+   * (LinkedIn redirects to the employer's own site). Verified present on the
+   * guest detail page's primary CTA button; undefined if that marker is
+   * absent for any reason, rather than guessing.
+   */
+  linkedinEasyApply?: boolean
 }
 
 // ─── Search results ───────────────────────────────────────────────────────────
@@ -106,6 +115,14 @@ export function parseDetail(html: string): JobDetail {
     else if (label.includes('industr')) detail.industries = value
   })
 
+  // The primary apply CTA's tracking name reveals LinkedIn's own apply-flow
+  // classification, independent of anything the search card carries.
+  if ($('[data-tracking-control-name*="apply-link-onsite"]').length) {
+    detail.linkedinEasyApply = true
+  } else if ($('[data-tracking-control-name*="apply-link-offsite"]').length) {
+    detail.linkedinEasyApply = false
+  }
+
   return detail
 }
 
@@ -133,6 +150,7 @@ export function toScrapedJob(card: SearchCard, detail?: JobDetail): ScrapedJob {
     postedAt: card.postedAt,
     jobType: mapEmploymentType(detail?.employmentType),
     remoteUae: isRemote(card, detail),
+    linkedinEasyApply: detail?.linkedinEasyApply,
   }
 }
 

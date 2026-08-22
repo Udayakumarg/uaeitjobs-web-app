@@ -123,6 +123,8 @@ export interface FilterMultiParams {
   publisher?: string[]
   /** "easy" (apply within the platform) or "external" (redirects to the source site). */
   applyMode?: 'easy' | 'external'
+  /** LinkedIn-specific: true = only jobs LinkedIn itself marks Easy Apply. */
+  linkedinEasyApply?: boolean
   page?: number
   size?: number
 }

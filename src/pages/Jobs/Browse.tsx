@@ -142,6 +142,7 @@ export default function JobBrowse() {
   const [sortBy,          setSortBy]         = useState(() => searchParams.get('sort') ?? 'newest')
   const [sources,         setSources]        = useState<Set<string>>(() => new Set(searchParams.getAll('publisher')))
   const [applyMode,       setApplyMode]      = useState(() => searchParams.get('applyMode') ?? '')
+  const [linkedinEasyApply, setLinkedinEasyApply] = useState(() => searchParams.get('linkedinEasyApply') === 'true')
 
   // dynamic publisher list — loaded once, falls back to static list while fetching
   const [publishers, setPublishers] = useState<Publisher[]>(SOURCE_FALLBACK)
@@ -188,8 +189,9 @@ export default function JobBrowse() {
     if (sortBy !== 'newest') p.set('sort',     sortBy)
     sources.forEach(s       => p.append('publisher', s))
     if (applyMode)           p.set('applyMode', applyMode)
+    if (linkedinEasyApply)   p.set('linkedinEasyApply', 'true')
     setSearchParams(p, { replace: true })
-  }, [query, company, emirates, jobCats, levels, jobTypes, posted, salaryBucket, sortBy, sources, applyMode, setSearchParams])
+  }, [query, company, emirates, jobCats, levels, jobTypes, posted, salaryBucket, sortBy, sources, applyMode, linkedinEasyApply, setSearchParams])
 
   // fetch — search + all filtering in a single DB round-trip via filterMulti.
   // The 'q' param drives plainto_tsquery full-text ranking server-side so
@@ -219,6 +221,7 @@ export default function JobBrowse() {
       ...(sortBy !== 'newest'   && { sort:            sortBy === 'salary_high' ? 'salary_desc' : 'salary_asc' }),
       ...(sArr.length           && { publisher:       sArr }),
       ...(applyMode             && { applyMode:       applyMode as 'easy' | 'external' }),
+      ...(linkedinEasyApply     && { linkedinEasyApply: true }),
     }
     const req = jobsApi.filterMulti(params)
 
@@ -235,7 +238,7 @@ export default function JobBrowse() {
       }
     }).catch(() => {}).finally(() => { if (ok) setJobsLoading(false) })
     return () => { ok = false }
-  }, [query, company, emirates, jobCats, levels, jobTypes, posted, salaryBucket, sortBy, sources, applyMode])
+  }, [query, company, emirates, jobCats, levels, jobTypes, posted, salaryBucket, sortBy, sources, applyMode, linkedinEasyApply])
 
   useEffect(() => {
     if (!selectedId) return
@@ -267,7 +270,7 @@ export default function JobBrowse() {
     setQuery(''); setCompany(''); setEmirates(new Set()); setJobCats(new Set())
     setLevels(new Set()); setJobTypes(new Set())
     setPosted(''); setSalary(''); setSortBy('newest'); setSources(new Set())
-    setApplyMode('')
+    setApplyMode(''); setLinkedinEasyApply(false)
   }
 
   const saveJob = useCallback(async (id: number, e: React.MouseEvent) => {
@@ -304,6 +307,7 @@ export default function JobBrowse() {
     ...(posted       ? [{ key: 'posted', label: POSTED_OPTIONS.find(x => x.value === posted)?.label  ?? posted,  onRemove: () => setPosted('')  }] : []),
     ...(salaryBucket ? [{ key: 'sal',    label: SALARY_OPTIONS.find(x => x.value === salaryBucket)?.label ?? salaryBucket, onRemove: () => setSalary('') }] : []),
     ...(applyMode    ? [{ key: 'apply',  label: APPLY_MODE_OPTIONS.find(x => x.value === applyMode)?.label ?? applyMode, onRemove: () => setApplyMode('') }] : []),
+    ...(linkedinEasyApply ? [{ key: 'li-easy', label: 'LinkedIn Easy Apply', onRemove: () => setLinkedinEasyApply(false) }] : []),
   ]
 
   const activeCount = chips.length
@@ -320,6 +324,7 @@ export default function JobBrowse() {
     sortBy, onSortChange: setSortBy,
     sources, onSourcesChange: setSources,
     applyMode, onApplyModeChange: setApplyMode,
+    linkedinEasyApply, onLinkedinEasyApplyChange: setLinkedinEasyApply,
     publishers,
     chips, activeCount, total, loading: jobsLoading,
     onClearAll: clearAll, hasFilters,
@@ -425,6 +430,7 @@ interface SharedFilterProps {
   sortBy: string;            onSortChange: (v: string) => void
   sources: Set<string>;      onSourcesChange: (s: Set<string>) => void
   applyMode: string;         onApplyModeChange: (v: string) => void
+  linkedinEasyApply: boolean; onLinkedinEasyApplyChange: (v: boolean) => void
   publishers: Publisher[]
   chips: { key: string; label: string; onRemove: () => void }[]
   activeCount: number; hasFilters: boolean
@@ -441,6 +447,7 @@ function FilterBar(props: SharedFilterProps & { onMobileOpen: () => void }) {
     sortBy, onSortChange,
     sources, onSourcesChange, publishers,
     applyMode, onApplyModeChange,
+    linkedinEasyApply, onLinkedinEasyApplyChange,
     chips, activeCount, hasFilters, total, loading,
     onClearAll, onMobileOpen,
   } = props
@@ -545,8 +552,18 @@ function FilterBar(props: SharedFilterProps & { onMobileOpen: () => void }) {
             <CheckboxPanel options={JOB_TYPES} selected={jobTypes} onToggle={v => onJobTypesChange(toggleSet(jobTypes, v))} />
           </FilterDropdown>
 
-          <FilterDropdown label="Apply"    count={applyMode ? 1 : 0}    open={openPanel === 'applyMode'} onToggle={() => tog('applyMode')} onClose={close}>
+          <FilterDropdown
+            label="Apply"
+            count={(applyMode ? 1 : 0) + (linkedinEasyApply ? 1 : 0)}
+            open={openPanel === 'applyMode'} onToggle={() => tog('applyMode')} onClose={close}
+          >
             <RadioPanel options={APPLY_MODE_OPTIONS} selected={applyMode} onSelect={onApplyModeChange} />
+            <div className="mx-3.5 border-t border-gray-100" />
+            <CheckboxPanel
+              options={[{ value: 'on', label: 'Easy Apply on LinkedIn' }]}
+              selected={linkedinEasyApply ? new Set(['on']) : new Set()}
+              onToggle={() => onLinkedinEasyApplyChange(!linkedinEasyApply)}
+            />
           </FilterDropdown>
 
           <FilterDropdown label="Posted"   count={posted ? 1 : 0}       open={openPanel === 'posted'}  onToggle={() => tog('posted')}  onClose={close}>
@@ -612,6 +629,7 @@ function MobileFilterSheet(props: SharedFilterProps & { open: boolean; onClose: 
     sortBy, onSortChange,
     sources, onSourcesChange, publishers,
     applyMode, onApplyModeChange,
+    linkedinEasyApply, onLinkedinEasyApplyChange,
     total, loading, onClearAll, activeCount,
   } = props
 
@@ -710,6 +728,17 @@ function MobileFilterSheet(props: SharedFilterProps & { open: boolean; onClose: 
                   </span>
                 </button>
               ))}
+              <div className="my-1 border-t border-gray-100" />
+              <button onClick={() => onLinkedinEasyApplyChange(!linkedinEasyApply)}
+                className="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors hover:bg-[#FAFAFA]">
+                <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded border-2 transition-colors"
+                  style={linkedinEasyApply ? { borderColor: PINK, background: PINK } : { borderColor: '#D1D5DB', background: '#fff' }}>
+                  {linkedinEasyApply && <span className="h-2 w-2 rounded-[1px] bg-white" />}
+                </span>
+                <span className="font-sans text-[13px] font-medium" style={{ color: linkedinEasyApply ? PINK : '#374151' }}>
+                  Easy Apply on LinkedIn
+                </span>
+              </button>
             </div>
           </SheetSection>
 

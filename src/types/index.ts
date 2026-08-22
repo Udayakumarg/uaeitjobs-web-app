@@ -108,6 +108,12 @@ export interface Job {
   descriptionHtml?: string | null
   /** Clearbit logo URL derived from the apply URL domain. May 404 for unknown companies — UI falls back to initials. */
   companyLogoUrl?: string | null
+  /**
+   * LinkedIn's own apply-flow classification: true when LinkedIn lets the
+   * candidate apply without leaving LinkedIn, false when LinkedIn redirects
+   * to the employer's site. Null/undefined for every non-LinkedIn job.
+   */
+  linkedinEasyApply?: boolean | null
 }
 
 export interface DescriptionSection {
