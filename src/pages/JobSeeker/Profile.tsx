@@ -1,13 +1,19 @@
-import { BadgeCheck, Building2, FileText, GraduationCap, Plus, Tag, Upload, User, X } from 'lucide-react'
+import { BadgeCheck, Bot, Building2, FileText, GraduationCap, Plus, Tag, Upload, User, X } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { CardSkeleton } from '../../components/Skeleton'
 import { useToastStore } from '../../components/Toast'
 import { Button, Card, Field, Input, Select, Textarea } from '../../components/ui'
-import { errorMessage, seekerApi } from '../../services/api'
+import { errorMessage, seekerAiApi, seekerApi, type AiProvider, type AiSettings } from '../../services/api'
 import { useAuthStore } from '../../store/authStore'
 import type { JobSeekerProfile } from '../../types'
 import { initials, parseSkills } from '../../utils/format'
+
+const AI_PROVIDERS: { value: AiProvider; label: string }[] = [
+  { value: 'openai', label: 'OpenAI' },
+  { value: 'claude', label: 'Anthropic (Claude)' },
+  { value: 'gemini', label: 'Google (Gemini)' },
+]
 
 const VISA_OPTIONS = [
   { value: '', label: 'Not specified' },
@@ -50,6 +56,11 @@ export default function JobSeekerProfilePage() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
 
+  const [aiSettings, setAiSettings]     = useState<AiSettings>({ provider: null, configured: false, maskedKey: null })
+  const [aiProvider, setAiProvider]     = useState<AiProvider>('openai')
+  const [aiKeyInput, setAiKeyInput]     = useState('')
+  const [aiSaving, setAiSaving]         = useState(false)
+
   const skillInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
@@ -60,6 +71,9 @@ export default function JobSeekerProfilePage() {
       })
       .catch(() => undefined)
       .finally(() => setLoading(false))
+    seekerAiApi.settings()
+      .then(({ data }) => { setAiSettings(data); if (data.provider) setAiProvider(data.provider) })
+      .catch(() => undefined)
   }, [])
 
   function update<K extends keyof JobSeekerProfile>(key: K, value: JobSeekerProfile[K]) {
@@ -101,6 +115,34 @@ export default function JobSeekerProfilePage() {
       toast({ type: 'success', title: 'CV uploaded' })
     } catch (error) {
       toast({ type: 'error', title: 'Upload failed', message: errorMessage(error) })
+    }
+  }
+
+  async function saveAiKey() {
+    if (!aiKeyInput.trim()) { toast({ type: 'info', title: 'Enter an API key first' }); return }
+    setAiSaving(true)
+    try {
+      const { data } = await seekerAiApi.saveSettings(aiProvider, aiKeyInput.trim())
+      setAiSettings(data)
+      setAiKeyInput('')
+      toast({ type: 'success', title: 'AI key saved' })
+    } catch (error) {
+      toast({ type: 'error', title: 'Could not save key', message: errorMessage(error) })
+    } finally {
+      setAiSaving(false)
+    }
+  }
+
+  async function removeAiKey() {
+    setAiSaving(true)
+    try {
+      await seekerAiApi.removeSettings()
+      setAiSettings({ provider: null, configured: false, maskedKey: null })
+      toast({ type: 'success', title: 'AI key removed' })
+    } catch (error) {
+      toast({ type: 'error', title: 'Could not remove key', message: errorMessage(error) })
+    } finally {
+      setAiSaving(false)
     }
   }
 
@@ -253,6 +295,53 @@ export default function JobSeekerProfilePage() {
                 placeholder="e.g. B.Sc. Computer Science — University of Dubai, 2018"
               />
             </Field>
+          </Card>
+
+          {/* ── AI cover letter drafting ──────────────────────────────────── */}
+          <Card>
+            <SectionHeading icon={Bot} title="AI cover letter drafting" />
+            <p className="mb-4 text-sm leading-6 text-slate-600">
+              Add your own API key from OpenAI, Anthropic, or Google to draft a tailored cover letter
+              for any job in one click — using this profile and the job description. You review and edit
+              before applying; nothing is ever submitted automatically. Usage is billed to your own account
+              with the provider, not to UAEITJOBS.
+            </p>
+            <div className="grid gap-4 sm:grid-cols-[160px_1fr_auto]">
+              <Field label="Provider">
+                <Select value={aiProvider} onChange={(e) => setAiProvider(e.target.value as AiProvider)}>
+                  {AI_PROVIDERS.map((p) => <option key={p.value} value={p.value}>{p.label}</option>)}
+                </Select>
+              </Field>
+              <Field label="API key">
+                <Input
+                  type="password"
+                  value={aiKeyInput}
+                  onChange={(e) => setAiKeyInput(e.target.value)}
+                  placeholder={aiSettings.configured ? `Configured — ${aiSettings.maskedKey}` : 'sk-…'}
+                />
+              </Field>
+              <div className="flex items-end">
+                <Button type="button" size="sm" onClick={saveAiKey} disabled={aiSaving} className="whitespace-nowrap">
+                  {aiSaving ? 'Saving…' : 'Save key'}
+                </Button>
+              </div>
+            </div>
+            {aiSettings.configured && (
+              <div className="mt-3 flex items-center justify-between rounded-lg bg-slate-50 px-3 py-2 text-xs text-slate-600">
+                <span>
+                  {AI_PROVIDERS.find((p) => p.value === aiSettings.provider)?.label} key configured
+                  ({aiSettings.maskedKey}) — you'll see "Draft with AI" on job pages.
+                </span>
+                <button
+                  type="button"
+                  onClick={removeAiKey}
+                  disabled={aiSaving}
+                  className="font-semibold text-rose-600 hover:underline disabled:opacity-50"
+                >
+                  Remove
+                </button>
+              </div>
+            )}
           </Card>
 
           {/* ── CV ─────────────────────────────────────────────────────────── */}

@@ -185,6 +185,24 @@ export const seekerApi = {
   unsaveJob: (id: number) => api.delete(`/saved-jobs/${id}`),
 }
 
+export type AiProvider = 'openai' | 'claude' | 'gemini'
+
+export interface AiSettings {
+  provider: AiProvider | null
+  configured: boolean
+  /** Preview only, e.g. "••••ab12" — the real key is never sent back after save. */
+  maskedKey: string | null
+}
+
+export const seekerAiApi = {
+  settings: () => api.get<AiSettings>('/job-seeker/ai-settings'),
+  saveSettings: (provider: AiProvider, apiKey: string) =>
+    api.post<AiSettings>('/job-seeker/ai-settings', { provider, apiKey }),
+  removeSettings: () => api.delete('/job-seeker/ai-settings'),
+  /** Drafts a cover letter for one job. Nothing is persisted or submitted — review and edit before applying. */
+  draft: (jobId: number) => api.post<{ coverLetter: string }>('/job-seeker/applications/draft', { jobId }),
+}
+
 export const hrApi = {
   profile: () => api.get<HRProfile>('/hr/profile'),
   saveProfile: (payload: HRProfile) => api.post<HRProfile>('/hr/profile', payload),

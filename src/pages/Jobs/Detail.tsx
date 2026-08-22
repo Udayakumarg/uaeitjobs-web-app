@@ -2,6 +2,7 @@ import DOMPurify from 'dompurify'
 import {
   ArrowLeft,
   Bookmark,
+  Bot,
   BriefcaseBusiness,
   CalendarDays,
   CheckCircle2,
@@ -25,7 +26,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom'
 import { CompanyLogo } from '../../components/CompanyLogo'
 import { useToastStore } from '../../components/Toast'
 import { useDocumentMeta } from '../../hooks/useDocumentMeta'
-import { errorMessage, jobsApi, seekerApi } from '../../services/api'
+import { errorMessage, jobsApi, seekerAiApi, seekerApi } from '../../services/api'
 import { useAuthStore } from '../../store/authStore'
 import type { Job } from '../../types'
 import { labelize, money, parseSkills, relativeTime } from '../../utils/format'
@@ -70,6 +71,7 @@ export default function JobDetail() {
   const [coverLetter, setCoverLetter] = useState('')
   const [applying, setApplying] = useState(false)
   const [applied, setApplied] = useState(false)
+  const [drafting, setDrafting] = useState(false)
 
   useDocumentMeta(
     job
@@ -103,6 +105,20 @@ export default function JobDetail() {
       toast({ type: 'error', title: 'Could not apply', message: errorMessage(err) })
     } finally {
       setApplying(false)
+    }
+  }
+
+  async function draftWithAi() {
+    if (!job) return
+    setDrafting(true)
+    try {
+      const { data } = await seekerAiApi.draft(job.id)
+      setCoverLetter(data.coverLetter)
+      toast({ type: 'success', title: 'Draft ready', message: 'Review and edit before applying.' })
+    } catch (err) {
+      toast({ type: 'error', title: 'Could not draft', message: errorMessage(err) })
+    } finally {
+      setDrafting(false)
     }
   }
 
@@ -451,9 +467,19 @@ export default function JobDetail() {
             <p className="mt-0.5 text-sm text-slate-500">{job.companyName}</p>
 
             <div className="mt-4">
-              <label className="text-sm font-medium text-slate-700">
-                Cover letter <span className="text-slate-400 font-normal">(optional)</span>
-              </label>
+              <div className="flex items-center justify-between">
+                <label className="text-sm font-medium text-slate-700">
+                  Cover letter <span className="text-slate-400 font-normal">(optional)</span>
+                </label>
+                <button
+                  type="button"
+                  onClick={draftWithAi}
+                  disabled={drafting}
+                  className="inline-flex items-center gap-1 text-xs font-semibold text-pink-700 hover:underline disabled:opacity-50"
+                >
+                  <Bot size={13} /> {drafting ? 'Drafting…' : 'Draft with AI'}
+                </button>
+              </div>
               <textarea
                 className="mt-1.5 w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-pink-400 focus:outline-none focus:ring-2 focus:ring-pink-400/20 resize-none"
                 rows={6}
