@@ -61,6 +61,13 @@ const APPLY_MODE_OPTIONS = [
   { value: 'external', label: 'Regular Apply' },
 ]
 
+const VISA_OPTIONS = [
+  { value: 'free_visa',           label: 'Free visa (employer-provided)' },
+  { value: 'employment_visa',     label: 'Will sponsor visa'             },
+  { value: 'own_visa',            label: 'Own visa required'             },
+  { value: 'visit_visa_accepted', label: 'Visit visa accepted'           },
+]
+
 const POSTED_OPTIONS = [
   { value: '24h', label: 'Last 24 h'   },
   { value: '3d',  label: 'Last 3 days' },
@@ -84,7 +91,7 @@ const SORT_OPTIONS = [
   { value: 'salary_low',  label: 'Salary: Low ↑'  },
 ]
 
-type PanelId = 'emirate' | 'stack' | 'level' | 'type' | 'posted' | 'salary' | 'sort' | 'source' | 'applyMode'
+type PanelId = 'emirate' | 'stack' | 'level' | 'type' | 'posted' | 'salary' | 'sort' | 'source' | 'applyMode' | 'uae'
 
 // Static fallback shown instantly while the dynamic list loads.
 // Replaced by the live /jobs/publishers response once it arrives.
@@ -143,6 +150,9 @@ export default function JobBrowse() {
   const [sources,         setSources]        = useState<Set<string>>(() => new Set(searchParams.getAll('publisher')))
   const [applyMode,       setApplyMode]      = useState(() => searchParams.get('applyMode') ?? '')
   const [linkedinEasyApply, setLinkedinEasyApply] = useState(() => searchParams.get('linkedinEasyApply') === 'true')
+  const [remoteUae,       setRemoteUae]       = useState(() => searchParams.get('remoteUae') === 'true')
+  const [immediateJoiner, setImmediateJoiner] = useState(() => searchParams.get('immediateJoiner') === 'true')
+  const [visaType,        setVisaType]        = useState(() => searchParams.get('visaType') ?? '')
 
   // dynamic publisher list — loaded once, falls back to static list while fetching
   const [publishers, setPublishers] = useState<Publisher[]>(SOURCE_FALLBACK)
@@ -190,8 +200,11 @@ export default function JobBrowse() {
     sources.forEach(s       => p.append('publisher', s))
     if (applyMode)           p.set('applyMode', applyMode)
     if (linkedinEasyApply)   p.set('linkedinEasyApply', 'true')
+    if (remoteUae)           p.set('remoteUae', 'true')
+    if (immediateJoiner)     p.set('immediateJoiner', 'true')
+    if (visaType)            p.set('visaType', visaType)
     setSearchParams(p, { replace: true })
-  }, [query, company, emirates, jobCats, levels, jobTypes, posted, salaryBucket, sortBy, sources, applyMode, linkedinEasyApply, setSearchParams])
+  }, [query, company, emirates, jobCats, levels, jobTypes, posted, salaryBucket, sortBy, sources, applyMode, linkedinEasyApply, remoteUae, immediateJoiner, visaType, setSearchParams])
 
   // fetch — search + all filtering in a single DB round-trip via filterMulti.
   // The 'q' param drives plainto_tsquery full-text ranking server-side so
@@ -222,6 +235,9 @@ export default function JobBrowse() {
       ...(sArr.length           && { publisher:       sArr }),
       ...(applyMode             && { applyMode:       applyMode as 'easy' | 'external' }),
       ...(linkedinEasyApply     && { linkedinEasyApply: true }),
+      ...(remoteUae             && { remoteUae: true }),
+      ...(immediateJoiner       && { immediateJoiner: true }),
+      ...(visaType              && { visaType }),
     }
     const req = jobsApi.filterMulti(params)
 
@@ -238,7 +254,7 @@ export default function JobBrowse() {
       }
     }).catch(() => {}).finally(() => { if (ok) setJobsLoading(false) })
     return () => { ok = false }
-  }, [query, company, emirates, jobCats, levels, jobTypes, posted, salaryBucket, sortBy, sources, applyMode, linkedinEasyApply])
+  }, [query, company, emirates, jobCats, levels, jobTypes, posted, salaryBucket, sortBy, sources, applyMode, linkedinEasyApply, remoteUae, immediateJoiner, visaType])
 
   useEffect(() => {
     if (!selectedId) return
@@ -271,6 +287,7 @@ export default function JobBrowse() {
     setLevels(new Set()); setJobTypes(new Set())
     setPosted(''); setSalary(''); setSortBy('newest'); setSources(new Set())
     setApplyMode(''); setLinkedinEasyApply(false)
+    setRemoteUae(false); setImmediateJoiner(false); setVisaType('')
   }
 
   const saveJob = useCallback(async (id: number, e: React.MouseEvent) => {
@@ -308,6 +325,9 @@ export default function JobBrowse() {
     ...(salaryBucket ? [{ key: 'sal',    label: SALARY_OPTIONS.find(x => x.value === salaryBucket)?.label ?? salaryBucket, onRemove: () => setSalary('') }] : []),
     ...(applyMode    ? [{ key: 'apply',  label: APPLY_MODE_OPTIONS.find(x => x.value === applyMode)?.label ?? applyMode, onRemove: () => setApplyMode('') }] : []),
     ...(linkedinEasyApply ? [{ key: 'li-easy', label: 'LinkedIn Easy Apply', onRemove: () => setLinkedinEasyApply(false) }] : []),
+    ...(remoteUae ? [{ key: 'remote', label: 'Remote UAE', onRemove: () => setRemoteUae(false) }] : []),
+    ...(immediateJoiner ? [{ key: 'immediate', label: 'Immediate Joiner', onRemove: () => setImmediateJoiner(false) }] : []),
+    ...(visaType ? [{ key: 'visa', label: VISA_OPTIONS.find(x => x.value === visaType)?.label ?? visaType, onRemove: () => setVisaType('') }] : []),
   ]
 
   const activeCount = chips.length
@@ -325,6 +345,9 @@ export default function JobBrowse() {
     sources, onSourcesChange: setSources,
     applyMode, onApplyModeChange: setApplyMode,
     linkedinEasyApply, onLinkedinEasyApplyChange: setLinkedinEasyApply,
+    remoteUae, onRemoteUaeChange: setRemoteUae,
+    immediateJoiner, onImmediateJoinerChange: setImmediateJoiner,
+    visaType, onVisaTypeChange: setVisaType,
     publishers,
     chips, activeCount, total, loading: jobsLoading,
     onClearAll: clearAll, hasFilters,
@@ -431,6 +454,9 @@ interface SharedFilterProps {
   sources: Set<string>;      onSourcesChange: (s: Set<string>) => void
   applyMode: string;         onApplyModeChange: (v: string) => void
   linkedinEasyApply: boolean; onLinkedinEasyApplyChange: (v: boolean) => void
+  remoteUae: boolean;         onRemoteUaeChange: (v: boolean) => void
+  immediateJoiner: boolean;   onImmediateJoinerChange: (v: boolean) => void
+  visaType: string;           onVisaTypeChange: (v: string) => void
   publishers: Publisher[]
   chips: { key: string; label: string; onRemove: () => void }[]
   activeCount: number; hasFilters: boolean
@@ -448,6 +474,8 @@ function FilterBar(props: SharedFilterProps & { onMobileOpen: () => void }) {
     sources, onSourcesChange, publishers,
     applyMode, onApplyModeChange,
     linkedinEasyApply, onLinkedinEasyApplyChange,
+    remoteUae, onRemoteUaeChange, immediateJoiner, onImmediateJoinerChange,
+    visaType, onVisaTypeChange,
     chips, activeCount, hasFilters, total, loading,
     onClearAll, onMobileOpen,
   } = props
@@ -566,6 +594,23 @@ function FilterBar(props: SharedFilterProps & { onMobileOpen: () => void }) {
             />
           </FilterDropdown>
 
+          <FilterDropdown
+            label="UAE"
+            count={(visaType ? 1 : 0) + (remoteUae ? 1 : 0) + (immediateJoiner ? 1 : 0)}
+            open={openPanel === 'uae'} onToggle={() => tog('uae')} onClose={close}
+          >
+            <RadioPanel options={VISA_OPTIONS} selected={visaType} onSelect={onVisaTypeChange} />
+            <div className="mx-3.5 border-t border-gray-100" />
+            <CheckboxPanel
+              options={[
+                { value: 'remote', label: 'Remote within UAE' },
+                { value: 'immediate', label: 'Immediate joiner' },
+              ]}
+              selected={new Set([...(remoteUae ? ['remote'] : []), ...(immediateJoiner ? ['immediate'] : [])])}
+              onToggle={(v) => v === 'remote' ? onRemoteUaeChange(!remoteUae) : onImmediateJoinerChange(!immediateJoiner)}
+            />
+          </FilterDropdown>
+
           <FilterDropdown label="Posted"   count={posted ? 1 : 0}       open={openPanel === 'posted'}  onToggle={() => tog('posted')}  onClose={close}>
             <RadioPanel options={POSTED_OPTIONS} selected={posted} onSelect={onPostedChange} />
           </FilterDropdown>
@@ -630,6 +675,8 @@ function MobileFilterSheet(props: SharedFilterProps & { open: boolean; onClose: 
     sources, onSourcesChange, publishers,
     applyMode, onApplyModeChange,
     linkedinEasyApply, onLinkedinEasyApplyChange,
+    remoteUae, onRemoteUaeChange, immediateJoiner, onImmediateJoinerChange,
+    visaType, onVisaTypeChange,
     total, loading, onClearAll, activeCount,
   } = props
 
@@ -737,6 +784,48 @@ function MobileFilterSheet(props: SharedFilterProps & { open: boolean; onClose: 
                 </span>
                 <span className="font-sans text-[13px] font-medium" style={{ color: linkedinEasyApply ? PINK : '#374151' }}>
                   Easy Apply on LinkedIn
+                </span>
+              </button>
+            </div>
+          </SheetSection>
+
+          <SheetSection label="Visa">
+            <div className="grid gap-0.5">
+              {VISA_OPTIONS.map(({ value, label }) => (
+                <button key={value} onClick={() => onVisaTypeChange(visaType === value ? '' : value)}
+                  className="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors hover:bg-[#FAFAFA]">
+                  <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full border-2 transition-colors"
+                    style={visaType === value ? { borderColor: PINK, background: PINK } : { borderColor: '#D1D5DB', background: '#fff' }}>
+                    {visaType === value && <span className="h-1.5 w-1.5 rounded-full bg-white" />}
+                  </span>
+                  <span className="font-sans text-[13px] font-medium" style={{ color: visaType === value ? PINK : '#374151' }}>
+                    {label}
+                  </span>
+                </button>
+              ))}
+            </div>
+          </SheetSection>
+
+          <SheetSection label="UAE Essentials">
+            <div className="grid gap-0.5">
+              <button onClick={() => onRemoteUaeChange(!remoteUae)}
+                className="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors hover:bg-[#FAFAFA]">
+                <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded border-2 transition-colors"
+                  style={remoteUae ? { borderColor: PINK, background: PINK } : { borderColor: '#D1D5DB', background: '#fff' }}>
+                  {remoteUae && <span className="h-2 w-2 rounded-[1px] bg-white" />}
+                </span>
+                <span className="font-sans text-[13px] font-medium" style={{ color: remoteUae ? PINK : '#374151' }}>
+                  Remote within UAE
+                </span>
+              </button>
+              <button onClick={() => onImmediateJoinerChange(!immediateJoiner)}
+                className="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors hover:bg-[#FAFAFA]">
+                <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded border-2 transition-colors"
+                  style={immediateJoiner ? { borderColor: PINK, background: PINK } : { borderColor: '#D1D5DB', background: '#fff' }}>
+                  {immediateJoiner && <span className="h-2 w-2 rounded-[1px] bg-white" />}
+                </span>
+                <span className="font-sans text-[13px] font-medium" style={{ color: immediateJoiner ? PINK : '#374151' }}>
+                  Immediate joiner
                 </span>
               </button>
             </div>

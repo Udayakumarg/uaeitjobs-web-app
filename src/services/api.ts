@@ -125,6 +125,9 @@ export interface FilterMultiParams {
   applyMode?: 'easy' | 'external'
   /** LinkedIn-specific: true = only jobs LinkedIn itself marks Easy Apply. */
   linkedinEasyApply?: boolean
+  remoteUae?: boolean
+  immediateJoiner?: boolean
+  visaType?: string
   page?: number
   size?: number
 }
