@@ -56,6 +56,11 @@ const JOB_TYPES = [
   { value: 'temporary',  label: 'Temporary'  },
 ]
 
+const APPLY_MODE_OPTIONS = [
+  { value: 'easy',     label: 'Easy Apply'    },
+  { value: 'external', label: 'Regular Apply' },
+]
+
 const POSTED_OPTIONS = [
   { value: '24h', label: 'Last 24 h'   },
   { value: '3d',  label: 'Last 3 days' },
@@ -79,7 +84,7 @@ const SORT_OPTIONS = [
   { value: 'salary_low',  label: 'Salary: Low ↑'  },
 ]
 
-type PanelId = 'emirate' | 'stack' | 'level' | 'type' | 'posted' | 'salary' | 'sort' | 'source'
+type PanelId = 'emirate' | 'stack' | 'level' | 'type' | 'posted' | 'salary' | 'sort' | 'source' | 'applyMode'
 
 // Static fallback shown instantly while the dynamic list loads.
 // Replaced by the live /jobs/publishers response once it arrives.
@@ -136,6 +141,7 @@ export default function JobBrowse() {
   const [salaryBucket,    setSalary]         = useState(() => searchParams.get('salary') ?? '')
   const [sortBy,          setSortBy]         = useState(() => searchParams.get('sort') ?? 'newest')
   const [sources,         setSources]        = useState<Set<string>>(() => new Set(searchParams.getAll('publisher')))
+  const [applyMode,       setApplyMode]      = useState(() => searchParams.get('applyMode') ?? '')
 
   // dynamic publisher list — loaded once, falls back to static list while fetching
   const [publishers, setPublishers] = useState<Publisher[]>(SOURCE_FALLBACK)
@@ -181,8 +187,9 @@ export default function JobBrowse() {
     if (salaryBucket)       p.set('salary',    salaryBucket)
     if (sortBy !== 'newest') p.set('sort',     sortBy)
     sources.forEach(s       => p.append('publisher', s))
+    if (applyMode)           p.set('applyMode', applyMode)
     setSearchParams(p, { replace: true })
-  }, [query, company, emirates, jobCats, levels, jobTypes, posted, salaryBucket, sortBy, sources, setSearchParams])
+  }, [query, company, emirates, jobCats, levels, jobTypes, posted, salaryBucket, sortBy, sources, applyMode, setSearchParams])
 
   // fetch — search + all filtering in a single DB round-trip via filterMulti.
   // The 'q' param drives plainto_tsquery full-text ranking server-side so
@@ -211,6 +218,7 @@ export default function JobBrowse() {
       ...(salMax != null        && { salaryMax:       salMax }),
       ...(sortBy !== 'newest'   && { sort:            sortBy === 'salary_high' ? 'salary_desc' : 'salary_asc' }),
       ...(sArr.length           && { publisher:       sArr }),
+      ...(applyMode             && { applyMode:       applyMode as 'easy' | 'external' }),
     }
     const req = jobsApi.filterMulti(params)
 
@@ -227,7 +235,7 @@ export default function JobBrowse() {
       }
     }).catch(() => {}).finally(() => { if (ok) setJobsLoading(false) })
     return () => { ok = false }
-  }, [query, company, emirates, jobCats, levels, jobTypes, posted, salaryBucket, sortBy, sources])
+  }, [query, company, emirates, jobCats, levels, jobTypes, posted, salaryBucket, sortBy, sources, applyMode])
 
   useEffect(() => {
     if (!selectedId) return
@@ -259,6 +267,7 @@ export default function JobBrowse() {
     setQuery(''); setCompany(''); setEmirates(new Set()); setJobCats(new Set())
     setLevels(new Set()); setJobTypes(new Set())
     setPosted(''); setSalary(''); setSortBy('newest'); setSources(new Set())
+    setApplyMode('')
   }
 
   const saveJob = useCallback(async (id: number, e: React.MouseEvent) => {
@@ -294,6 +303,7 @@ export default function JobBrowse() {
     ...Array.from(sources).map(v  => ({ key: `s-${v}`, label: publishers.find(p => p.key === v)?.label ?? v, onRemove: () => setSources(toggleSet(sources, v)) })),
     ...(posted       ? [{ key: 'posted', label: POSTED_OPTIONS.find(x => x.value === posted)?.label  ?? posted,  onRemove: () => setPosted('')  }] : []),
     ...(salaryBucket ? [{ key: 'sal',    label: SALARY_OPTIONS.find(x => x.value === salaryBucket)?.label ?? salaryBucket, onRemove: () => setSalary('') }] : []),
+    ...(applyMode    ? [{ key: 'apply',  label: APPLY_MODE_OPTIONS.find(x => x.value === applyMode)?.label ?? applyMode, onRemove: () => setApplyMode('') }] : []),
   ]
 
   const activeCount = chips.length
@@ -309,6 +319,7 @@ export default function JobBrowse() {
     salaryBucket, onSalaryChange: setSalary,
     sortBy, onSortChange: setSortBy,
     sources, onSourcesChange: setSources,
+    applyMode, onApplyModeChange: setApplyMode,
     publishers,
     chips, activeCount, total, loading: jobsLoading,
     onClearAll: clearAll, hasFilters,
@@ -413,6 +424,7 @@ interface SharedFilterProps {
   salaryBucket: string;      onSalaryChange: (v: string) => void
   sortBy: string;            onSortChange: (v: string) => void
   sources: Set<string>;      onSourcesChange: (s: Set<string>) => void
+  applyMode: string;         onApplyModeChange: (v: string) => void
   publishers: Publisher[]
   chips: { key: string; label: string; onRemove: () => void }[]
   activeCount: number; hasFilters: boolean
@@ -428,6 +440,7 @@ function FilterBar(props: SharedFilterProps & { onMobileOpen: () => void }) {
     posted, onPostedChange, salaryBucket, onSalaryChange,
     sortBy, onSortChange,
     sources, onSourcesChange, publishers,
+    applyMode, onApplyModeChange,
     chips, activeCount, hasFilters, total, loading,
     onClearAll, onMobileOpen,
   } = props
@@ -532,6 +545,10 @@ function FilterBar(props: SharedFilterProps & { onMobileOpen: () => void }) {
             <CheckboxPanel options={JOB_TYPES} selected={jobTypes} onToggle={v => onJobTypesChange(toggleSet(jobTypes, v))} />
           </FilterDropdown>
 
+          <FilterDropdown label="Apply"    count={applyMode ? 1 : 0}    open={openPanel === 'applyMode'} onToggle={() => tog('applyMode')} onClose={close}>
+            <RadioPanel options={APPLY_MODE_OPTIONS} selected={applyMode} onSelect={onApplyModeChange} />
+          </FilterDropdown>
+
           <FilterDropdown label="Posted"   count={posted ? 1 : 0}       open={openPanel === 'posted'}  onToggle={() => tog('posted')}  onClose={close}>
             <RadioPanel options={POSTED_OPTIONS} selected={posted} onSelect={onPostedChange} />
           </FilterDropdown>
@@ -594,6 +611,7 @@ function MobileFilterSheet(props: SharedFilterProps & { open: boolean; onClose: 
     posted, onPostedChange, salaryBucket, onSalaryChange,
     sortBy, onSortChange,
     sources, onSourcesChange, publishers,
+    applyMode, onApplyModeChange,
     total, loading, onClearAll, activeCount,
   } = props
 
@@ -673,6 +691,23 @@ function MobileFilterSheet(props: SharedFilterProps & { open: boolean; onClose: 
                   className="inline-flex h-9 items-center whitespace-nowrap rounded-lg border px-3.5 font-sans text-[13px] font-medium transition-colors"
                   style={jobTypes.has(value) ? { background: PINK, color: '#fff', borderColor: PINK } : { borderColor: '#E5E7EB', color: '#374151', background: '#fff' }}>
                   {label}
+                </button>
+              ))}
+            </div>
+          </SheetSection>
+
+          <SheetSection label="Apply Type">
+            <div className="grid gap-0.5">
+              {APPLY_MODE_OPTIONS.map(({ value, label }) => (
+                <button key={value} onClick={() => onApplyModeChange(applyMode === value ? '' : value)}
+                  className="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors hover:bg-[#FAFAFA]">
+                  <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full border-2 transition-colors"
+                    style={applyMode === value ? { borderColor: PINK, background: PINK } : { borderColor: '#D1D5DB', background: '#fff' }}>
+                    {applyMode === value && <span className="h-1.5 w-1.5 rounded-full bg-white" />}
+                  </span>
+                  <span className="font-sans text-[13px] font-medium" style={{ color: applyMode === value ? PINK : '#374151' }}>
+                    {label}
+                  </span>
                 </button>
               ))}
             </div>

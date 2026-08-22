@@ -121,6 +121,8 @@ export interface FilterMultiParams {
   salaryMax?: number
   sort?: string
   publisher?: string[]
+  /** "easy" (apply within the platform) or "external" (redirects to the source site). */
+  applyMode?: 'easy' | 'external'
   page?: number
   size?: number
 }
