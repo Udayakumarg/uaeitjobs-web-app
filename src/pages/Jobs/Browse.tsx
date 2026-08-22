@@ -356,7 +356,13 @@ export default function JobBrowse() {
   }
 
   return (
-    <div className="flex flex-col bg-white" style={{ height: 'calc(100vh - 57px)' }}>
+    /* 100vh on mobile measures the browser's collapsed-address-bar viewport,
+       not what's actually visible — so this panel rendered taller than the
+       real screen and the outer page could scroll, revealing the site
+       footer underneath what's meant to be a fixed, internally-scrolling
+       view. 100dvh tracks the real visible viewport as the address bar
+       shows/hides. */
+    <div className="flex flex-col bg-white h-[calc(100dvh-57px)]">
 
       {/* ── Filter bar ─────────────────────────────────────────── */}
       <FilterBar {...fp} onMobileOpen={() => setMobileOpen(true)} />
