@@ -14,7 +14,7 @@ import { scrapeNaukrigulf } from './scrapers/naukrigulf'
 import { scrapeGulfTalent } from './scrapers/gulftalent'
 import { scrapeLinkedIn } from './scrapers/linkedin'
 import { postJobs } from './api'
-import { pickProxy, pickLinkedInProxy } from './utils/proxy'
+import { pickProxy } from './utils/proxy'
 import { applyContextStealth } from './utils/stealth'
 
 const HEADED        = process.env.HEADED === 'true'
@@ -25,15 +25,12 @@ const activeSources = sourceArg ? [sourceArg] : SOURCES
 
 async function main() {
   // ── Proxy selection ─────────────────────────────────────────────────────────
-  // LinkedIn-only runs (typical: trigger-server spawns `--source=linkedin`)
-  // prefer the LinkedIn-specific residential proxy when configured.
-  // Mixed runs fall back to the generic PROXIES pool.
-  const isLinkedInOnly = activeSources.length === 1 && activeSources[0] === 'linkedin'
-  const linkedInProxy  = isLinkedInOnly ? pickLinkedInProxy() : undefined
-  const proxy          = linkedInProxy ?? pickProxy()
-  const proxySource    = linkedInProxy ? ' [LinkedIn]' : ''
-  const proxyLabel     = proxy
-    ? `${proxy.server} (${proxy.username ? 'authenticated' : 'no-auth'})${proxySource}`
+  // Applies to the Playwright sources only. LinkedIn no longer takes a proxy:
+  // it runs against the guest API over plain HTTP, which the datacenter IP
+  // serves fine — that was the whole reason for the rewrite.
+  const proxy      = pickProxy()
+  const proxyLabel = proxy
+    ? `${proxy.server} (${proxy.username ? 'authenticated' : 'no-auth'})`
     : 'direct connection'
 
   console.log(`\n🚀 uaeitjobs scraper`)
@@ -101,8 +98,8 @@ async function main() {
       } else if (source === 'gulftalent') {
         jobs = await scrapeGulfTalent()
       } else if (source === 'linkedin') {
-        // LinkedIn needs the full context (for session cookies + API interception)
-        jobs = await scrapeLinkedIn(context)
+        // LinkedIn uses the guest API over plain HTTP — no browser, no session.
+        jobs = await scrapeLinkedIn()
       } else {
         console.warn(`  Unknown source "${source}" — skipping`)
         continue
