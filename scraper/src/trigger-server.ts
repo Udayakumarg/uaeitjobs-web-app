@@ -101,7 +101,16 @@ if (SCHEDULE_ENABLED) {
   // Scheduled LinkedIn runs use LI_FRESHNESS to fetch only the last ~25h of
   // postings — see the module docstring on why a daily full-market sweep
   // would be wasteful once the database already has yesterday's jobs.
-  cron.schedule('0 2 * * *',  () => launchSource('linkedin', { LI_FRESHNESS: SCHEDULE_LI_FRESHNESS }), { timezone: 'UTC' })
+  //
+  // LI_FETCH_DETAIL is on for the scheduled run specifically (manual runs
+  // still default to card-only, see linkedin/index.ts) so linkedinEasyApply
+  // — LinkedIn's own Easy Apply flag — actually gets populated day over day.
+  // Freshness narrowing already keeps the daily job count small enough that
+  // detail-fetching all of it is cheap; no LI_MAX_DETAIL cap needed here.
+  cron.schedule('0 2 * * *',  () => launchSource('linkedin', {
+    LI_FRESHNESS: SCHEDULE_LI_FRESHNESS,
+    LI_FETCH_DETAIL: 'true',
+  }), { timezone: 'UTC' })
   console.log('[trigger] Daily schedule armed: bayt 01:00, naukrigulf 01:20, gulftalent 01:40, linkedin 02:00 UTC')
 } else {
   console.log('[trigger] SCHEDULE_ENABLED=false — daily cron disabled, manual triggers only')
