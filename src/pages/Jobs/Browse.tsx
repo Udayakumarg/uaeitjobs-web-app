@@ -558,26 +558,17 @@ function FilterBar(props: SharedFilterProps & { onMobileOpen: () => void }) {
       <div className="hidden md:block border-t border-gray-100 px-4 py-2">
         <div className="flex items-center justify-center gap-1.5">
 
-          {/* Primary filters */}
-          <FilterDropdown label="Source"   count={sources.size}         open={openPanel === 'source'}  onToggle={() => tog('source')}  onClose={close}>
-            <CheckboxPanel
-              options={publishers.map(p => ({ value: p.key, label: p.count > 0 ? `${p.label} (${p.count})` : p.label }))}
-              selected={sources}
-              onToggle={v => onSourcesChange(toggleSet(sources, v))}
-            />
+          {/* Relevance — "is this even my kind of job, and where" — leads the
+              bar. A job seeker opens this page asking that first, not
+              wondering which site a listing came from. */}
+          <FilterDropdown label="Stack"    count={jobCats.size}         open={openPanel === 'stack'}   onToggle={() => tog('stack')}   onClose={close}>
+            <CheckboxPanel options={JOB_CATEGORIES.map(c => ({ value: c.value, label: c.label }))} selected={jobCats as Set<string>} onToggle={v => onJobCatsChange(toggleSet(jobCats, v as JobCategory))} />
           </FilterDropdown>
 
           <FilterDropdown label="Emirate"  count={emirates.size}        open={openPanel === 'emirate'} onToggle={() => tog('emirate')} onClose={close}>
             <CheckboxPanel options={EMIRATES} selected={emirates as Set<string>} onToggle={v => onEmiratesChange(toggleSet(emirates, v as Emirate))} />
           </FilterDropdown>
 
-          <FilterDropdown label="Stack"    count={jobCats.size}         open={openPanel === 'stack'}   onToggle={() => tog('stack')}   onClose={close}>
-            <CheckboxPanel options={JOB_CATEGORIES.map(c => ({ value: c.value, label: c.label }))} selected={jobCats as Set<string>} onToggle={v => onJobCatsChange(toggleSet(jobCats, v as JobCategory))} />
-          </FilterDropdown>
-
-          <Sep />
-
-          {/* Secondary filters */}
           <FilterDropdown label="Level"    count={levels.size}          open={openPanel === 'level'}   onToggle={() => tog('level')}   onClose={close}>
             <CheckboxPanel options={LEVELS} selected={levels} onToggle={v => onLevelsChange(toggleSet(levels, v))} />
           </FilterDropdown>
@@ -586,12 +577,16 @@ function FilterBar(props: SharedFilterProps & { onMobileOpen: () => void }) {
             <CheckboxPanel options={JOB_TYPES} selected={jobTypes} onToggle={v => onJobTypesChange(toggleSet(jobTypes, v))} />
           </FilterDropdown>
 
-          <FilterDropdown
-            label="LinkedIn"
-            count={linkedinFilter ? 1 : 0}
-            open={openPanel === 'linkedin'} onToggle={() => tog('linkedin')} onClose={close}
-          >
-            <RadioPanel options={LINKEDIN_FILTER_OPTIONS} selected={linkedinFilter} onSelect={onLinkedinFilterChange} />
+          <Sep />
+
+          {/* The actual frustrations — "will it pay, is it even still open,
+              can I take it, can I apply without a fight." */}
+          <FilterDropdown label="Salary"   count={salaryBucket ? 1 : 0} open={openPanel === 'salary'}  onToggle={() => tog('salary')}  onClose={close}>
+            <RadioPanel options={SALARY_OPTIONS} selected={salaryBucket} onSelect={onSalaryChange} />
+          </FilterDropdown>
+
+          <FilterDropdown label="Posted"   count={posted ? 1 : 0}       open={openPanel === 'posted'}  onToggle={() => tog('posted')}  onClose={close}>
+            <RadioPanel options={POSTED_OPTIONS} selected={posted} onSelect={onPostedChange} />
           </FilterDropdown>
 
           <FilterDropdown
@@ -611,15 +606,25 @@ function FilterBar(props: SharedFilterProps & { onMobileOpen: () => void }) {
             />
           </FilterDropdown>
 
-          <FilterDropdown label="Posted"   count={posted ? 1 : 0}       open={openPanel === 'posted'}  onToggle={() => tog('posted')}  onClose={close}>
-            <RadioPanel options={POSTED_OPTIONS} selected={posted} onSelect={onPostedChange} />
-          </FilterDropdown>
-
-          <FilterDropdown label="Salary"   count={salaryBucket ? 1 : 0} open={openPanel === 'salary'}  onToggle={() => tog('salary')}  onClose={close}>
-            <RadioPanel options={SALARY_OPTIONS} selected={salaryBucket} onSelect={onSalaryChange} />
+          <FilterDropdown
+            label="LinkedIn"
+            count={linkedinFilter ? 1 : 0}
+            open={openPanel === 'linkedin'} onToggle={() => tog('linkedin')} onClose={close}
+          >
+            <RadioPanel options={LINKEDIN_FILTER_OPTIONS} selected={linkedinFilter} onSelect={onLinkedinFilterChange} />
           </FilterDropdown>
 
           <Sep />
+
+          {/* Where it came from — meta info a job seeker on a one-stop board
+              shouldn't need to think about, so it trails everything else. */}
+          <FilterDropdown label="Source"   count={sources.size}         open={openPanel === 'source'}  onToggle={() => tog('source')}  onClose={close}>
+            <CheckboxPanel
+              options={publishers.map(p => ({ value: p.key, label: p.count > 0 ? `${p.label} (${p.count})` : p.label }))}
+              selected={sources}
+              onToggle={v => onSourcesChange(toggleSet(sources, v))}
+            />
+          </FilterDropdown>
 
           {/* Sort */}
           <FilterDropdown
@@ -693,20 +698,16 @@ function MobileFilterSheet(props: SharedFilterProps & { open: boolean; onClose: 
 
         <div className="flex-1 overflow-y-auto px-5 py-4 space-y-7">
 
-          <SheetSection label="Source">
-            <div className="flex flex-wrap gap-2">
-              {publishers.map(({ key, label, count }) => {
-                const on = sources.has(key)
-                return (
-                  <button key={key}
-                    onClick={() => onSourcesChange(toggleSet(sources, key))}
-                    className="inline-flex items-center gap-1.5 rounded-full border px-3.5 py-2 text-[13px] font-medium transition-all"
-                    style={on ? { background: PINK_BG, borderColor: PINK_RING, color: PINK } : { borderColor: '#e5e7eb', color: '#374151', background: '#fff' }}>
-                    {label}
-                    {count > 0 && <span className="text-[11px] font-normal" style={{ color: on ? PINK : '#9ca3af' }}>({count})</span>}
-                  </button>
-                )
-              })}
+          <SheetSection label="Specialization">
+            <div className="grid grid-cols-2 gap-2">
+              {JOB_CATEGORIES.map(({ value, label }) => (
+                <label key={value}
+                  className="flex items-center gap-2.5 p-2.5 border cursor-pointer transition-colors rounded"
+                  style={jobCats.has(value) ? { borderColor: PINK, background: PINK_BG } : { borderColor: '#E5E7EB' }}>
+                  <input type="checkbox" checked={jobCats.has(value)} onChange={() => onJobCatsChange(toggleSet(jobCats, value as JobCategory))} />
+                  <span className="text-sm font-medium" style={{ color: jobCats.has(value) ? PINK : '#374151' }}>{label}</span>
+                </label>
+              ))}
             </div>
           </SheetSection>
 
@@ -718,19 +719,6 @@ function MobileFilterSheet(props: SharedFilterProps & { open: boolean; onClose: 
                   style={emirates.has(value) ? { borderColor: PINK, background: PINK_BG } : { borderColor: '#E5E7EB' }}>
                   <input type="checkbox" checked={emirates.has(value)} onChange={() => onEmiratesChange(toggleSet(emirates, value))} />
                   <span className="text-sm font-medium" style={{ color: emirates.has(value) ? PINK : '#374151' }}>{label}</span>
-                </label>
-              ))}
-            </div>
-          </SheetSection>
-
-          <SheetSection label="Specialization">
-            <div className="grid grid-cols-2 gap-2">
-              {JOB_CATEGORIES.map(({ value, label }) => (
-                <label key={value}
-                  className="flex items-center gap-2.5 p-2.5 border cursor-pointer transition-colors rounded"
-                  style={jobCats.has(value) ? { borderColor: PINK, background: PINK_BG } : { borderColor: '#E5E7EB' }}>
-                  <input type="checkbox" checked={jobCats.has(value)} onChange={() => onJobCatsChange(toggleSet(jobCats, value as JobCategory))} />
-                  <span className="text-sm font-medium" style={{ color: jobCats.has(value) ? PINK : '#374151' }}>{label}</span>
                 </label>
               ))}
             </div>
@@ -760,16 +748,33 @@ function MobileFilterSheet(props: SharedFilterProps & { open: boolean; onClose: 
             </div>
           </SheetSection>
 
-          <SheetSection label="LinkedIn">
+          <SheetSection label="Salary (AED / month)">
             <div className="grid gap-0.5">
-              {LINKEDIN_FILTER_OPTIONS.map(({ value, label }) => (
-                <button key={value} onClick={() => onLinkedinFilterChange(linkedinFilter === value ? '' : value)}
+              {SALARY_OPTIONS.map(({ value, label }) => (
+                <button key={value} onClick={() => onSalaryChange(salaryBucket === value ? '' : value)}
                   className="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors hover:bg-[#FAFAFA]">
                   <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full border-2 transition-colors"
-                    style={linkedinFilter === value ? { borderColor: PINK, background: PINK } : { borderColor: '#D1D5DB', background: '#fff' }}>
-                    {linkedinFilter === value && <span className="h-1.5 w-1.5 rounded-full bg-white" />}
+                    style={salaryBucket === value ? { borderColor: PINK, background: PINK } : { borderColor: '#D1D5DB', background: '#fff' }}>
+                    {salaryBucket === value && <span className="h-1.5 w-1.5 rounded-full bg-white" />}
                   </span>
-                  <span className="font-sans text-[13px] font-medium" style={{ color: linkedinFilter === value ? PINK : '#374151' }}>
+                  <span className="font-sans text-[13px] font-medium" style={{ color: salaryBucket === value ? PINK : '#374151' }}>
+                    {label}
+                  </span>
+                </button>
+              ))}
+            </div>
+          </SheetSection>
+
+          <SheetSection label="Date Posted">
+            <div className="grid gap-0.5">
+              {POSTED_OPTIONS.map(({ value, label }) => (
+                <button key={value} onClick={() => onPostedChange(posted === value ? '' : value)}
+                  className="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors hover:bg-[#FAFAFA]">
+                  <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full border-2 transition-colors"
+                    style={posted === value ? { borderColor: PINK, background: PINK } : { borderColor: '#D1D5DB', background: '#fff' }}>
+                    {posted === value && <span className="h-1.5 w-1.5 rounded-full bg-white" />}
+                  </span>
+                  <span className="font-sans text-[13px] font-medium" style={{ color: posted === value ? PINK : '#374151' }}>
                     {label}
                   </span>
                 </button>
@@ -819,16 +824,16 @@ function MobileFilterSheet(props: SharedFilterProps & { open: boolean; onClose: 
             </div>
           </SheetSection>
 
-          <SheetSection label="Date Posted">
+          <SheetSection label="LinkedIn">
             <div className="grid gap-0.5">
-              {POSTED_OPTIONS.map(({ value, label }) => (
-                <button key={value} onClick={() => onPostedChange(posted === value ? '' : value)}
+              {LINKEDIN_FILTER_OPTIONS.map(({ value, label }) => (
+                <button key={value} onClick={() => onLinkedinFilterChange(linkedinFilter === value ? '' : value)}
                   className="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors hover:bg-[#FAFAFA]">
                   <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full border-2 transition-colors"
-                    style={posted === value ? { borderColor: PINK, background: PINK } : { borderColor: '#D1D5DB', background: '#fff' }}>
-                    {posted === value && <span className="h-1.5 w-1.5 rounded-full bg-white" />}
+                    style={linkedinFilter === value ? { borderColor: PINK, background: PINK } : { borderColor: '#D1D5DB', background: '#fff' }}>
+                    {linkedinFilter === value && <span className="h-1.5 w-1.5 rounded-full bg-white" />}
                   </span>
-                  <span className="font-sans text-[13px] font-medium" style={{ color: posted === value ? PINK : '#374151' }}>
+                  <span className="font-sans text-[13px] font-medium" style={{ color: linkedinFilter === value ? PINK : '#374151' }}>
                     {label}
                   </span>
                 </button>
@@ -836,20 +841,20 @@ function MobileFilterSheet(props: SharedFilterProps & { open: boolean; onClose: 
             </div>
           </SheetSection>
 
-          <SheetSection label="Salary (AED / month)">
-            <div className="grid gap-0.5">
-              {SALARY_OPTIONS.map(({ value, label }) => (
-                <button key={value} onClick={() => onSalaryChange(salaryBucket === value ? '' : value)}
-                  className="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors hover:bg-[#FAFAFA]">
-                  <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full border-2 transition-colors"
-                    style={salaryBucket === value ? { borderColor: PINK, background: PINK } : { borderColor: '#D1D5DB', background: '#fff' }}>
-                    {salaryBucket === value && <span className="h-1.5 w-1.5 rounded-full bg-white" />}
-                  </span>
-                  <span className="font-sans text-[13px] font-medium" style={{ color: salaryBucket === value ? PINK : '#374151' }}>
+          <SheetSection label="Source">
+            <div className="flex flex-wrap gap-2">
+              {publishers.map(({ key, label, count }) => {
+                const on = sources.has(key)
+                return (
+                  <button key={key}
+                    onClick={() => onSourcesChange(toggleSet(sources, key))}
+                    className="inline-flex items-center gap-1.5 rounded-full border px-3.5 py-2 text-[13px] font-medium transition-all"
+                    style={on ? { background: PINK_BG, borderColor: PINK_RING, color: PINK } : { borderColor: '#e5e7eb', color: '#374151', background: '#fff' }}>
                     {label}
-                  </span>
-                </button>
-              ))}
+                    {count > 0 && <span className="text-[11px] font-normal" style={{ color: on ? PINK : '#9ca3af' }}>({count})</span>}
+                  </button>
+                )
+              })}
             </div>
           </SheetSection>
 
