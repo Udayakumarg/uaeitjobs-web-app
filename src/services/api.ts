@@ -121,9 +121,7 @@ export interface FilterMultiParams {
   salaryMax?: number
   sort?: string
   publisher?: string[]
-  /** "easy" (apply within the platform) or "external" (redirects to the source site). */
-  applyMode?: 'easy' | 'external'
-  /** LinkedIn-specific: true = only jobs LinkedIn itself marks Easy Apply. */
+  /** true = only jobs LinkedIn itself marks Easy Apply. */
   linkedinEasyApply?: boolean
   visaType?: string
   page?: number
