@@ -2,16 +2,23 @@ import { Page } from 'playwright'
 import { ScrapedJob } from '../types'
 import { delayWithJitter } from '../utils/delay'
 
-const SEARCH_TERMS = [
-  'software engineer',
-  'full stack developer',
+// Verified live 2026-08: NaukriGulf's `/jobs-in-uae?q=...` query param is
+// inert — it returns the same generic default listing regardless of what
+// `q` is set to (confirmed by comparing "software engineer" against
+// "baker chef pastry": identical results). The site's real search-by-role
+// entry point is a slug path instead: `/{slug}-jobs`. This is why every
+// run was fetching 30 "real" jobs that scored almost entirely below
+// MIN_SCORE — they were NaukriGulf's generic feed, not IT results at all.
+const SEARCH_SLUGS = [
+  'software-engineer',
+  'full-stack-developer',
   'devops',
-  'data engineer',
-  'backend developer',
-  'frontend developer',
-  'mobile developer',
-  'cloud engineer',
-  'QA engineer',
+  'data-engineer',
+  'backend-developer',
+  'frontend-developer',
+  'mobile-developer',
+  'cloud-engineer',
+  'qa-engineer',
   'cybersecurity',
 ]
 
@@ -60,10 +67,15 @@ export async function scrapeNaukrigulf(page: Page): Promise<ScrapedJob[]> {
   const seen = new Set<string>()
   const jobs: ScrapedJob[] = []
 
-  for (const term of SEARCH_TERMS) {
+  for (const slug of SEARCH_SLUGS) {
     for (let pageNum = 1; pageNum <= MAX_PAGES; pageNum++) {
-      const url = `https://www.naukrigulf.com/jobs-in-uae?q=${encodeURIComponent(term)}&city=United+Arab+Emirates&page=${pageNum}`
-      console.log(`  [naukrigulf] "${term}" p${pageNum}`)
+      // Page 1 has no numeric suffix; page 2+ is `-{slug}-jobs-{pageNum}`.
+      // Verified live: `?page=N` on the base URL is inert (same trap as `q=`);
+      // the `-N` suffix is what actually advances the result set.
+      const url = pageNum === 1
+        ? `https://www.naukrigulf.com/${slug}-jobs`
+        : `https://www.naukrigulf.com/${slug}-jobs-${pageNum}`
+      console.log(`  [naukrigulf] "${slug}" p${pageNum}`)
 
       try {
         await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30_000 })
@@ -79,7 +91,7 @@ export async function scrapeNaukrigulf(page: Page): Promise<ScrapedJob[]> {
           .catch(() => false)
 
         if (!gotCards) {
-          console.log(`  [naukrigulf] No cards rendered — stopping for "${term}"`)
+          console.log(`  [naukrigulf] No cards rendered — stopping for "${slug}"`)
           break
         }
 
@@ -90,7 +102,7 @@ export async function scrapeNaukrigulf(page: Page): Promise<ScrapedJob[]> {
         // last written — the previous selectors matched nothing).
         const cards = await page.$$('.srp-tuple')
         if (cards.length === 0) {
-          console.log(`  [naukrigulf] No cards found — stopping for "${term}"`)
+          console.log(`  [naukrigulf] No cards found — stopping for "${slug}"`)
           break
         }
 
@@ -145,13 +157,13 @@ export async function scrapeNaukrigulf(page: Page): Promise<ScrapedJob[]> {
           }
         }
 
-        console.log(`  [naukrigulf] "${term}" p${pageNum}: +${newOnPage} jobs`)
+        console.log(`  [naukrigulf] "${slug}" p${pageNum}: +${newOnPage} jobs`)
         if (newOnPage === 0) break
 
         // Inter-page jitter: 1.5–3.5 s
         await delayWithJitter(page, 2_000)
       } catch (err) {
-        console.warn(`  [naukrigulf] "${term}" p${pageNum} failed:`, (err as Error).message)
+        console.warn(`  [naukrigulf] "${slug}" p${pageNum} failed:`, (err as Error).message)
         break
       }
     }
