@@ -56,11 +56,6 @@ const JOB_TYPES = [
   { value: 'temporary',  label: 'Temporary'  },
 ]
 
-const LINKEDIN_FILTER_OPTIONS = [
-  { value: 'easy', label: 'LinkedIn Easy Apply' },
-  { value: 'all',  label: 'LinkedIn'            },
-]
-
 const VISA_OPTIONS = [
   { value: 'free_visa',           label: 'Free visa (employer-provided)' },
   { value: 'employment_visa',     label: 'Will sponsor visa'             },
@@ -91,7 +86,7 @@ const SORT_OPTIONS = [
   { value: 'salary_low',  label: 'Salary: Low ↑'  },
 ]
 
-type PanelId = 'emirate' | 'stack' | 'level' | 'type' | 'posted' | 'salary' | 'sort' | 'source' | 'linkedin' | 'uae' | 'saved'
+type PanelId = 'emirate' | 'stack' | 'level' | 'type' | 'posted' | 'salary' | 'sort' | 'source' | 'uae' | 'saved'
 
 // Static fallback shown instantly while the dynamic list loads.
 // Replaced by the live /jobs/publishers response once it arrives.
@@ -148,8 +143,9 @@ export default function JobBrowse() {
   const [salaryBucket,    setSalary]         = useState(() => searchParams.get('salary') ?? '')
   const [sortBy,          setSortBy]         = useState(() => searchParams.get('sort') ?? 'newest')
   const [sources,         setSources]        = useState<Set<string>>(() => new Set(searchParams.getAll('publisher')))
-  /** 'easy' = LinkedIn's own Easy Apply jobs only. 'all' = every LinkedIn job. '' = no filter. */
-  const [linkedinFilter,  setLinkedinFilter]  = useState(() => searchParams.get('linkedin') ?? '')
+  // Kept as the same 'linkedin=easy' URL param used before this was simplified
+  // from a dropdown to a toggle, so old bookmarks/saved searches keep working.
+  const [easyApplyOnly,   setEasyApplyOnly]   = useState(() => searchParams.get('linkedin') === 'easy')
   const [remoteUae,       setRemoteUae]       = useState(() => searchParams.get('remoteUae') === 'true')
   const [immediateJoiner, setImmediateJoiner] = useState(() => searchParams.get('immediateJoiner') === 'true')
   const [visaType,        setVisaType]        = useState(() => searchParams.get('visaType') ?? '')
@@ -203,12 +199,12 @@ export default function JobBrowse() {
     if (salaryBucket)       p.set('salary',    salaryBucket)
     if (sortBy !== 'newest') p.set('sort',     sortBy)
     sources.forEach(s       => p.append('publisher', s))
-    if (linkedinFilter)      p.set('linkedin', linkedinFilter)
+    if (easyApplyOnly)       p.set('linkedin', 'easy')
     if (remoteUae)           p.set('remoteUae', 'true')
     if (immediateJoiner)     p.set('immediateJoiner', 'true')
     if (visaType)            p.set('visaType', visaType)
     setSearchParams(p, { replace: true })
-  }, [query, company, emirates, jobCats, levels, jobTypes, posted, salaryBucket, sortBy, sources, linkedinFilter, remoteUae, immediateJoiner, visaType, setSearchParams])
+  }, [query, company, emirates, jobCats, levels, jobTypes, posted, salaryBucket, sortBy, sources, easyApplyOnly, remoteUae, immediateJoiner, visaType, setSearchParams])
 
   // fetch — search + all filtering in a single DB round-trip via filterMulti.
   // The 'q' param drives plainto_tsquery full-text ranking server-side so
@@ -221,13 +217,7 @@ export default function JobBrowse() {
     const cArr = Array.from(jobCats)
     const lArr = Array.from(levels)
     const tArr = Array.from(jobTypes)
-    // "LinkedIn" (linkedinFilter === 'all') narrows to that publisher without
-    // fighting whatever the separate Source dropdown already has selected —
-    // publisher filtering is OR'd server-side, so folding 'linkedin' into the
-    // same array the Source checkboxes populate is safe and additive.
-    const sArr = linkedinFilter === 'all'
-      ? Array.from(new Set([...sources, 'linkedin']))
-      : Array.from(sources)
+    const sArr = Array.from(sources)
 
     const [salMin, salMax] = salaryBucket ? salaryRange(salaryBucket) : [undefined, undefined]
     const params: FilterMultiParams = {
@@ -243,7 +233,7 @@ export default function JobBrowse() {
       ...(salMax != null        && { salaryMax:       salMax }),
       ...(sortBy !== 'newest'   && { sort:            sortBy === 'salary_high' ? 'salary_desc' : 'salary_asc' }),
       ...(sArr.length           && { publisher:       sArr }),
-      ...(linkedinFilter === 'easy' && { linkedinEasyApply: true }),
+      ...(easyApplyOnly         && { linkedinEasyApply: true }),
       ...(remoteUae             && { remoteUae: true }),
       ...(immediateJoiner       && { immediateJoiner: true }),
       ...(visaType              && { visaType }),
@@ -263,7 +253,7 @@ export default function JobBrowse() {
       }
     }).catch(() => {}).finally(() => { if (ok) setJobsLoading(false) })
     return () => { ok = false }
-  }, [query, company, emirates, jobCats, levels, jobTypes, posted, salaryBucket, sortBy, sources, linkedinFilter, remoteUae, immediateJoiner, visaType])
+  }, [query, company, emirates, jobCats, levels, jobTypes, posted, salaryBucket, sortBy, sources, easyApplyOnly, remoteUae, immediateJoiner, visaType])
 
   useEffect(() => {
     if (!selectedId) return
@@ -333,7 +323,7 @@ export default function JobBrowse() {
     setQuery(''); setCompany(''); setEmirates(new Set()); setJobCats(new Set())
     setLevels(new Set()); setJobTypes(new Set())
     setPosted(''); setSalary(''); setSortBy('newest'); setSources(new Set())
-    setLinkedinFilter('')
+    setEasyApplyOnly(false)
     setRemoteUae(false); setImmediateJoiner(false); setVisaType('')
   }
 
@@ -370,7 +360,7 @@ export default function JobBrowse() {
     ...Array.from(sources).map(v  => ({ key: `s-${v}`, label: publishers.find(p => p.key === v)?.label ?? v, onRemove: () => setSources(toggleSet(sources, v)) })),
     ...(posted       ? [{ key: 'posted', label: POSTED_OPTIONS.find(x => x.value === posted)?.label  ?? posted,  onRemove: () => setPosted('')  }] : []),
     ...(salaryBucket ? [{ key: 'sal',    label: SALARY_OPTIONS.find(x => x.value === salaryBucket)?.label ?? salaryBucket, onRemove: () => setSalary('') }] : []),
-    ...(linkedinFilter ? [{ key: 'li', label: LINKEDIN_FILTER_OPTIONS.find(x => x.value === linkedinFilter)?.label ?? linkedinFilter, onRemove: () => setLinkedinFilter('') }] : []),
+    ...(easyApplyOnly ? [{ key: 'ea', label: 'Easy Apply', onRemove: () => setEasyApplyOnly(false) }] : []),
     ...(remoteUae ? [{ key: 'remote', label: 'Remote UAE', onRemove: () => setRemoteUae(false) }] : []),
     ...(immediateJoiner ? [{ key: 'immediate', label: 'Immediate Joiner', onRemove: () => setImmediateJoiner(false) }] : []),
     ...(visaType ? [{ key: 'visa', label: VISA_OPTIONS.find(x => x.value === visaType)?.label ?? visaType, onRemove: () => setVisaType('') }] : []),
@@ -389,7 +379,7 @@ export default function JobBrowse() {
     salaryBucket, onSalaryChange: setSalary,
     sortBy, onSortChange: setSortBy,
     sources, onSourcesChange: setSources,
-    linkedinFilter, onLinkedinFilterChange: setLinkedinFilter,
+    easyApplyOnly, onEasyApplyOnlyChange: setEasyApplyOnly,
     remoteUae, onRemoteUaeChange: setRemoteUae,
     immediateJoiner, onImmediateJoinerChange: setImmediateJoiner,
     visaType, onVisaTypeChange: setVisaType,
@@ -506,7 +496,7 @@ interface SharedFilterProps {
   salaryBucket: string;      onSalaryChange: (v: string) => void
   sortBy: string;            onSortChange: (v: string) => void
   sources: Set<string>;      onSourcesChange: (s: Set<string>) => void
-  linkedinFilter: string;    onLinkedinFilterChange: (v: string) => void
+  easyApplyOnly: boolean;    onEasyApplyOnlyChange: (v: boolean) => void
   remoteUae: boolean;         onRemoteUaeChange: (v: boolean) => void
   immediateJoiner: boolean;   onImmediateJoinerChange: (v: boolean) => void
   visaType: string;           onVisaTypeChange: (v: string) => void
@@ -535,7 +525,7 @@ function FilterBar(props: SharedFilterProps & SavedSearchProps & { onMobileOpen:
     posted, onPostedChange, salaryBucket, onSalaryChange,
     sortBy, onSortChange,
     sources, onSourcesChange, publishers,
-    linkedinFilter, onLinkedinFilterChange,
+    easyApplyOnly, onEasyApplyOnlyChange,
     remoteUae, onRemoteUaeChange, immediateJoiner, onImmediateJoinerChange,
     visaType, onVisaTypeChange,
     chips, activeCount, hasFilters, total, loading,
@@ -670,13 +660,18 @@ function FilterBar(props: SharedFilterProps & SavedSearchProps & { onMobileOpen:
             />
           </FilterDropdown>
 
-          <FilterDropdown
-            label="LinkedIn"
-            count={linkedinFilter ? 1 : 0}
-            open={openPanel === 'linkedin'} onToggle={() => tog('linkedin')} onClose={close}
+          <button
+            onClick={() => onEasyApplyOnlyChange(!easyApplyOnly)}
+            className={`inline-flex h-[30px] shrink-0 items-center gap-1.5 rounded-full border px-3.5 font-sans text-[12.5px] font-medium whitespace-nowrap transition-all duration-150 select-none ${
+              easyApplyOnly
+                ? 'bg-[#FDF2F8] border-[#F9A8D4] text-[#BE185D] hover:bg-[#FCE7F3]'
+                : 'bg-white border-gray-200 text-gray-500 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-700'
+            }`}
+            title="Jobs where the candidate can apply without leaving the source site"
           >
-            <RadioPanel options={LINKEDIN_FILTER_OPTIONS} selected={linkedinFilter} onSelect={v => { onLinkedinFilterChange(v); close() }} />
-          </FilterDropdown>
+            <Zap size={11} strokeWidth={2.5} className={easyApplyOnly ? 'text-[#BE185D]' : 'text-gray-400'} />
+            Easy Apply
+          </button>
 
           <Sep />
 
@@ -808,7 +803,7 @@ function MobileFilterSheet(props: SharedFilterProps & { open: boolean; onClose: 
     posted, onPostedChange, salaryBucket, onSalaryChange,
     sortBy, onSortChange,
     sources, onSourcesChange, publishers,
-    linkedinFilter, onLinkedinFilterChange,
+    easyApplyOnly, onEasyApplyOnlyChange,
     remoteUae, onRemoteUaeChange, immediateJoiner, onImmediateJoinerChange,
     visaType, onVisaTypeChange,
     total, loading, onClearAll, activeCount,
@@ -954,21 +949,17 @@ function MobileFilterSheet(props: SharedFilterProps & { open: boolean; onClose: 
             </div>
           </SheetSection>
 
-          <SheetSection label="LinkedIn">
-            <div className="grid gap-0.5">
-              {LINKEDIN_FILTER_OPTIONS.map(({ value, label }) => (
-                <button key={value} onClick={() => onLinkedinFilterChange(linkedinFilter === value ? '' : value)}
-                  className="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors hover:bg-[#FAFAFA]">
-                  <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full border-2 transition-colors"
-                    style={linkedinFilter === value ? { borderColor: PINK, background: PINK } : { borderColor: '#D1D5DB', background: '#fff' }}>
-                    {linkedinFilter === value && <span className="h-1.5 w-1.5 rounded-full bg-white" />}
-                  </span>
-                  <span className="font-sans text-[13px] font-medium" style={{ color: linkedinFilter === value ? PINK : '#374151' }}>
-                    {label}
-                  </span>
-                </button>
-              ))}
-            </div>
+          <SheetSection label="Apply">
+            <button onClick={() => onEasyApplyOnlyChange(!easyApplyOnly)}
+              className="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors hover:bg-[#FAFAFA]">
+              <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded border-2 transition-colors"
+                style={easyApplyOnly ? { borderColor: PINK, background: PINK } : { borderColor: '#D1D5DB', background: '#fff' }}>
+                {easyApplyOnly && <span className="h-2 w-2 rounded-[1px] bg-white" />}
+              </span>
+              <span className="font-sans text-[13px] font-medium" style={{ color: easyApplyOnly ? PINK : '#374151' }}>
+                Easy Apply only
+              </span>
+            </button>
           </SheetSection>
 
           <SheetSection label="Source">
