@@ -183,7 +183,12 @@ export const seekerApi = {
   savedJobs: () => api.get<Array<{ id: number; job: Job; savedAt: string }>>('/saved-jobs'),
   saveJob: (id: number) => api.post(`/saved-jobs/${id}`),
   unsaveJob: (id: number) => api.delete(`/saved-jobs/${id}`),
+  savedSearches: () => api.get<SavedSearch[]>('/saved-searches'),
+  saveSearch: (name: string, filters: string) => api.post<SavedSearch>('/saved-searches', { name, filters }),
+  deleteSearch: (id: number) => api.delete(`/saved-searches/${id}`),
 }
+
+export type SavedSearch = { id: number; name: string; filters: string; createdAt: string }
 
 export type AiProvider = 'openai' | 'claude' | 'gemini'
 

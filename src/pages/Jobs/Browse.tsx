@@ -16,7 +16,7 @@ import { memo, useCallback, useEffect, useRef, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { CompanyLogo } from '../../components/CompanyLogo'
 import { useDocumentMeta } from '../../hooks/useDocumentMeta'
-import { errorMessage, jobsApi, seekerApi, type FilterMultiParams } from '../../services/api'
+import { errorMessage, jobsApi, seekerApi, type FilterMultiParams, type SavedSearch } from '../../services/api'
 
 // ── Publisher type ────────────────────────────────────────────────────────────
 type Publisher = { key: string; label: string; count: number }
@@ -91,7 +91,7 @@ const SORT_OPTIONS = [
   { value: 'salary_low',  label: 'Salary: Low ↑'  },
 ]
 
-type PanelId = 'emirate' | 'stack' | 'level' | 'type' | 'posted' | 'salary' | 'sort' | 'source' | 'linkedin' | 'uae'
+type PanelId = 'emirate' | 'stack' | 'level' | 'type' | 'posted' | 'salary' | 'sort' | 'source' | 'linkedin' | 'uae' | 'saved'
 
 // Static fallback shown instantly while the dynamic list loads.
 // Replaced by the live /jobs/publishers response once it arrives.
@@ -183,6 +183,11 @@ export default function JobBrowse() {
 
   // applied job IDs — read-only; loaded once when user logs in
   const [appliedIds, setAppliedIds] = useState<Set<number>>(new Set())
+
+  // saved searches — job seekers only, same gating as saved/applied jobs below
+  const [savedSearches, setSavedSearches] = useState<SavedSearch[]>([])
+  const [savingSearch,  setSavingSearch]  = useState(false)
+  const [searchName,    setSearchName]    = useState('')
 
   // Sync filter state → URL (replace so individual filter toggles don't pile up in history).
   // Initialised from URL above so bookmarks/shared links restore the exact view.
@@ -276,6 +281,7 @@ export default function JobBrowse() {
     if (!user || user.userType !== 'job_seeker') {
       setSavedIds(new Set())
       setAppliedIds(new Set())
+      setSavedSearches([])
       return
     }
     seekerApi.savedJobs()
@@ -284,7 +290,44 @@ export default function JobBrowse() {
     seekerApi.appliedJobIds()
       .then(({ data }) => setAppliedIds(new Set(data)))
       .catch(() => {})
+    seekerApi.savedSearches()
+      .then(({ data }) => setSavedSearches(data))
+      .catch(() => {})
   }, [user])
+
+  // Applying a saved search is a full navigation, not a state update — filter
+  // state above is only ever initialised from the URL once on mount (so
+  // bookmarks/shared links restore correctly), it doesn't re-sync if the URL
+  // changes later. A hard navigation guarantees every filter actually updates
+  // rather than silently applying only some of them.
+  const applySavedSearch = useCallback((filters: string) => {
+    window.location.assign(`/jobs?${filters}`)
+  }, [])
+
+  const saveCurrentSearch = useCallback(async () => {
+    const name = searchName.trim()
+    if (!name) return
+    try {
+      const { data } = await seekerApi.saveSearch(name, searchParams.toString())
+      setSavedSearches(prev => [data, ...prev])
+      setSearchName('')
+      setSavingSearch(false)
+      toast({ type: 'success', title: 'Search saved' })
+    } catch (err) {
+      toast({ type: 'error', title: 'Could not save search', message: errorMessage(err) })
+    }
+  }, [searchName, searchParams, toast])
+
+  const deleteSavedSearch = useCallback(async (id: number) => {
+    const prev = savedSearches
+    setSavedSearches(s => s.filter(x => x.id !== id))
+    try {
+      await seekerApi.deleteSearch(id)
+    } catch (err) {
+      setSavedSearches(prev)
+      toast({ type: 'error', title: 'Could not remove', message: errorMessage(err) })
+    }
+  }, [savedSearches, toast])
 
   function clearAll() {
     setQuery(''); setCompany(''); setEmirates(new Set()); setJobCats(new Set())
@@ -353,6 +396,9 @@ export default function JobBrowse() {
     publishers,
     chips, activeCount, total, loading: jobsLoading,
     onClearAll: clearAll, hasFilters,
+    isJobSeeker: !!user && user.userType === 'job_seeker',
+    savedSearches, applySavedSearch, deleteSavedSearch,
+    savingSearch, setSavingSearch, searchName, setSearchName, saveCurrentSearch,
   }
 
   return (
@@ -470,8 +516,18 @@ interface SharedFilterProps {
   total: number; loading: boolean; onClearAll: () => void
 }
 
+interface SavedSearchProps {
+  isJobSeeker: boolean
+  savedSearches: SavedSearch[]
+  applySavedSearch: (filters: string) => void
+  deleteSavedSearch: (id: number) => void
+  savingSearch: boolean; setSavingSearch: (v: boolean) => void
+  searchName: string; setSearchName: (v: string) => void
+  saveCurrentSearch: () => void
+}
+
 // ── Filter bar (desktop) ──────────────────────────────────────────────────────
-function FilterBar(props: SharedFilterProps & { onMobileOpen: () => void }) {
+function FilterBar(props: SharedFilterProps & SavedSearchProps & { onMobileOpen: () => void }) {
   const {
     query, onQueryChange,
     emirates, onEmiratesChange, jobCats, onJobCatsChange,
@@ -484,6 +540,8 @@ function FilterBar(props: SharedFilterProps & { onMobileOpen: () => void }) {
     visaType, onVisaTypeChange,
     chips, activeCount, hasFilters, total, loading,
     onClearAll, onMobileOpen,
+    isJobSeeker, savedSearches, applySavedSearch, deleteSavedSearch,
+    savingSearch, setSavingSearch, searchName, setSearchName, saveCurrentSearch,
   } = props
 
   const [openPanel, setOpenPanel] = useState<PanelId | null>(null)
@@ -497,6 +555,12 @@ function FilterBar(props: SharedFilterProps & { onMobileOpen: () => void }) {
 
   function tog(id: PanelId) { setOpenPanel(openPanel === id ? null : id) }
   function close() { setOpenPanel(null) }
+
+  // Reset the inline "name this search" input whenever the Saved dropdown
+  // isn't open, so reopening it never shows a stale in-progress name.
+  useEffect(() => {
+    if (openPanel !== 'saved') { setSavingSearch(false); setSearchName('') }
+  }, [openPanel]) // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <div className="shrink-0 z-20 bg-white" style={{ boxShadow: '0 1px 0 0 #e5e7eb' }}>
@@ -582,11 +646,11 @@ function FilterBar(props: SharedFilterProps & { onMobileOpen: () => void }) {
           {/* The actual frustrations — "will it pay, is it even still open,
               can I take it, can I apply without a fight." */}
           <FilterDropdown label="Salary"   count={salaryBucket ? 1 : 0} open={openPanel === 'salary'}  onToggle={() => tog('salary')}  onClose={close}>
-            <RadioPanel options={SALARY_OPTIONS} selected={salaryBucket} onSelect={onSalaryChange} />
+            <RadioPanel options={SALARY_OPTIONS} selected={salaryBucket} onSelect={v => { onSalaryChange(v); close() }} />
           </FilterDropdown>
 
           <FilterDropdown label="Posted"   count={posted ? 1 : 0}       open={openPanel === 'posted'}  onToggle={() => tog('posted')}  onClose={close}>
-            <RadioPanel options={POSTED_OPTIONS} selected={posted} onSelect={onPostedChange} />
+            <RadioPanel options={POSTED_OPTIONS} selected={posted} onSelect={v => { onPostedChange(v); close() }} />
           </FilterDropdown>
 
           <FilterDropdown
@@ -611,7 +675,7 @@ function FilterBar(props: SharedFilterProps & { onMobileOpen: () => void }) {
             count={linkedinFilter ? 1 : 0}
             open={openPanel === 'linkedin'} onToggle={() => tog('linkedin')} onClose={close}
           >
-            <RadioPanel options={LINKEDIN_FILTER_OPTIONS} selected={linkedinFilter} onSelect={onLinkedinFilterChange} />
+            <RadioPanel options={LINKEDIN_FILTER_OPTIONS} selected={linkedinFilter} onSelect={v => { onLinkedinFilterChange(v); close() }} />
           </FilterDropdown>
 
           <Sep />
@@ -634,6 +698,72 @@ function FilterBar(props: SharedFilterProps & { onMobileOpen: () => void }) {
           >
             <RadioPanel options={SORT_OPTIONS} selected={sortBy} onSelect={v => { onSortChange(v); close() }} />
           </FilterDropdown>
+
+          {isJobSeeker && (
+            <FilterDropdown
+              label="Saved" count={savedSearches.length} noHighlight
+              open={openPanel === 'saved'} onToggle={() => tog('saved')} onClose={close}
+            >
+              <div className="w-[240px]">
+                <div className="border-b border-gray-100 p-2.5">
+                  {savingSearch ? (
+                    <div className="flex items-center gap-1.5">
+                      <input
+                        autoFocus
+                        value={searchName}
+                        onChange={e => setSearchName(e.target.value)}
+                        onKeyDown={e => { if (e.key === 'Enter') saveCurrentSearch(); if (e.key === 'Escape') setSavingSearch(false) }}
+                        placeholder="Name this search…"
+                        maxLength={100}
+                        className="min-w-0 flex-1 rounded-md border border-gray-200 px-2 py-1 font-sans text-[12.5px] outline-none focus:border-gray-400"
+                      />
+                      <button
+                        onClick={saveCurrentSearch}
+                        disabled={!searchName.trim()}
+                        className="shrink-0 rounded-md px-2 py-1 font-sans text-[12px] font-medium text-white disabled:opacity-40"
+                        style={{ background: PINK }}
+                      >
+                        Save
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => setSavingSearch(true)}
+                      disabled={!hasFilters}
+                      className="flex w-full items-center gap-1.5 font-sans text-[12.5px] font-medium disabled:cursor-not-allowed disabled:text-gray-300 enabled:hover:opacity-80"
+                      style={hasFilters ? { color: PINK } : undefined}
+                    >
+                      <BookmarkCheck size={13} />
+                      Save current search
+                    </button>
+                  )}
+                </div>
+                {savedSearches.length === 0 ? (
+                  <p className="px-3.5 py-3 font-sans text-[12px] text-gray-400">No saved searches yet.</p>
+                ) : (
+                  <div className="max-h-[240px] overflow-y-auto py-1">
+                    {savedSearches.map(s => (
+                      <div key={s.id} className="group flex items-center gap-1 px-2.5 py-1">
+                        <button
+                          onClick={() => applySavedSearch(s.filters)}
+                          className="min-w-0 flex-1 truncate rounded-md px-1.5 py-1.5 text-left font-sans text-[12.5px] text-gray-700 hover:bg-gray-50"
+                        >
+                          {s.name}
+                        </button>
+                        <button
+                          onClick={() => deleteSavedSearch(s.id)}
+                          className="shrink-0 rounded p-1 text-gray-300 opacity-0 transition-opacity hover:bg-rose-50 hover:text-rose-500 group-hover:opacity-100"
+                          aria-label={`Remove "${s.name}"`}
+                        >
+                          <X size={11} strokeWidth={2.5} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </FilterDropdown>
+          )}
 
           <button
             onClick={onClearAll}
