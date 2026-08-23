@@ -263,6 +263,16 @@ export const adminApi = {
     api.post<{ status: string; message: string; source: string }>(`/admin/scraper/trigger/${source}`),
   scraperStatus: () =>
     api.get<{ serverReachable: boolean; sources: Record<string, string> }>('/admin/scraper/status'),
+  keywords: () =>
+    api.get<KeywordSearchStrategy[]>('/admin/keywords'),
+  suggestKeywords: () =>
+    api.post<{ added: string[]; skippedExisting: string[]; skippedInvalid: string[] }>('/admin/keywords/suggest'),
+}
+
+export type KeywordSearchStrategy = {
+  id: number; keyword: string; tier: number; category: string | null
+  weight: number; active: boolean; lastRunAt: string | null
+  totalRuns: number; totalReturned: number; totalInserted: number; totalDuplicates: number
 }
 
 export const userApi = {

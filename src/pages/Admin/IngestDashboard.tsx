@@ -1,6 +1,6 @@
 import {
   Activity, AlertCircle, CheckCircle, Clock, Globe, Play,
-  RefreshCw, Repeat2, TrendingUp, Zap
+  RefreshCw, Repeat2, Sparkles, TrendingUp, Zap
 } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { useToastStore } from '../../components/Toast'
@@ -248,6 +248,7 @@ function ManualTriggerPanel({
   const [triggering,  setTriggering]  = useState<string | null>(null)
   const [scraperStatus, setScraperStatus] = useState<Record<string, string>>({})
   const [serverUp,    setServerUp]    = useState<boolean | null>(null)
+  const [suggesting,  setSuggesting]  = useState(false)
 
   const loadStatus = async () => {
     try {
@@ -275,6 +276,26 @@ function ManualTriggerPanel({
       toast({ type: 'error', title: 'Trigger failed', message: errorMessage(e) })
     } finally {
       setTriggering(null)
+    }
+  }
+
+  const suggestKeywords = async () => {
+    setSuggesting(true)
+    try {
+      const { data } = await adminApi.suggestKeywords()
+      if (data.added.length === 0) {
+        toast({ type: 'info', title: 'No new keywords', message: `LLM proposed ${data.skippedExisting.length} that already existed.` })
+      } else {
+        toast({
+          type: 'success',
+          title: `${data.added.length} keyword${data.added.length === 1 ? '' : 's'} added`,
+          message: data.added.slice(0, 5).join(', ') + (data.added.length > 5 ? '…' : ''),
+        })
+      }
+    } catch (e) {
+      toast({ type: 'error', title: 'Suggestion failed', message: errorMessage(e) })
+    } finally {
+      setSuggesting(false)
     }
   }
 
@@ -349,9 +370,19 @@ function ManualTriggerPanel({
           ))}
           <Button
             size="sm"
+            variant="secondary"
+            disabled={suggesting}
+            onClick={suggestKeywords}
+            className="ml-auto"
+            title="Ask the LLM to propose new search keywords not already covered — added at the lowest rotation tier, still has to earn its place via real insert rates"
+          >
+            <Sparkles size={12} />
+            {suggesting ? 'Asking LLM…' : 'Suggest keywords (LLM)'}
+          </Button>
+          <Button
+            size="sm"
             disabled={apiRunning}
             onClick={onApiRun}
-            className="ml-auto"
           >
             <Play size={12} />
             {apiRunning ? 'Running…' : 'Run all API sources'}
