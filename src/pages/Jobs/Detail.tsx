@@ -130,9 +130,10 @@ export default function JobDetail() {
     } catch { /* cancelled */ }
   }
 
-  // When the user is not authenticated the server sets both applyUrl and
-  // linkedinUrl to null (Phase 4 gating).  We surface a "Sign in to apply"
-  // CTA instead of falling through to a generic LinkedIn search URL.
+  // A job with neither applyUrl nor linkedinUrl is HR-posted and applies
+  // natively on this platform (cover letter, tracked application) — that
+  // genuinely requires an account, unlike external listings, which now
+  // show their real apply link to everyone regardless of login.
   const isGated = !user && job?.applyUrl == null && job?.linkedinUrl == null
 
   // HR-posted jobs have no external applyUrl — seeker applies within the platform.

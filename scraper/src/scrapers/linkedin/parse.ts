@@ -63,17 +63,12 @@ export function parseSearchCards(html: string): SearchCard[] {
     const company = text(node.find('.base-search-card__subtitle')) || 'Unknown'
     const rawLocation = text(node.find('.job-search-card__location'))
 
-    // The full-link anchor carries the canonical slug URL; fall back to the
-    // numeric-id form, which always resolves.
-    const href = node.find('.base-card__full-link').attr('href')
-      ?? node.find('a[href*="/jobs/view/"]').attr('href')
-
     cards.push({
       externalId,
       title,
       company,
       location: normaliseLocation(rawLocation),
-      applyUrl: canonicalUrl(href, externalId),
+      applyUrl: canonicalUrl(externalId),
       postedAt: node.find('time[datetime]').attr('datetime')?.trim() || undefined,
       companyLogoUrl: node.find('img[data-delayed-url]').attr('data-delayed-url')?.trim() || undefined,
     })
@@ -247,8 +242,14 @@ function blockText(node: Selection): string {
     .trim() ?? ''
 }
 
-function canonicalUrl(href: string | undefined, externalId: string): string {
-  const cleaned = href?.trim().split('?')[0]
-  if (cleaned && /^https?:\/\//.test(cleaned)) return cleaned
+/**
+ * Always build the bare-ID permalink rather than reusing LinkedIn's own
+ * search-card link. That link carries a locale subdomain (www./ae./sg./…,
+ * whichever edition happened to serve the search) plus a decorative SEO
+ * slug LinkedIn doesn't actually need — it only reads the trailing numeric
+ * ID. The bare form resolves identically and stays consistent across every
+ * job regardless of which locale it was scraped from.
+ */
+function canonicalUrl(externalId: string): string {
   return `https://www.linkedin.com/jobs/view/${externalId}/`
 }
