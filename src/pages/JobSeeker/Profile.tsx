@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom'
 import { CardSkeleton } from '../../components/Skeleton'
 import { useToastStore } from '../../components/Toast'
 import { Button, Card, Field, Input, Select, Textarea } from '../../components/ui'
-import { errorMessage, seekerAiApi, seekerApi, type AiProvider, type AiSettings } from '../../services/api'
+import { downloadAuthenticated, errorMessage, seekerAiApi, seekerApi, type AiProvider, type AiSettings } from '../../services/api'
 import { useAuthStore } from '../../store/authStore'
 import type { JobSeekerProfile } from '../../types'
 import { initials, parseSkills } from '../../utils/format'
@@ -353,9 +353,17 @@ export default function JobSeekerProfilePage() {
                 <input type="file" accept=".pdf,.doc,.docx" className="hidden" onChange={(e) => uploadCv(e.target.files?.[0])} />
               </label>
               {profile.cvUrl ? (
-                <a className="inline-flex items-center gap-1.5 text-sm font-semibold text-pink-700 hover:underline" href={profile.cvUrl} target="_blank" rel="noreferrer">
+                <button
+                  type="button"
+                  className="inline-flex items-center gap-1.5 text-sm font-semibold text-pink-700 hover:underline"
+                  onClick={() =>
+                    downloadAuthenticated(profile.cvUrl!, 'my-cv').catch((error) =>
+                      toast({ type: 'error', title: 'Could not download CV', message: errorMessage(error) }),
+                    )
+                  }
+                >
                   <FileText size={14} /> View current CV
-                </a>
+                </button>
               ) : (
                 <p className="text-sm text-slate-400">No CV uploaded yet.</p>
               )}

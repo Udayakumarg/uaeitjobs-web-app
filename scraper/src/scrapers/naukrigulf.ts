@@ -1,6 +1,7 @@
 import { Page } from 'playwright'
 import { ScrapedJob } from '../types'
 import { delayWithJitter } from '../utils/delay'
+import { inferEmirate } from '../utils/location'
 
 // Verified live 2026-08: NaukriGulf's `/jobs-in-uae?q=...` query param is
 // inert — it returns the same generic default listing regardless of what
@@ -23,18 +24,6 @@ const SEARCH_SLUGS = [
 ]
 
 const MAX_PAGES = parseInt(process.env.MAX_PAGES ?? '3', 10)
-
-function inferEmirate(text: string): string | undefined {
-  const t = text.toLowerCase()
-  if (t.includes('dubai'))           return 'dubai'
-  if (t.includes('abu dhabi'))       return 'abu_dhabi'
-  if (t.includes('sharjah'))         return 'sharjah'
-  if (t.includes('ajman'))           return 'ajman'
-  if (t.includes('ras al khaimah'))  return 'ras_al_khaimah'
-  if (t.includes('fujairah'))        return 'fujairah'
-  if (t.includes('umm al quwain'))   return 'umm_al_quwain'
-  return undefined
-}
 
 function extractJobId(url: string): string | null {
   // NaukriGulf job URLs carry an explicit marker: .../job-title-...-jid-220826001091

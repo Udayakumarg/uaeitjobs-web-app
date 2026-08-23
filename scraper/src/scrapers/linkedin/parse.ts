@@ -8,6 +8,7 @@
  */
 import * as cheerio from 'cheerio'
 import { ScrapedJob } from '../../types'
+import { inferEmirate } from '../../utils/location'
 
 /** A job as it appears in the search-results feed. Enough to persist on its own. */
 export interface SearchCard {
@@ -150,27 +151,9 @@ export function toScrapedJob(card: SearchCard, detail?: JobDetail): ScrapedJob {
 }
 
 // ─── Normalisation ────────────────────────────────────────────────────────────
-
-/**
- * Map free-text location onto the backend's emirate enum.
- *
- * Hyphens are normalised first because LinkedIn writes the multi-word emirates
- * as "Ras al-Khaimah" — matching against spaced names alone silently fails.
- * The multi-word names are tested before the single-word ones so that
- * "Umm Al Quwain" cannot be short-circuited by a substring match.
- */
-export function inferEmirate(text: string): string | undefined {
-  const t = (text ?? '').toLowerCase().replace(/-/g, ' ')
-  if (t.includes('abu dhabi')) return 'abu_dhabi'
-  if (t.includes('ras al khaimah')) return 'ras_al_khaimah'
-  if (t.includes('umm al quwain')) return 'umm_al_quwain'
-  if (t.includes('dubai')) return 'dubai'
-  if (t.includes('sharjah')) return 'sharjah'
-  if (t.includes('ajman')) return 'ajman'
-  if (t.includes('fujairah')) return 'fujairah'
-  if (t.includes('al ain')) return 'abu_dhabi'
-  return undefined
-}
+// inferEmirate lives in ../../utils/location — shared with every other
+// scraper source (it was previously duplicated per-source, and only this
+// copy had the hyphen fix; see that file for details).
 
 /**
  * "Dubai, Dubai, United Arab Emirates" -> "Dubai, AE".

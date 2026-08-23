@@ -19,6 +19,7 @@
 import axios from 'axios'
 import * as cheerio from 'cheerio'
 import { ScrapedJob } from '../types'
+import { inferEmirate } from '../utils/location'
 
 // Verified live against GulfTalent's actual title taxonomy 2026-08 — several
 // of the original slugs (devops-engineer, data-engineer, frontend-developer,
@@ -52,17 +53,6 @@ const http = axios.create({
 })
 
 function sleep(ms: number) { return new Promise(r => setTimeout(r, ms)) }
-
-function inferEmirate(text: string): string | undefined {
-  const t = (text ?? '').toLowerCase()
-  if (t.includes('dubai'))          return 'dubai'
-  if (t.includes('abu dhabi'))      return 'abu_dhabi'
-  if (t.includes('sharjah'))        return 'sharjah'
-  if (t.includes('ajman'))          return 'ajman'
-  if (t.includes('ras al khaimah')) return 'ras_al_khaimah'
-  if (t.includes('fujairah'))       return 'fujairah'
-  return undefined
-}
 
 /** GulfTalent's card date is plain text like "9 Jun 2026" — parses fine with the native Date constructor. */
 function parseDate(text: string): string | undefined {

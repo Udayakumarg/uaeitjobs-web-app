@@ -82,6 +82,24 @@ api.interceptors.response.use(
   },
 )
 
+/**
+ * Downloads a file from an authenticated endpoint and hands it to the browser
+ * as a save/open prompt. Plain `<a href="...">` navigation can't carry the
+ * Authorization header this API needs, so the file has to come through axios
+ * as a blob and be opened via a throwaway object URL instead.
+ */
+export async function downloadAuthenticated(path: string, filename: string) {
+  const { data } = await api.get<Blob>(path, { responseType: 'blob' })
+  const objectUrl = window.URL.createObjectURL(data)
+  const link = document.createElement('a')
+  link.href = objectUrl
+  link.download = filename
+  document.body.appendChild(link)
+  link.click()
+  link.remove()
+  window.URL.revokeObjectURL(objectUrl)
+}
+
 export function fieldErrors(error: unknown): Record<string, string> {
   if (!axios.isAxiosError(error)) return {}
   const data = error.response?.data as { fieldErrors?: unknown; errors?: unknown } | undefined
@@ -144,8 +162,6 @@ export const authApi = {
 export const jobsApi = {
   list: (params?: Record<string, string | number | boolean | undefined>) => api.get<Page<Job>>('/jobs', { params }),
   detail: (id: string | number) => api.get<Job>(`/jobs/${id}`),
-  search: (q: string, page = 0, size = 20) => api.get<Page<Job>>('/jobs/search', { params: { q, page, size } }),
-  filter: (params: Record<string, string | number | boolean | undefined>) => api.get<Page<Job>>('/jobs/filter', { params }),
   /** Multi-select filter — all array dimensions are sent as repeated query params. */
   filterMulti: (params: FilterMultiParams) => {
     // Axios serializes arrays as repeated params: ?emirate=dubai&emirate=abu_dhabi
@@ -154,8 +170,6 @@ export const jobsApi = {
       paramsSerializer: { indexes: null }, // prevents bracket notation: emirate[0]=...
     })
   },
-  locations: () => api.get<string[]>('/locations'),
-  skills: (q: string) => api.get<string[]>('/skills/autocomplete', { params: { q } }),
   stats: () => api.get<{ totalJobs: number; countriesRepresented: number; companies: number }>('/stats'),
   /** Job boards that have more than minCount active jobs (default 5).
    *  Used by the Browse page Source filter so new boards appear automatically. */
@@ -173,7 +187,6 @@ export const seekerApi = {
     form.append('file', file)
     return api.post<JobSeekerProfile>('/job-seeker/cv', form, { headers: { 'Content-Type': 'multipart/form-data' } })
   },
-  updateSkills: (skills: string) => api.patch<JobSeekerProfile>('/job-seeker/skills', { skills }),
   apply: (payload: { jobId: number; coverLetter?: string }) => api.post<Application>('/applications', payload),
   applications: (page = 0, size = 20) => api.get<Page<Application>>('/applications', { params: { page, size } }),
   /** Returns the set of job IDs the user has applied to — lightweight, IDs only. */
@@ -217,7 +230,6 @@ export const hrApi = {
   deleteJob: (id: number) => api.delete(`/jobs/${id}`),
   applicants: (jobId: number, page = 0, size = 20) => api.get<Page<Application>>(`/hr/jobs/${jobId}/applicants`, { params: { page, size } }),
   updateApplication: (id: number, status: ApplicationStatus) => api.patch<Application>(`/applications/${id}`, { status }),
-  importLinkedIn: (linkedInUrl: string) => api.post<Job>('/linkedin-import', { linkedInUrl }),
   /** Preview-only: fetch and parse a job URL. Never saves. Returns partial data for JS-rendered pages. */
   importPreview: (url: string) => api.post<{
     title: string | null

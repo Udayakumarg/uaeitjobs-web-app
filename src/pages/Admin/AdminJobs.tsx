@@ -34,7 +34,12 @@ export default function AdminJobs() {
     }
   }, [page, filter, search, toast])
 
-  useEffect(() => { load() }, [load])
+  // Debounced (matches Companies/Directory.tsx's pattern) — otherwise every
+  // keystroke in the search box fired its own request.
+  useEffect(() => {
+    const id = window.setTimeout(load, 250)
+    return () => window.clearTimeout(id)
+  }, [load])
 
   const toggleActive = async (job: Job) => {
     const newActive = !job.active

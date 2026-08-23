@@ -1,6 +1,7 @@
 import { Page } from 'playwright'
 import { ScrapedJob } from '../types'
 import { delayWithJitter } from '../utils/delay'
+import { inferEmirate } from '../utils/location'
 
 // UAE IT search terms for Bayt
 const SEARCH_TERMS = [
@@ -22,18 +23,6 @@ function extractJobId(url: string): string | null {
   // Bayt job URLs: /en/uae/jobs/some-title-12345678/ — grab the trailing number
   const m = url.match(/[-/](\d{6,})(?:[/?]|$)/)
   return m ? m[1] : null
-}
-
-function inferEmirate(text: string): string | undefined {
-  const t = text.toLowerCase()
-  if (t.includes('dubai'))           return 'dubai'
-  if (t.includes('abu dhabi'))       return 'abu_dhabi'
-  if (t.includes('sharjah'))         return 'sharjah'
-  if (t.includes('ajman'))           return 'ajman'
-  if (t.includes('ras al khaimah'))  return 'ras_al_khaimah'
-  if (t.includes('fujairah'))        return 'fujairah'
-  if (t.includes('umm al quwain'))   return 'umm_al_quwain'
-  return undefined
 }
 
 export async function scrapeBayt(page: Page): Promise<ScrapedJob[]> {
@@ -78,9 +67,17 @@ export async function scrapeBayt(page: Page): Promise<ScrapedJob[]> {
             const companyEl = await card.$('.t-default, .jb-company, [data-automation-id="company-name"]')
             const company = companyEl ? (await companyEl.innerText()).trim() : 'Unknown'
 
-            // Location
-            const locEl = await card.$('.t-mute, .jb-location, [data-automation-id="job-location"]')
-            const location = locEl ? (await locEl.innerText()).trim() : 'United Arab Emirates'
+            // Location — try the specific selectors first; `.t-mute` is a
+            // generic Bayt utility class also used for the posted-date text
+            // below, so a comma-combined selector could grab a timestamp
+            // instead of the actual location depending on DOM order.
+            const locEl = (await card.$('[data-automation-id="job-location"]'))
+              ?? (await card.$('.jb-location'))
+              ?? (await card.$('.t-mute'))
+            let location = locEl ? (await locEl.innerText()).trim() : 'United Arab Emirates'
+            if (/^\d+\s*(day|hour|week|month)s?\s*ago$/i.test(location) || /^(just now|today|yesterday)$/i.test(location)) {
+              location = 'United Arab Emirates'
+            }
 
             // Description snippet (listing page only — no detail page visits to save time)
             const descEl = await card.$('.jb-description, .t-small.is-black, p')

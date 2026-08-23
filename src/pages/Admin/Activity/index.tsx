@@ -225,17 +225,30 @@ export default function AdminActivity() {
 
   useEffect(() => { load() }, [load])
 
-  // 60-second auto-refresh + countdown ticker
+  // 60-second auto-refresh + countdown ticker.
+  // The interval only ever decrements state — it never calls load() itself.
+  // React (StrictMode in particular) can invoke a setState updater function
+  // more than once to check it's pure, and a network call has no business
+  // living inside one; that used to double-fire the activity/friction-signal
+  // requests on every tick.
   useEffect(() => {
     if (timerRef.current) clearInterval(timerRef.current)
     timerRef.current = setInterval(() => {
-      setCountdown(prev => {
-        if (prev <= 1) { load(); return AUTO_REFRESH_SECS }
-        return prev - 1
-      })
+      setCountdown(prev => Math.max(prev - 1, 0))
     }, 1000)
     return () => { if (timerRef.current) clearInterval(timerRef.current) }
-  }, [load])
+  }, [])
+
+  // Separate effect reacts to the countdown reaching zero. Resets the
+  // countdown unconditionally (not inside load()'s success branch) so a
+  // failed refresh still retries on the next 60s cycle instead of freezing
+  // at 0.
+  useEffect(() => {
+    if (countdown === 0) {
+      setCountdown(AUTO_REFRESH_SECS)
+      load()
+    }
+  }, [countdown, load])
 
   const handleResend = async (user: UserRow) => {
     setResendingId(user.id)

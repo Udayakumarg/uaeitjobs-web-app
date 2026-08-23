@@ -1,6 +1,7 @@
 import { Page } from 'playwright'
 import { ScrapedJob } from '../types'
 import { delayWithJitter } from '../utils/delay'
+import { inferEmirate } from '../utils/location'
 
 /**
  * Indeed sits behind Cloudflare Bot Management, not a simple UA-string WAF
@@ -47,22 +48,20 @@ const LOCATION = 'Dubai'
 const MAX_PAGES = 1
 const BASE = 'https://ae.indeed.com'
 
-function inferEmirate(text: string): string | undefined {
-  const t = (text ?? '').toLowerCase()
-  if (t.includes('dubai'))          return 'dubai'
-  if (t.includes('abu dhabi'))      return 'abu_dhabi'
-  if (t.includes('sharjah'))        return 'sharjah'
-  if (t.includes('ajman'))          return 'ajman'
-  if (t.includes('ras al khaimah')) return 'ras_al_khaimah'
-  if (t.includes('fujairah'))       return 'fujairah'
-  if (t.includes('umm al quwain'))  return 'umm_al_quwain'
-  return undefined
-}
-
 /** "AED 8,000 - 12,000 a month" -> {min, max, currency}. Best-effort only — salary is absent on most cards. */
 function parseSalary(text: string | null): { min?: number; max?: number; currency?: string } {
   if (!text) return {}
   const currency = /aed/i.test(text) ? 'AED' : /\$|usd/i.test(text) ? 'USD' : undefined
+  // The card selector this feeds from falls back to Indeed's generic
+  // attribute chip, which also carries shift length / contract type text —
+  // "8 hour shift" used to be parsed into salaryMin/Max: 8 and published as
+  // a real salary. Require an actual salary signal (currency marker, a
+  // thousands-formatted number, or a "a/per year|month|hour|day" pay-rate
+  // suffix) before treating any digits in the text as a salary figure.
+  const looksLikeSalary = Boolean(currency)
+    || /\d,\d{3}/.test(text)
+    || /\b(?:a|per)\s*(?:year|month|hour|day)\b/i.test(text)
+  if (!looksLikeSalary) return {}
   const nums = text.replace(/,/g, '').match(/\d+(?:\.\d+)?/g)
   if (!nums || nums.length === 0) return { currency }
   const values = nums.map(Number)

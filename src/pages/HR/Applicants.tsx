@@ -5,7 +5,7 @@ import { TableSkeleton } from '../../components/Skeleton'
 import { StatusBadge } from '../../components/StatusBadge'
 import { useToastStore } from '../../components/Toast'
 import { Button, Card, Select } from '../../components/ui'
-import { errorMessage, hrApi } from '../../services/api'
+import { downloadAuthenticated, errorMessage, hrApi } from '../../services/api'
 import type { Application, ApplicationStatus, Page } from '../../types'
 import { dateLabel } from '../../utils/format'
 
@@ -36,7 +36,13 @@ export default function HRApplicants() {
 
   function load() {
     if (!id) return
-    hrApi.applicants(Number(id)).then(({ data }) => setPage(data)).catch((error) =>
+    // Requesting a single large page rather than the default 20 — the
+    // header was showing the true `totalElements` count while the list and
+    // status filter below only ever saw page 0's 20 rows, so "40 total" sat
+    // above a 20-row list and the status filter silently missed the rest.
+    // 200 is generous headroom for one job's applicant count; real
+    // pagination is the next step if a posting ever exceeds it.
+    hrApi.applicants(Number(id), 0, 200).then(({ data }) => setPage(data)).catch((error) =>
       toast({ type: 'error', title: 'Could not load applicants', message: errorMessage(error) }),
     )
   }
@@ -189,16 +195,17 @@ export default function HRApplicants() {
                     {/* CV download */}
                     <td className="p-4">
                       {application.cvUrl ? (
-                        <a
-                          href={application.cvUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          download
+                        <Button
+                          variant="secondary"
+                          className="whitespace-nowrap"
+                          onClick={() =>
+                            downloadAuthenticated(application.cvUrl!, `${application.applicant?.displayName || 'applicant'}-cv`).catch(
+                              (error) => toast({ type: 'error', title: 'Could not download CV', message: errorMessage(error) }),
+                            )
+                          }
                         >
-                          <Button variant="secondary" className="whitespace-nowrap">
-                            <Download size={13} /> Download CV
-                          </Button>
-                        </a>
+                          <Download size={13} /> Download CV
+                        </Button>
                       ) : (
                         <span className="text-xs text-slate-400">No CV</span>
                       )}

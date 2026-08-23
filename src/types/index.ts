@@ -16,7 +16,8 @@ export interface User {
 
 export interface AuthResponse {
   accessToken: string
-  refreshToken: string
+  // The backend always sends this as null now (delivery moved to an httpOnly
+  // cookie) — dropped from the type since nothing here ever read it.
   user: User
 }
 

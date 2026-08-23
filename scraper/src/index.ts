@@ -22,7 +22,11 @@ const HEADED        = process.env.HEADED === 'true'
 const SOURCES       = process.env.SOURCES?.split(',').map(s => s.trim().toLowerCase()) ?? ['bayt', 'naukrigulf']
 const args          = process.argv.slice(2)
 const sourceArg     = args.find(a => a.startsWith('--source='))?.split('=')[1]
-const activeSources = sourceArg ? [sourceArg] : SOURCES
+// Regression: this used to wrap sourceArg in a single-element array without
+// splitting on commas, so `--source=gulftalent,bayt,naukrigulf` produced the
+// literal source name "gulftalent,bayt,naukrigulf" — no scraper matched it,
+// so npm run scrape:all logged "Unknown source" and scraped nothing.
+const activeSources = sourceArg ? sourceArg.split(',').map(s => s.trim().toLowerCase()) : SOURCES
 
 async function main() {
   // ── Proxy selection ─────────────────────────────────────────────────────────
@@ -91,33 +95,41 @@ async function main() {
     for (const source of activeSources) {
       console.log(`\n── ${source.toUpperCase()} ──────────────────────────`)
 
-      let jobs: Awaited<ReturnType<typeof scrapeBayt>> = []
-      if (source === 'bayt') {
-        jobs = await scrapeBayt(page)
-      } else if (source === 'naukrigulf') {
-        jobs = await scrapeNaukrigulf(page)
-      } else if (source === 'gulftalent') {
-        jobs = await scrapeGulfTalent()
-      } else if (source === 'linkedin') {
-        // LinkedIn uses the guest API over plain HTTP — no browser, no session.
-        jobs = await scrapeLinkedIn()
-      } else if (source === 'indeed') {
-        jobs = await scrapeIndeed(page)
-      } else {
-        console.warn(`  Unknown source "${source}" — skipping`)
-        continue
-      }
+      // One source's scrape/post failure must not abort every source after
+      // it in the list — this used to propagate straight out of the loop to
+      // main()'s catch, silently skipping every remaining source.
+      try {
+        let jobs: Awaited<ReturnType<typeof scrapeBayt>> = []
+        if (source === 'bayt') {
+          jobs = await scrapeBayt(page)
+        } else if (source === 'naukrigulf') {
+          jobs = await scrapeNaukrigulf(page)
+        } else if (source === 'gulftalent') {
+          jobs = await scrapeGulfTalent()
+        } else if (source === 'linkedin') {
+          // LinkedIn uses the guest API over plain HTTP — no browser, no session.
+          jobs = await scrapeLinkedIn()
+        } else if (source === 'indeed') {
+          jobs = await scrapeIndeed(page)
+        } else {
+          console.warn(`  Unknown source "${source}" — skipping`)
+          continue
+        }
 
-      if (jobs.length === 0) {
-        console.log(`  No jobs scraped from ${source}`)
-        summary[source] = { fetched: 0, inserted: 0, duplicates: 0, rejected: 0 }
-        continue
-      }
+        if (jobs.length === 0) {
+          console.log(`  No jobs scraped from ${source}`)
+          summary[source] = { fetched: 0, inserted: 0, duplicates: 0, rejected: 0 }
+          continue
+        }
 
-      console.log(`  Posting ${jobs.length} jobs to backend…`)
-      const result = await postJobs(source, jobs)
-      summary[source] = result
-      console.log(`  ✓ ${source}: inserted=${result.inserted} dupes=${result.duplicates} rejected=${result.rejected}`)
+        console.log(`  Posting ${jobs.length} jobs to backend…`)
+        const result = await postJobs(source, jobs)
+        summary[source] = result
+        console.log(`  ✓ ${source}: inserted=${result.inserted} dupes=${result.duplicates} rejected=${result.rejected}`)
+      } catch (err) {
+        console.error(`  ✗ ${source} failed:`, err instanceof Error ? err.message : err)
+        summary[source] = { error: err instanceof Error ? err.message : String(err) }
+      }
     }
   } finally {
     await browser.close()
