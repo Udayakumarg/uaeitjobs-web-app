@@ -3,6 +3,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Badge, Button, Card, Container, EmptyState, Select } from '../../components/ui'
 import { useToastStore } from '../../components/Toast'
+import { useDocumentMeta } from '../../hooks/useDocumentMeta'
 import { companiesApi, errorMessage } from '../../services/api'
 import { useAuthStore } from '../../store/authStore'
 import type { HiringActivity, HiringCompany, HiringCompanyFilters } from '../../types'
@@ -49,17 +50,6 @@ export default function CompaniesDirectory() {
   const addToast = useToastStore((s) => s.add)
   const user     = useAuthStore((s) => s.user)
 
-  // ── SEO meta ──────────────────────────────────────────────────────────
-  useEffect(() => {
-    const prevTitle = document.title
-    document.title = 'UAE IT Hiring Companies — Directory of Tech Employers | UAEITJOBS'
-    setMeta(
-      'description',
-      'Browse UAE organisations hiring for IT and technology roles. Click straight through to each company’s careers page. Banks, telecoms, government, startups and consultancies.',
-    )
-    return () => { document.title = prevTitle }
-  }, [])
-
   // ── Load filter options once ─────────────────────────────────────────
   useEffect(() => {
     companiesApi.filters()
@@ -97,25 +87,32 @@ export default function CompaniesDirectory() {
   const resetAndSet = <T,>(setter: (v: T) => void) => (v: T) => { setter(v); setPage(0) }
 
   // ── JSON-LD ItemList schema ──────────────────────────────────────────
-  const jsonLd = useMemo(() => {
-    return JSON.stringify({
-      '@context': 'https://schema.org',
-      '@type':    'ItemList',
-      name:       'UAE IT Hiring Companies',
-      itemListElement: items.slice(0, 50).map((c, i) => ({
-        '@type':   'ListItem',
-        position:  i + 1,
-        url:       `https://www.uaeitjobs.com/companies/${c.slug}`,
-        name:      c.name,
-      })),
-    })
-  }, [items])
+  // useDocumentMeta injects this via script.text (literal text content),
+  // not dangerouslySetInnerHTML — a company name containing "</script>"
+  // can't break out and inject a sibling element the way the raw HTML
+  // string this used to build could.
+  const jsonLd = useMemo(() => ({
+    '@context': 'https://schema.org',
+    '@type':    'ItemList',
+    name:       'UAE IT Hiring Companies',
+    itemListElement: items.slice(0, 50).map((c, i) => ({
+      '@type':   'ListItem',
+      position:  i + 1,
+      url:       `https://www.uaeitjobs.com/companies/${c.slug}`,
+      name:      c.name,
+    })),
+  }), [items])
+
+  useDocumentMeta({
+    title: 'UAE IT Hiring Companies — Directory of Tech Employers',
+    raw: true,
+    description:
+      'Browse UAE organisations hiring for IT and technology roles. Click straight through to each company’s careers page. Banks, telecoms, government, startups and consultancies.',
+    jsonLd,
+  })
 
   return (
     <Container className="py-10">
-      {/* JSON-LD — picked up by Google for rich-result eligibility. */}
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLd }} />
-
       {/* ── Header ─────────────────────────────────────────────────────── */}
       <header className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div className="max-w-2xl">
@@ -252,15 +249,4 @@ function CompanyCard({ c }: { c: HiringCompany }) {
       </div>
     </article>
   )
-}
-
-/* Tiny helper — finds or creates <meta name="..."> in <head>. */
-function setMeta(name: string, content: string) {
-  let el = document.querySelector(`meta[name="${name}"]`) as HTMLMetaElement | null
-  if (!el) {
-    el = document.createElement('meta')
-    el.name = name
-    document.head.appendChild(el)
-  }
-  el.content = content
 }

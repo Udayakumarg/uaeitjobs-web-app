@@ -9,15 +9,20 @@ import { Card, EmptyState } from '../../components/ui'
 import { seekerApi, errorMessage } from '../../services/api'
 import type { Application } from '../../types'
 import { money, relativeTime } from '../../utils/format'
+import { isSafeUrl } from '../../utils/url'
 
 export default function JobSeekerApplications() {
   const toast = useToastStore(s => s.add)
   const [items,   setItems]   = useState<Application[] | null>(null)
+  // The real total — items.length was capped at whatever page size was
+  // requested below, so a seeker with more than that many applications was
+  // always told a count equal to the page size, never the true number.
+  const [total,   setTotal]   = useState(0)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     seekerApi.applications(0, 100)
-      .then(({ data }) => setItems(data.content))
+      .then(({ data }) => { setItems(data.content); setTotal(data.totalElements) })
       .catch(err => toast({ type: 'error', title: 'Could not load applications', message: errorMessage(err) }))
       .finally(() => setLoading(false))
   }, [toast])
@@ -28,7 +33,7 @@ export default function JobSeekerApplications() {
         <div>
           <h1 className="text-3xl font-bold text-slate-950">My applications</h1>
           {items && items.length > 0 && (
-            <p className="mt-1 text-sm text-slate-500">{items.length} job{items.length !== 1 ? 's' : ''} applied</p>
+            <p className="mt-1 text-sm text-slate-500">{total} job{total !== 1 ? 's' : ''} applied</p>
           )}
         </div>
         <Link
@@ -78,7 +83,8 @@ export default function JobSeekerApplications() {
 function ApplicationCard({ app }: { app: Application }) {
   const job     = app.job
   const salary  = job ? money(job.salaryMin, job.salaryMax, job.salaryCurrency) : null
-  const applyUrl = job?.applyUrl ?? job?.linkedinUrl ?? null
+  const rawApplyUrl = job?.applyUrl ?? job?.linkedinUrl ?? null
+  const applyUrl = isSafeUrl(rawApplyUrl) ? rawApplyUrl : null
 
   // Meta line: company · location · job type
   const meta = [

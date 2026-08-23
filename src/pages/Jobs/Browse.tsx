@@ -25,6 +25,7 @@ import { useToastStore } from '../../components/Toast'
 import { JOB_CATEGORIES } from '../../types'
 import type { Emirate, Job, JobCategory } from '../../types'
 import { labelize, money, parseSkills, relativeTime } from '../../utils/format'
+import { isSafeUrl } from '../../utils/url'
 
 // ── Static data ───────────────────────────────────────────────────────────────
 const EMIRATES: { value: Emirate; label: string }[] = [
@@ -134,6 +135,16 @@ export default function JobBrowse() {
 
   // filter state — initialised from URL so bookmarks and shared links restore the full view
   const [query,           setQuery]          = useState(() => searchParams.get('q') ?? '')
+  // The fetch effect below uses this, not `query` directly — otherwise every
+  // keystroke fired its own request against a backend limited to 10 req/min,
+  // and a user typing a normal search term would hit "Rate limit exceeded"
+  // mid-search. `query` itself still drives the input and the URL sync
+  // immediately so typing feels responsive.
+  const [debouncedQuery,  setDebouncedQuery]  = useState(query)
+  useEffect(() => {
+    const id = window.setTimeout(() => setDebouncedQuery(query), 250)
+    return () => window.clearTimeout(id)
+  }, [query])
   const [company,         setCompany]        = useState(() => searchParams.get('company') ?? '')
   const [emirates,        setEmirates]       = useState<Set<Emirate>>(() => new Set(searchParams.getAll('emirate') as Emirate[]))
   const [jobCats,         setJobCats]        = useState<Set<JobCategory>>(() => new Set(searchParams.getAll('category') as JobCategory[]))
@@ -222,7 +233,7 @@ export default function JobBrowse() {
     const [salMin, salMax] = salaryBucket ? salaryRange(salaryBucket) : [undefined, undefined]
     const params: FilterMultiParams = {
       page: 0, size: 80,
-      ...(query.trim()          && { q:              query.trim() }),
+      ...(debouncedQuery.trim() && { q:              debouncedQuery.trim() }),
       ...(company.trim()        && { company:        company.trim() }),
       ...(eArr.length           && { emirate:         eArr }),
       ...(cArr.length           && { category:        cArr }),
@@ -253,14 +264,23 @@ export default function JobBrowse() {
       }
     }).catch(() => {}).finally(() => { if (ok) setJobsLoading(false) })
     return () => { ok = false }
-  }, [query, company, emirates, jobCats, levels, jobTypes, posted, salaryBucket, sortBy, sources, easyApplyOnly, remoteUae, immediateJoiner, visaType])
+  }, [debouncedQuery, company, emirates, jobCats, levels, jobTypes, posted, salaryBucket, sortBy, sources, easyApplyOnly, remoteUae, immediateJoiner, visaType])
 
   useEffect(() => {
     if (!selectedId) return
+    let ok = true
     setDetailLoading(true)
     jobsApi.detail(String(selectedId))
-      .then(({ data }) => { setDetail(data); detailRef.current?.scrollTo(0, 0) })
-      .catch(() => {}).finally(() => setDetailLoading(false))
+      .then(({ data }) => {
+        // Selecting job B while job A's request is still in flight must not
+        // let A's late response overwrite B's — without this guard, whichever
+        // request resolves last wins regardless of which job is selected now.
+        if (!ok) return
+        setDetail(data)
+        detailRef.current?.scrollTo(0, 0)
+      })
+      .catch(() => {}).finally(() => { if (ok) setDetailLoading(false) })
+    return () => { ok = false }
   }, [selectedId])
 
   // Load saved + applied job IDs — job seekers only.
@@ -1184,7 +1204,11 @@ function DetailPanel({ job, onSave, isSaved, isApplied, onApply }: {
   const isLinkedIn     = !!(job.linkedinUrl || job.applyUrl?.toLowerCase().includes('linkedin.com'))
   const isGated        = !user && job.applyUrl == null && job.linkedinUrl == null
   const isDirectApply  = !!user && !job.applyUrl && !job.linkedinUrl
-  const applyUrl       = job.applyUrl ?? job.linkedinUrl ?? null
+  // job.applyUrl/linkedinUrl come from scraped or HR-supplied data — checked
+  // before it's allowed into an href below (new URL() alone would accept a
+  // javascript: URL as "valid").
+  const rawApplyUrl    = job.applyUrl ?? job.linkedinUrl ?? null
+  const applyUrl       = isSafeUrl(rawApplyUrl) ? rawApplyUrl : null
   const half = Math.ceil(skills.length / 2)
   const emirateLabel = EMIRATES.find(e => e.value === job.emirate)?.label
 
@@ -1226,9 +1250,9 @@ function DetailPanel({ job, onSave, isSaved, isApplied, onApply }: {
             >
               {isApplied ? 'Apply Again' : 'Apply Now'}
             </Link>
-          ) : (
+          ) : applyUrl ? (
             <a
-              href={applyUrl!}
+              href={applyUrl}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-2 text-white font-sans text-sm font-bold px-5 py-2.5 rounded-lg transition-colors"
@@ -1245,7 +1269,7 @@ function DetailPanel({ job, onSave, isSaved, isApplied, onApply }: {
             >
               <ExternalLink size={14} /> {isApplied ? 'Apply Again' : 'Apply Now'}
             </a>
-          )}
+          ) : null}
           <button
             onClick={(e) => onSave(job.id, e)}
             className="border rounded-lg p-2.5 transition-colors"

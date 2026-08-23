@@ -49,8 +49,15 @@ export const useAuthStore = create<AuthState>((set) => ({
     //      401 (token already cleared), attempt a token refresh, receive a new
     //      session from setSession(), and silently re-log the user back in.
     const token = localStorage.getItem('uaeitjobs.accessToken')
-    const base = (import.meta.env.VITE_API_URL?.replace(/\/+$/, '') ?? '')
-    fetch(`${base}/api/v1/auth/logout`, {
+    // Mirror services/api.ts's apiBaseUrl() logic inline rather than
+    // importing it (see the circular-dependency note above) — VITE_API_URL
+    // is documented to optionally already end in /api/v1, so appending it
+    // unconditionally used to produce /api/v1/api/v1/auth/logout, which
+    // 404'd silently (see the .catch(() => {}) below) and left the
+    // refresh-token cookie un-revoked on "logout".
+    const rawBase = import.meta.env.VITE_API_URL?.replace(/\/+$/, '') ?? ''
+    const base = rawBase.endsWith('/api/v1') ? rawBase : `${rawBase}/api/v1`
+    fetch(`${base}/auth/logout`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

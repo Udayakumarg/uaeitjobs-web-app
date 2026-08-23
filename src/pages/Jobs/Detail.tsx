@@ -30,6 +30,7 @@ import { errorMessage, jobsApi, seekerAiApi, seekerApi } from '../../services/ap
 import { useAuthStore } from '../../store/authStore'
 import type { Job } from '../../types'
 import { labelize, money, parseSkills, relativeTime } from '../../utils/format'
+import { isSafeUrl } from '../../utils/url'
 
 function buildJobPostingJsonLd(job: Job): Record<string, unknown> {
   const emirateAddress: Record<string, string> = {
@@ -81,7 +82,18 @@ export default function JobDetail() {
 
   useEffect(() => {
     if (!id) return
-    jobsApi.detail(id).then(({ data }) => setJob(data)).catch((err) => setError(errorMessage(err))).finally(() => setLoading(false))
+    let ok = true
+    // Reset immediately on navigation between jobs — otherwise job 1's title,
+    // salary, and apply link stayed on screen (and clickable) until job 2's
+    // response landed, so a user could click "Apply" for the wrong job.
+    setJob(null)
+    setError('')
+    setLoading(true)
+    jobsApi.detail(id)
+      .then(({ data }) => { if (ok) setJob(data) })
+      .catch((err) => { if (ok) setError(errorMessage(err)) })
+      .finally(() => { if (ok) setLoading(false) })
+    return () => { ok = false }
   }, [id])
 
   async function save() {
@@ -139,10 +151,14 @@ export default function JobDetail() {
   // HR-posted jobs have no external applyUrl — seeker applies within the platform.
   const isDirectApply = !!user && !job?.applyUrl && !job?.linkedinUrl
 
-  const applyUrl = job?.applyUrl || job?.linkedinUrl
+  const rawApplyUrl = job?.applyUrl || job?.linkedinUrl
     || (user && !isDirectApply
         ? `https://www.linkedin.com/jobs/search/?keywords=${encodeURIComponent((job?.title ?? '') + ' ' + (job?.companyName ?? ''))}&location=United%20Arab%20Emirates`
         : null)
+  // job.applyUrl/linkedinUrl come from scraped or HR-supplied data — `new
+  // URL()` happily parses a `javascript:` URL as "valid", so this is
+  // checked before it's ever allowed into an href below.
+  const applyUrl = isSafeUrl(rawApplyUrl) ? rawApplyUrl : null
 
   // Detect the external platform from the apply URL so we can label the
   // CTA ("Apply on LinkedIn", "Apply on Bayt", …) and show a source badge.
@@ -437,15 +453,16 @@ export default function JobDetail() {
                   <Send size={15} /> Apply now
                 </button>
               )
-            ) : (
+            ) : applyUrl ? (
               <a
-                href={applyUrl!}
+                href={applyUrl}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl bg-slate-950 px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-800 sm:flex-none"
               >
                 <ExternalLink size={15} /> {applySource ? `Apply on ${applySource.name}` : 'Apply now'}
               </a>
+            ) : null
             )}
             <button
               onClick={save}

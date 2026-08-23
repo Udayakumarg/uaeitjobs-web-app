@@ -15,6 +15,13 @@
     "noEmit": true,
     "jsx": "react-jsx",
 
+    /* Type safety — was off, so strictNullChecks/noImplicitAny caught
+       almost nothing (e.g. href={applyUrl!} could render href="null" with
+       no compile error). Turning this on will surface pre-existing gaps
+       across the codebase; run `tsc -b`/`npm run build` and fix what
+       surfaces before this lands. */
+    "strict": true,
+
     /* Linting */
     "noUnusedLocals": true,
     "noUnusedParameters": true,

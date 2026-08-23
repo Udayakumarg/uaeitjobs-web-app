@@ -4,8 +4,10 @@ import { Link, useParams } from 'react-router-dom'
 import { Badge, Button, Card, Container } from '../../components/ui'
 import Loading from '../../components/Loading'
 import { useToastStore } from '../../components/Toast'
+import { useDocumentMeta } from '../../hooks/useDocumentMeta'
 import { companiesApi, errorMessage, statusCode } from '../../services/api'
 import type { HiringActivity, HiringCompany } from '../../types'
+import { isSafeUrl } from '../../utils/url'
 
 const ACTIVITY_LABEL: Record<HiringActivity, string> = {
   ACTIVE_HIRING:   'Active hiring',
@@ -51,24 +53,12 @@ export default function CompanyDetail() {
     return () => { cancelled = true }
   }, [slug, addToast])
 
-  // ── SEO meta ──────────────────────────────────────────────────────────
-  useEffect(() => {
-    if (!company) return
-    const prevTitle = document.title
-    const t = `${company.name} — IT & Tech Careers in UAE | UAEITJOBS`
-    document.title = t
-    setMeta(
-      'description',
-      company.description
-        ? `${company.name}: ${company.description.slice(0, 150)}`
-        : `${company.name} hires IT and technology professionals in ${company.city ?? 'the UAE'}. View open careers and recent roles.`,
-    )
-    return () => { document.title = prevTitle }
-  }, [company])
-
+  // JSON-LD injected via useDocumentMeta's script.text — literal text
+  // content, not dangerouslySetInnerHTML, so a company name or description
+  // containing "</script>" can't break out of the tag.
   const jsonLd = useMemo(() => {
     if (!company) return null
-    return JSON.stringify({
+    return {
       '@context': 'https://schema.org',
       '@type':    'Organization',
       name:        company.name,
@@ -79,8 +69,19 @@ export default function CompanyDetail() {
         addressLocality: company.city,
         addressCountry: 'AE',
       } : undefined,
-    })
+    }
   }, [company])
+
+  useDocumentMeta({
+    title: company ? `${company.name} — IT & Tech Careers in UAE` : 'Company',
+    raw: true,
+    description: company
+      ? (company.description
+          ? `${company.name}: ${company.description.slice(0, 150)}`
+          : `${company.name} hires IT and technology professionals in ${company.city ?? 'the UAE'}. View open careers and recent roles.`)
+      : undefined,
+    jsonLd: jsonLd ?? undefined,
+  })
 
   if (loading) return <Loading />
 
@@ -101,7 +102,6 @@ export default function CompanyDetail() {
 
   return (
     <Container className="py-10">
-      {jsonLd ? <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLd }} /> : null}
 
       <Link to="/companies" className="inline-flex items-center gap-1.5 text-sm font-medium text-slate-600 hover:text-pink-700">
         <ArrowLeft className="h-4 w-4" /> All companies
@@ -135,7 +135,7 @@ export default function CompanyDetail() {
             </div>
           </div>
           <a
-            href={company.careersUrl}
+            href={isSafeUrl(company.careersUrl) ? company.careersUrl : undefined}
             target="_blank"
             rel="noopener noreferrer nofollow"
             className="inline-flex shrink-0 items-center gap-2 rounded-lg bg-pink-700 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-pink-800"
@@ -161,14 +161,14 @@ export default function CompanyDetail() {
 
         <div className="mt-8 flex flex-wrap gap-4 border-t border-slate-200 pt-6 text-sm">
           <a
-            href={company.careersUrl}
+            href={isSafeUrl(company.careersUrl) ? company.careersUrl : undefined}
             target="_blank"
             rel="noopener noreferrer nofollow"
             className="text-pink-700 hover:underline"
           >
             Careers page
           </a>
-          {company.websiteUrl ? (
+          {isSafeUrl(company.websiteUrl) ? (
             <a
               href={company.websiteUrl}
               target="_blank"
@@ -185,14 +185,4 @@ export default function CompanyDetail() {
       </Card>
     </Container>
   )
-}
-
-function setMeta(name: string, content: string) {
-  let el = document.querySelector(`meta[name="${name}"]`) as HTMLMetaElement | null
-  if (!el) {
-    el = document.createElement('meta')
-    el.name = name
-    document.head.appendChild(el)
-  }
-  el.content = content
 }

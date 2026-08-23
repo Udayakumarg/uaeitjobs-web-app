@@ -26,6 +26,13 @@ import * as cron     from 'node-cron'
 const PORT   = parseInt(process.env.TRIGGER_PORT   ?? '3001', 10)
 const SECRET = process.env.TRIGGER_SECRET ?? ''
 
+if (!SECRET) {
+  console.error('[trigger] TRIGGER_SECRET is not set — refusing to start. '
+    + 'This server binds 0.0.0.0 and triggers scraper runs; running it without '
+    + 'a shared secret means anyone on the internet can trigger it.')
+  process.exit(1)
+}
+
 const VALID_SOURCES = new Set(['bayt', 'naukrigulf', 'gulftalent', 'linkedin', 'indeed'])
 
 // Track which source is currently running so we don't double-launch — shared
@@ -130,7 +137,12 @@ const server = http.createServer((req, res) => {
   res.setHeader('Content-Type', 'application/json')
 
   // ── Auth ────────────────────────────────────────────────────────────────
-  if (SECRET && req.headers['x-trigger-secret'] !== SECRET) {
+  // Fails closed: an unset/empty TRIGGER_SECRET must never be treated as
+  // "auth disabled" — the process refuses to start below instead. This
+  // check used to be skipped entirely when SECRET was falsy, so a missing
+  // env var silently opened the trigger endpoint to the whole internet
+  // (the server binds 0.0.0.0).
+  if (req.headers['x-trigger-secret'] !== SECRET) {
     res.writeHead(401).end(JSON.stringify({ error: 'Unauthorised' }))
     return
   }
@@ -169,6 +181,6 @@ const server = http.createServer((req, res) => {
 
 server.listen(PORT, '0.0.0.0', () => {
   console.log(`🎯  Scraper trigger server listening on port ${PORT}`)
-  console.log(`    Auth : ${SECRET ? 'enabled' : 'DISABLED — set TRIGGER_SECRET'}`)
+  console.log(`    Auth : enabled`)
   console.log(`    Sources: ${[...VALID_SOURCES].join(', ')}`)
 })
