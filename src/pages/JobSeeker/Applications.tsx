@@ -1,15 +1,23 @@
-import { ExternalLink, RotateCcw } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { ExternalLink, RotateCcw, Search } from 'lucide-react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { CompanyLogo } from '../../components/CompanyLogo'
 import { CardSkeleton } from '../../components/Skeleton'
 import { StatusBadge } from '../../components/StatusBadge'
 import { useToastStore } from '../../components/Toast'
-import { Card, EmptyState } from '../../components/ui'
+import { Card, EmptyState, Select } from '../../components/ui'
 import { seekerApi, errorMessage } from '../../services/api'
-import type { Application } from '../../types'
-import { money, relativeTime } from '../../utils/format'
+import type { Application, ApplicationStatus } from '../../types'
+import { money, relativeTime, dateLabel } from '../../utils/format'
 import { isSafeUrl } from '../../utils/url'
+
+const STATUS_OPTIONS: { value: ApplicationStatus; label: string }[] = [
+  { value: 'applied',     label: 'Applied' },
+  { value: 'reviewed',    label: 'Reviewed' },
+  { value: 'shortlisted', label: 'Shortlisted' },
+  { value: 'rejected',    label: 'Rejected' },
+  { value: 'hired',       label: 'Hired' },
+]
 
 export default function JobSeekerApplications() {
   const toast = useToastStore(s => s.add)
@@ -20,12 +28,37 @@ export default function JobSeekerApplications() {
   const [total,   setTotal]   = useState(0)
   const [loading, setLoading] = useState(true)
 
+  // Everything below is client-side — up to 100 applications are already
+  // loaded in one shot, and a personal list this size doesn't need a
+  // server round-trip just to search or re-sort it.
+  const [query,      setQuery]      = useState('')
+  const [status,     setStatus]     = useState<ApplicationStatus | ''>('')
+  const [sortOrder,  setSortOrder]  = useState<'newest' | 'oldest'>('newest')
+
   useEffect(() => {
     seekerApi.applications(0, 100)
       .then(({ data }) => { setItems(data.content); setTotal(data.totalElements) })
       .catch(err => toast({ type: 'error', title: 'Could not load applications', message: errorMessage(err) }))
       .finally(() => setLoading(false))
   }, [toast])
+
+  const visibleItems = useMemo(() => {
+    if (!items) return null
+    const q = query.trim().toLowerCase()
+    const filtered = items.filter(app => {
+      if (status && app.status !== status) return false
+      if (!q) return true
+      return (app.job?.title.toLowerCase().includes(q))
+          || (app.job?.companyName.toLowerCase().includes(q))
+    })
+    return [...filtered].sort((a, b) => {
+      const at = a.appliedAt ? new Date(a.appliedAt).getTime() : 0
+      const bt = b.appliedAt ? new Date(b.appliedAt).getTime() : 0
+      return sortOrder === 'newest' ? bt - at : at - bt
+    })
+  }, [items, query, status, sortOrder])
+
+  const hasFilters = query.trim() !== '' || status !== ''
 
   return (
     <main className="mx-auto max-w-5xl px-4 py-8">
@@ -52,7 +85,7 @@ export default function JobSeekerApplications() {
         </div>
       )}
 
-      {/* Empty state */}
+      {/* Empty state — never applied at all */}
       {!loading && items?.length === 0 && (
         <EmptyState
           title="No applications yet."
@@ -68,10 +101,53 @@ export default function JobSeekerApplications() {
         />
       )}
 
+      {/* Toolbar — search, status filter, applied-date sort */}
+      {!loading && items && items.length > 0 && (
+        <Card className="mb-4 flex flex-col gap-3 p-3 sm:flex-row">
+          <div className="relative flex-1">
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+            <input
+              type="search"
+              value={query}
+              onChange={e => setQuery(e.target.value)}
+              placeholder="Search by job title or company…"
+              aria-label="Search applications"
+              className="min-h-11 w-full rounded-lg border border-slate-200 bg-white py-2 pl-10 pr-3 text-sm shadow-sm transition hover:border-slate-300 focus:border-pink-600 focus:outline-none focus:ring-4 focus:ring-pink-600/15"
+            />
+          </div>
+          <Select value={status} onChange={e => setStatus(e.target.value as ApplicationStatus | '')} className="sm:w-44" aria-label="Filter by status">
+            <option value="">All statuses</option>
+            {STATUS_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+          </Select>
+          <Select value={sortOrder} onChange={e => setSortOrder(e.target.value as 'newest' | 'oldest')} className="sm:w-52" aria-label="Sort by applied date">
+            <option value="newest">Applied date: Newest first</option>
+            <option value="oldest">Applied date: Oldest first</option>
+          </Select>
+        </Card>
+      )}
+
+      {/* Filtered-to-nothing state — applications exist, none match */}
+      {!loading && visibleItems && items && items.length > 0 && visibleItems.length === 0 && (
+        <EmptyState
+          title="No applications match your filters."
+          description="Try a different search term or clear the status filter."
+          action={
+            hasFilters ? (
+              <button
+                onClick={() => { setQuery(''); setStatus('') }}
+                className="inline-flex items-center gap-2 rounded-lg bg-slate-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800"
+              >
+                Clear filters
+              </button>
+            ) : undefined
+          }
+        />
+      )}
+
       {/* Application cards */}
-      {items && items.length > 0 && (
+      {visibleItems && visibleItems.length > 0 && (
         <div className="grid gap-3">
-          {items.map(app => (
+          {visibleItems.map(app => (
             <ApplicationCard key={app.id} app={app} />
           ))}
         </div>
@@ -133,7 +209,7 @@ function ApplicationCard({ app }: { app: Application }) {
         <p className="text-sm text-slate-500 truncate">
           {meta}
           {app.appliedAt && (
-            <span className="text-slate-400"> · {relativeTime(app.appliedAt)}</span>
+            <span className="text-slate-400" title={`Applied ${dateLabel(app.appliedAt)}`}> · {relativeTime(app.appliedAt)}</span>
           )}
           {salary && (
             <span className="text-emerald-700 font-medium"> · {salary}</span>
