@@ -1238,9 +1238,14 @@ function DetailPanel({ job, onSave, isSaved, isApplied, onApply }: {
           {job.locationUae && <span className="flex items-center gap-1.5"><MapPin size={12} />{job.locationUae}</span>}
           {job.jobType && <span className="flex items-center gap-1.5"><BriefcaseBusiness size={12} />{labelize(job.jobType)}</span>}
         </div>
-        <Link to={`/jobs?company=${encodeURIComponent(job.companyName ?? '')}`} className="hover:underline" style={{ color: PINK }}>
+        {/* Plain <a>, not <Link> — this panel renders while already on /jobs, so a
+            client-side Link navigation to the same route doesn't remount the page and
+            the company filter state (only ever read from the URL on first mount) never
+            picks up the new query param. Same class of bug applySavedSearch works around
+            above via window.location.assign — a real browser navigation forces the reset. */}
+        <a href={`/jobs?company=${encodeURIComponent(job.companyName ?? '')}`} className="hover:underline" style={{ color: PINK }}>
           More from {job.companyName} →
-        </Link>
+        </a>
       </div>
     </div>
   )
