@@ -462,8 +462,7 @@ export default function JobDetail() {
               >
                 <ExternalLink size={15} /> {applySource ? `Apply on ${applySource.name}` : 'Apply now'}
               </a>
-            ) : null
-            )}
+            ) : null}
             <button
               onClick={save}
               className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
