@@ -52,6 +52,49 @@ function parseRelativeTime(text: string): string | undefined {
   return new Date(Date.now() - n * ms).toISOString().substring(0, 10)
 }
 
+interface Card {
+  jobId: string
+  title: string
+  company: string
+  location: string
+  dateText: string
+  applyUrl: string
+  /** Card-level snippet — kept as the fallback if the detail-page fetch below fails. */
+  snippet: string
+}
+
+/**
+ * Fetches a job's own detail page and extracts the real description.
+ *
+ * Verified live 2026-08: NaukriGulf's detail pages are NOT blocked — same
+ * stealth Playwright session already used for listing pages navigates
+ * straight to a 200 with a rich `.job-description` block (there are
+ * multiple `.job-description` elements per page — "Roles & Responsibilities"
+ * and "Desired Candidate Profile" are separate blocks with the same class,
+ * so all of them are joined rather than just the first). Returns null on
+ * any failure so the caller can fall back to the card snippet instead of
+ * dropping the job. Reuses the same shared `page` the listing scrape uses —
+ * navigating away and back per job, not a second tab.
+ */
+async function fetchDetailDescription(page: Page, url: string): Promise<string | null> {
+  try {
+    await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30_000 })
+    const found = await page
+      .waitForSelector('.job-description', { timeout: 10_000 })
+      .then(() => true)
+      .catch(() => false)
+    if (!found) return null
+
+    const parts = await page.$$eval('.job-description', els =>
+      els.map(el => (el as HTMLElement).innerText.trim()).filter(Boolean))
+    const text = parts.join('\n\n').trim()
+    return text.length >= 60 ? text : null
+  } catch (err) {
+    console.warn(`  [naukrigulf] detail fetch failed for ${url}:`, (err as Error).message)
+    return null
+  }
+}
+
 export async function scrapeNaukrigulf(page: Page): Promise<ScrapedJob[]> {
   const seen = new Set<string>()
   const jobs: ScrapedJob[] = []
@@ -89,17 +132,18 @@ export async function scrapeNaukrigulf(page: Page): Promise<ScrapedJob[]> {
 
         // Verified against live markup 2026-08 (site redesign since this was
         // last written — the previous selectors matched nothing).
-        const cards = await page.$$('.srp-tuple')
-        if (cards.length === 0) {
+        const cardHandles = await page.$$('.srp-tuple')
+        if (cardHandles.length === 0) {
           console.log(`  [naukrigulf] No cards found — stopping for "${slug}"`)
           break
         }
 
-        let newOnPage = 0
-        for (const card of cards) {
+        // Pass 1: pull plain metadata out of the live card handles while still
+        // on the listing page — these handles go stale the moment we navigate
+        // away to fetch a detail page below, so nothing here can be deferred.
+        const cards: Card[] = []
+        for (const card of cardHandles) {
           try {
-            // Title & URL — the job ID lives only in the URL (…-jid-220826001091),
-            // there is no data-job-id attribute on this card any more.
             const titleEl = await card.$('.designation-title')
             const linkEl  = await card.$('a.info-position')
             if (!titleEl || !linkEl) continue
@@ -112,7 +156,6 @@ export async function scrapeNaukrigulf(page: Page): Promise<ScrapedJob[]> {
             if (!jobId || seen.has(`naukrigulf_${jobId}`)) continue
             seen.add(`naukrigulf_${jobId}`)
 
-            // Company
             const companyEl = await card.$('.info-org')
             const company = companyEl ? (await companyEl.innerText()).trim() : 'Unknown'
 
@@ -120,34 +163,40 @@ export async function scrapeNaukrigulf(page: Page): Promise<ScrapedJob[]> {
             const locEl = await card.$('.info-loc')
             const location = locEl ? (await locEl.innerText()).trim() : 'United Arab Emirates'
 
-            // Description snippet
-            const descEl = await card.$('.description')
-            const description = descEl ? (await descEl.innerText()).trim() : title
-
-            // Posted time is relative text ("6 hrs ago"), not a datetime attribute
             const dateEl = await card.$('.time')
-            const postedAt = dateEl ? parseRelativeTime((await dateEl.innerText()).trim()) : undefined
+            const dateText = dateEl ? (await dateEl.innerText()).trim() : ''
 
-            jobs.push({
-              externalId: jobId,
-              title,
-              company,
-              description: description || title,
-              location: location.includes('AE') || location.includes('Emirates') ? location : `${location}, AE`,
-              emirate: inferEmirate(location),
-              applyUrl,
-              publisher: 'NaukriGulf',
-              postedAt,
-              remoteUae: location.toLowerCase().includes('remote'),
-            })
-            newOnPage++
+            const descEl = await card.$('.description')
+            const snippet = descEl ? (await descEl.innerText()).trim() : ''
+
+            cards.push({ jobId, title, company, location, dateText, applyUrl, snippet })
           } catch {
             // Skip malformed card
           }
         }
 
-        console.log(`  [naukrigulf] "${slug}" p${pageNum}: +${newOnPage} jobs`)
-        if (newOnPage === 0) break
+        // Pass 2: now that the listing page's data is safely extracted, visit
+        // each new job's own detail page for the real description.
+        for (const c of cards) {
+          const detail = await fetchDetailDescription(page, c.applyUrl)
+          await delayWithJitter(page, 1_200)
+
+          jobs.push({
+            externalId: c.jobId,
+            title: c.title,
+            company: c.company,
+            description: detail ?? (c.snippet || c.title),
+            location: c.location.includes('AE') || c.location.includes('Emirates') ? c.location : `${c.location}, AE`,
+            emirate: inferEmirate(c.location),
+            applyUrl: c.applyUrl,
+            publisher: 'NaukriGulf',
+            postedAt: c.dateText ? parseRelativeTime(c.dateText) : undefined,
+            remoteUae: c.location.toLowerCase().includes('remote'),
+          })
+        }
+
+        console.log(`  [naukrigulf] "${slug}" p${pageNum}: +${cards.length} jobs`)
+        if (cards.length === 0) break
 
         // Inter-page jitter: 1.5–3.5 s
         await delayWithJitter(page, 2_000)

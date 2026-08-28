@@ -19,6 +19,7 @@
 import axios from 'axios'
 import * as cheerio from 'cheerio'
 import { ScrapedJob } from '../types'
+import { blockHtmlToText } from '../utils/html'
 import { inferEmirate } from '../utils/location'
 
 // Verified live against GulfTalent's actual title taxonomy 2026-08 — several
@@ -69,7 +70,71 @@ function jobIdFromHref(href: string): string | null {
   return m ? m[1] : null
 }
 
-async function fetchPage(slug: string, pageNum: number): Promise<ScrapedJob[]> {
+/**
+ * Fetches a job's own detail page and extracts the real description.
+ *
+ * Verified live 2026-08: GulfTalent's detail pages are NOT blocked — same
+ * plain-HTTP, no-UA-override technique as the search pages returns a real
+ * 200 with a rich `.job-description` block (role details, responsibilities,
+ * requirements, position details all present). Returns null on any failure
+ * so the caller can fall back to the old synthesized placeholder rather than
+ * drop the job.
+ */
+async function fetchDetailDescription(url: string): Promise<string | null> {
+  try {
+    const { data: html, status } = await http.get<string>(url)
+    if (status !== 200) return null
+    const $ = cheerio.load(html)
+    const raw = $('.job-description').first().html()
+    const text = blockHtmlToText(raw)
+    return text.length >= 60 ? text : null
+  } catch (err) {
+    console.warn(`  [gulftalent] detail fetch failed for ${url}:`, (err as Error).message)
+    return null
+  }
+}
+
+interface Card {
+  jobId: string
+  title: string
+  company: string
+  location: string
+  dateText: string
+  applyUrl: string
+}
+
+/** Collects card metadata from a listing page, skipping anything already in `seen`. */
+function collectCards(html: string, seen: Set<string>): Card[] {
+  const $ = cheerio.load(html)
+  const cards: Card[] = []
+
+  // Verified live 2026-08 against the /mobile/ redirect target — card is the
+  // anchor itself (data-cy="job-result-link"), not a wrapper around one.
+  $('a[href*="/uae/jobs/"]').each((_, el) => {
+    const card = $(el)
+    const href = card.attr('href') ?? ''
+    if (!href.match(/\/uae\/jobs\/[a-z].*-\d+/)) return  // must end with -ID
+
+    const jobId = card.attr('data-ga-label') || jobIdFromHref(href)
+    if (!jobId || seen.has(`gulftalent_${jobId}`)) return
+
+    const title    = card.find('.title').first().text().trim()
+    const company  = card.find('.company-name').first().text().trim() || 'Unknown'
+    const location = card.find('.location').first().text().trim() || 'United Arab Emirates'
+    const dateText = card.find('.date').first().text().trim()
+    if (!title) return
+
+    const cleanHref = href.replace('/mobile/', '/')
+    const applyUrl  = cleanHref.startsWith('http') ? cleanHref : `${BASE}${cleanHref}`
+
+    cards.push({ jobId, title, company, location, dateText, applyUrl })
+  })
+
+  return cards
+}
+
+/** One page's worth of jobs, each with its real description fetched from its own detail page. */
+async function fetchPage(slug: string, pageNum: number, seen: Set<string>): Promise<ScrapedJob[]> {
   const url = pageNum === 1
     ? `${BASE}/uae/jobs/title/${slug}`
     : `${BASE}/uae/jobs/title/${slug}/${pageNum}`
@@ -80,41 +145,28 @@ async function fetchPage(slug: string, pageNum: number): Promise<ScrapedJob[]> {
     return []
   }
 
-  const $ = cheerio.load(html)
+  const cards = collectCards(html, seen)
   const jobs: ScrapedJob[] = []
 
-  // Verified live 2026-08 against the /mobile/ redirect target — card is the
-  // anchor itself (data-cy="job-result-link"), not a wrapper around one.
-  $('a[href*="/uae/jobs/"]').each((_, el) => {
-    const card = $(el)
-    const href = card.attr('href') ?? ''
-    if (!href.match(/\/uae\/jobs\/[a-z].*-\d+/)) return  // must end with -ID
-
-    const jobId = card.attr('data-ga-label') || jobIdFromHref(href)
-    if (!jobId) return
-
-    const title    = card.find('.title').first().text().trim()
-    const company  = card.find('.company-name').first().text().trim() || 'Unknown'
-    const location = card.find('.location').first().text().trim() || 'United Arab Emirates'
-    const dateText = card.find('.date').first().text().trim()
-
-    if (!title) return
-
-    const cleanHref = href.replace('/mobile/', '/')
-    const applyUrl  = cleanHref.startsWith('http') ? cleanHref : `${BASE}${cleanHref}`
+  for (const card of cards) {
+    seen.add(`gulftalent_${card.jobId}`)
+    const detail = await fetchDetailDescription(card.applyUrl)
+    // Small delay between detail requests, same spirit as the between-page
+    // delay below — this is now one extra request per NEW job, not per page.
+    await sleep(400)
 
     jobs.push({
-      externalId: jobId,
-      title,
-      company,
-      description: `${title} at ${company} in ${location}`,
-      location: location.includes('AE') ? location : `${location}, AE`,
-      emirate: inferEmirate(location),
-      applyUrl,
+      externalId: card.jobId,
+      title: card.title,
+      company: card.company,
+      description: detail ?? `${card.title} at ${card.company} in ${card.location}`,
+      location: card.location.includes('AE') ? card.location : `${card.location}, AE`,
+      emirate: inferEmirate(card.location),
+      applyUrl: card.applyUrl,
       publisher: 'GulfTalent',
-      postedAt: dateText ? parseDate(dateText) : undefined,
+      postedAt: card.dateText ? parseDate(card.dateText) : undefined,
     })
-  })
+  }
 
   return jobs
 }
@@ -127,17 +179,10 @@ export async function scrapeGulfTalent(): Promise<ScrapedJob[]> {
     for (let pageNum = 1; pageNum <= MAX_PAGES; pageNum++) {
       console.log(`  [gulftalent] "${slug}" p${pageNum}`)
       try {
-        const page = await fetchPage(slug, pageNum)
-        let newCount = 0
-        for (const job of page) {
-          if (!seen.has(`gulftalent_${job.externalId}`)) {
-            seen.add(`gulftalent_${job.externalId}`)
-            jobs.push(job)
-            newCount++
-          }
-        }
-        console.log(`  [gulftalent] "${slug}" p${pageNum}: +${newCount}`)
-        if (newCount === 0) break
+        const page = await fetchPage(slug, pageNum, seen)
+        jobs.push(...page)
+        console.log(`  [gulftalent] "${slug}" p${pageNum}: +${page.length}`)
+        if (page.length === 0) break
         await sleep(600)
       } catch (err) {
         console.warn(`  [gulftalent] "${slug}" p${pageNum} error:`, (err as Error).message)

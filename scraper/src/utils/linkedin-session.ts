@@ -149,15 +149,21 @@ async function loginOrThrow(context: BrowserContext): Promise<void> {
   try {
     await performLogin(context)
   } catch (err) {
-    throw new Error(
+    // Not `new Error(msg, { cause })` and not a plain `.cause =` assignment —
+    // this project's tsconfig targets ES2020, which types neither that Error
+    // constructor overload nor the .cause property itself, though Node has
+    // supported both at runtime since 16.9. The cast is scoped to this one
+    // assignment rather than bumping the lib target for the whole scraper.
+    const wrapped = new Error(
       `LinkedIn login failed: ${(err as Error).message}\n` +
       '  → If running on the VPS, the datacenter IP is most likely the cause.\n' +
       '    Refresh cookies on a residential IP:\n' +
       '      npm run linkedin:login\n' +
       '    then: scp .linkedin-cookies.json root@82.25.110.205:/opt/apps/uaeitjobs-web-app/scraper/\n' +
       '  → Or configure: LINKEDIN_PROXY_SERVER / LINKEDIN_PROXY_USERNAME / LINKEDIN_PROXY_PASSWORD',
-      { cause: err },
     )
+    ;(wrapped as Error & { cause?: unknown }).cause = err
+    throw wrapped
   }
 }
 

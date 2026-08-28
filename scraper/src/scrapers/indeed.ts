@@ -23,9 +23,14 @@ import { inferEmirate } from '../utils/location'
  *
  * The detail page (indeed.com/viewjob?jk=...) is blocked independently of
  * the search page and was 403/401 on every header combination tested — so,
- * same as LinkedIn's card-only default and GulfTalent, this is card-only:
- * title/company/location is enough to clear RelevanceScorer.MIN_SCORE for
- * a recognisably IT-domain title.
+ * same as LinkedIn's card-only default, this is card-only: title/company/
+ * location is enough to clear RelevanceScorer.MIN_SCORE for a recognisably
+ * IT-domain title.
+ *
+ * NOT the same as GulfTalent, despite the comparison this comment used to
+ * draw — re-verified live 2026-08 that GulfTalent's detail page is NOT
+ * blocked (plain HTTP, same technique as its search page, real 200 with a
+ * full description). Indeed's block is specific to Indeed.
  */
 
 // Kept deliberately short — every entry here is one more HTTP request this
