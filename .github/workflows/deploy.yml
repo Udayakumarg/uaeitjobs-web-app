@@ -46,7 +46,10 @@ jobs:
           script: |
             cd /opt/apps
             docker compose pull uaeitjobs-frontend
-            # --force-recreate mirrors the backend workflow — avoids
-            # "container name already in use" when the image digest
-            # changes but compose doesn't detect a service config diff.
-            docker compose up -d --no-deps --no-build --force-recreate uaeitjobs-frontend
+            # --force-recreate intermittently races compose's own stop+remove of the
+            # old container, failing with "container name already in use" (seen twice
+            # in production, on both this repo and the backend). Doing it explicitly
+            # first is the reliable version of the same operation.
+            docker stop uaeitjobs-frontend || true
+            docker rm uaeitjobs-frontend || true
+            docker compose up -d --no-deps --no-build uaeitjobs-frontend
