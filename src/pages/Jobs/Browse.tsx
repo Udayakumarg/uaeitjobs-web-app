@@ -4,9 +4,11 @@ import {
   BookmarkCheck,
   BriefcaseBusiness,
   CalendarDays,
+  Check,
   ChevronDown,
   ExternalLink,
   MapPin,
+  Pencil,
   Search,
   SlidersHorizontal,
   X,
@@ -169,6 +171,8 @@ export default function JobBrowse() {
   const [savedSearches, setSavedSearches] = useState<SavedSearch[]>([])
   const [savingSearch,  setSavingSearch]  = useState(false)
   const [searchName,    setSearchName]    = useState('')
+  const [renamingId,    setRenamingId]    = useState<number | null>(null)
+  const [renameValue,   setRenameValue]   = useState('')
 
   // Sync filter state → URL (replace so individual filter toggles don't pile up in history).
   // Initialised from URL above so bookmarks/shared links restore the exact view.
@@ -300,6 +304,28 @@ export default function JobBrowse() {
     }
   }, [savedSearches, toast])
 
+  const startRenaming = useCallback((id: number, currentName: string) => {
+    setRenamingId(id)
+    setRenameValue(currentName)
+  }, [])
+
+  const commitRename = useCallback(async () => {
+    const id = renamingId
+    if (id == null) return
+    const name = renameValue.trim()
+    const target = savedSearches.find(s => s.id === id)
+    if (!name || !target || name === target.name) { setRenamingId(null); return }
+    const prev = savedSearches
+    setSavedSearches(s => s.map(x => x.id === id ? { ...x, name } : x))
+    setRenamingId(null)
+    try {
+      await seekerApi.updateSearch(id, name, target.filters)
+    } catch (err) {
+      setSavedSearches(prev)
+      toast({ type: 'error', title: 'Could not rename', message: errorMessage(err) })
+    }
+  }, [renamingId, renameValue, savedSearches, toast])
+
   function clearAll() {
     setQuery(''); setCompany(''); setEmirates(new Set()); setJobCats(new Set())
     setJobTypes(new Set())
@@ -359,6 +385,7 @@ export default function JobBrowse() {
     isJobSeeker: !!user && user.userType === 'job_seeker',
     savedSearches, applySavedSearch, deleteSavedSearch,
     savingSearch, setSavingSearch, searchName, setSearchName, saveCurrentSearch,
+    renamingId, renameValue, setRenameValue, startRenaming, commitRename, cancelRename: () => setRenamingId(null),
   }
 
   return (
@@ -479,6 +506,10 @@ interface SavedSearchProps {
   savingSearch: boolean; setSavingSearch: (v: boolean) => void
   searchName: string; setSearchName: (v: string) => void
   saveCurrentSearch: () => void
+  renamingId: number | null; renameValue: string; setRenameValue: (v: string) => void
+  startRenaming: (id: number, currentName: string) => void
+  commitRename: () => void
+  cancelRename: () => void
 }
 
 // ── Filter bar (desktop) ──────────────────────────────────────────────────────
@@ -495,6 +526,7 @@ function FilterBar(props: SharedFilterProps & SavedSearchProps & { onMobileOpen:
     onClearAll, onMobileOpen,
     isJobSeeker, savedSearches, applySavedSearch, deleteSavedSearch,
     savingSearch, setSavingSearch, searchName, setSearchName, saveCurrentSearch,
+    renamingId, renameValue, setRenameValue, startRenaming, commitRename, cancelRename,
   } = props
 
   const [openPanel, setOpenPanel] = useState<PanelId | null>(null)
@@ -671,19 +703,51 @@ function FilterBar(props: SharedFilterProps & SavedSearchProps & { onMobileOpen:
                   <div className="max-h-[240px] overflow-y-auto py-1">
                     {savedSearches.map(s => (
                       <div key={s.id} className="group flex items-center gap-1 px-2.5 py-1">
-                        <button
-                          onClick={() => applySavedSearch(s.filters)}
-                          className="min-w-0 flex-1 truncate rounded-md px-1.5 py-1.5 text-left font-sans text-[12.5px] text-gray-700 hover:bg-gray-50"
-                        >
-                          {s.name}
-                        </button>
-                        <button
-                          onClick={() => deleteSavedSearch(s.id)}
-                          className="shrink-0 rounded p-1 text-gray-300 opacity-0 transition-opacity hover:bg-rose-50 hover:text-rose-500 group-hover:opacity-100"
-                          aria-label={`Remove "${s.name}"`}
-                        >
-                          <X size={11} strokeWidth={2.5} />
-                        </button>
+                        {renamingId === s.id ? (
+                          <>
+                            <input
+                              autoFocus
+                              value={renameValue}
+                              onChange={e => setRenameValue(e.target.value)}
+                              onKeyDown={e => { if (e.key === 'Enter') commitRename(); if (e.key === 'Escape') cancelRename() }}
+                              onBlur={commitRename}
+                              maxLength={100}
+                              className="min-w-0 flex-1 rounded-md border border-gray-200 px-1.5 py-1 font-sans text-[12.5px] outline-none focus:border-gray-400"
+                            />
+                            <button
+                              // onMouseDown (not onClick) fires before the input's onBlur commits the rename,
+                              // so this reads as a deliberate confirm rather than a lost click on a vanished button.
+                              onMouseDown={e => { e.preventDefault(); commitRename() }}
+                              className="shrink-0 rounded p-1 text-gray-400 hover:bg-emerald-50 hover:text-emerald-600"
+                              aria-label="Save name"
+                            >
+                              <Check size={11} strokeWidth={2.5} />
+                            </button>
+                          </>
+                        ) : (
+                          <>
+                            <button
+                              onClick={() => applySavedSearch(s.filters)}
+                              className="min-w-0 flex-1 truncate rounded-md px-1.5 py-1.5 text-left font-sans text-[12.5px] text-gray-700 hover:bg-gray-50"
+                            >
+                              {s.name}
+                            </button>
+                            <button
+                              onClick={() => startRenaming(s.id, s.name)}
+                              className="shrink-0 rounded p-1 text-gray-300 opacity-0 transition-opacity hover:bg-gray-100 hover:text-gray-600 group-hover:opacity-100"
+                              aria-label={`Rename "${s.name}"`}
+                            >
+                              <Pencil size={11} strokeWidth={2.5} />
+                            </button>
+                            <button
+                              onClick={() => deleteSavedSearch(s.id)}
+                              className="shrink-0 rounded p-1 text-gray-300 opacity-0 transition-opacity hover:bg-rose-50 hover:text-rose-500 group-hover:opacity-100"
+                              aria-label={`Remove "${s.name}"`}
+                            >
+                              <X size={11} strokeWidth={2.5} />
+                            </button>
+                          </>
+                        )}
                       </div>
                     ))}
                   </div>

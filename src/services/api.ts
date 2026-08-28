@@ -198,6 +198,7 @@ export const seekerApi = {
   unsaveJob: (id: number) => api.delete(`/saved-jobs/${id}`),
   savedSearches: () => api.get<SavedSearch[]>('/saved-searches'),
   saveSearch: (name: string, filters: string) => api.post<SavedSearch>('/saved-searches', { name, filters }),
+  updateSearch: (id: number, name: string, filters: string) => api.patch<SavedSearch>(`/saved-searches/${id}`, { name, filters }),
   deleteSearch: (id: number) => api.delete(`/saved-searches/${id}`),
 }
 
