@@ -5,11 +5,13 @@ import { CompanyLogo } from '../../components/CompanyLogo'
 import { CardSkeleton } from '../../components/Skeleton'
 import { StatusBadge } from '../../components/StatusBadge'
 import { useToastStore } from '../../components/Toast'
-import { Card, EmptyState, Select } from '../../components/ui'
+import { Button, Card, EmptyState, Select } from '../../components/ui'
 import { seekerApi, errorMessage } from '../../services/api'
 import type { Application, ApplicationStatus } from '../../types'
 import { money, relativeTime, dateLabel } from '../../utils/format'
 import { isSafeUrl } from '../../utils/url'
+
+const PAGE_SIZE = 5
 
 const STATUS_OPTIONS: { value: ApplicationStatus; label: string }[] = [
   { value: 'applied',     label: 'Applied' },
@@ -34,6 +36,7 @@ export default function JobSeekerApplications() {
   const [query,      setQuery]      = useState('')
   const [status,     setStatus]     = useState<ApplicationStatus | ''>('')
   const [sortOrder,  setSortOrder]  = useState<'newest' | 'oldest'>('newest')
+  const [page,       setPage]       = useState(0)
 
   useEffect(() => {
     seekerApi.applications(0, 100)
@@ -59,6 +62,16 @@ export default function JobSeekerApplications() {
   }, [items, query, status, sortOrder])
 
   const hasFilters = query.trim() !== '' || status !== ''
+
+  // Re-searching or re-filtering can strand the user on a page that no
+  // longer exists (e.g. page 3 of an unfiltered list, then a filter drops
+  // it to 1 page) — jump back to the first page whenever the visible set changes shape.
+  useEffect(() => { setPage(0) }, [query, status, sortOrder])
+
+  const pagedItems = useMemo(() => {
+    if (!visibleItems) return null
+    return visibleItems.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE)
+  }, [visibleItems, page])
 
   return (
     <main className="mx-auto max-w-5xl px-4 py-8">
@@ -145,12 +158,37 @@ export default function JobSeekerApplications() {
       )}
 
       {/* Application cards */}
-      {visibleItems && visibleItems.length > 0 && (
+      {pagedItems && pagedItems.length > 0 && (
         <div className="grid gap-3">
-          {visibleItems.map(app => (
+          {pagedItems.map(app => (
             <ApplicationCard key={app.id} app={app} />
           ))}
         </div>
+      )}
+
+      {/* Pagination — paginates the filtered/searched set, not the raw total */}
+      {visibleItems && visibleItems.length > PAGE_SIZE && (
+        <nav className="mt-6 flex items-center justify-between">
+          <Button
+            variant="secondary"
+            size="sm"
+            disabled={page === 0}
+            onClick={() => setPage(p => Math.max(0, p - 1))}
+          >
+            Previous
+          </Button>
+          <span className="text-sm text-slate-600">
+            Page {page + 1} of {Math.ceil(visibleItems.length / PAGE_SIZE)}
+          </span>
+          <Button
+            variant="secondary"
+            size="sm"
+            disabled={(page + 1) * PAGE_SIZE >= visibleItems.length}
+            onClick={() => setPage(p => p + 1)}
+          >
+            Next
+          </Button>
+        </nav>
       )}
     </main>
   )
