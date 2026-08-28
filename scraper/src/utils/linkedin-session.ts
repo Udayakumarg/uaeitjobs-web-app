@@ -156,6 +156,7 @@ async function loginOrThrow(context: BrowserContext): Promise<void> {
       '      npm run linkedin:login\n' +
       '    then: scp .linkedin-cookies.json root@82.25.110.205:/opt/apps/uaeitjobs-web-app/scraper/\n' +
       '  → Or configure: LINKEDIN_PROXY_SERVER / LINKEDIN_PROXY_USERNAME / LINKEDIN_PROXY_PASSWORD',
+      { cause: err },
     )
   }
 }
