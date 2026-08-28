@@ -38,16 +38,6 @@ const EMIRATES: { value: Emirate; label: string }[] = [
   { value: 'umm_al_quwain',  label: 'Umm Al Quwain'  },
 ]
 
-const LEVELS = [
-  { value: 'intern',    label: 'Intern'        },
-  { value: 'junior',    label: 'Junior'        },
-  { value: 'mid',       label: 'Mid-level'     },
-  { value: 'senior',    label: 'Senior'        },
-  { value: 'lead',      label: 'Lead / Staff'  },
-  { value: 'principal', label: 'Principal'     },
-  { value: 'director',  label: 'Director'      },
-]
-
 const JOB_TYPES = [
   { value: 'full_time',  label: 'Full-time'  },
   { value: 'part_time',  label: 'Part-time'  },
@@ -55,13 +45,6 @@ const JOB_TYPES = [
   { value: 'freelance',  label: 'Freelance'  },
   { value: 'internship', label: 'Internship' },
   { value: 'temporary',  label: 'Temporary'  },
-]
-
-const VISA_OPTIONS = [
-  { value: 'free_visa',           label: 'Free visa (employer-provided)' },
-  { value: 'employment_visa',     label: 'Will sponsor visa'             },
-  { value: 'own_visa',            label: 'Own visa required'             },
-  { value: 'visit_visa_accepted', label: 'Visit visa accepted'           },
 ]
 
 const POSTED_OPTIONS = [
@@ -72,22 +55,25 @@ const POSTED_OPTIONS = [
   { value: '30d', label: 'Last month'  },
 ]
 
-const SALARY_OPTIONS = [
-  { value: '0-5k',    label: 'Under 5K'  },
-  { value: '5k-10k',  label: '5K – 10K'  },
-  { value: '10k-20k', label: '10K – 20K' },
-  { value: '20k-30k', label: '20K – 30K' },
-  { value: '30k-50k', label: '30K – 50K' },
-  { value: '50k+',    label: '50K+ AED'  },
-]
-
+// "Newest first" isn't listed as a pickable option — it's already the
+// backend's default sort, so having a redundant explicit entry for it would
+// just be more clutter for the same outcome.
 const SORT_OPTIONS = [
-  { value: 'newest',      label: 'Newest first'   },
+  { value: 'oldest',      label: 'Oldest first'   },
   { value: 'salary_high', label: 'Salary: High ↓' },
   { value: 'salary_low',  label: 'Salary: Low ↑'  },
 ]
 
-type PanelId = 'emirate' | 'stack' | 'level' | 'type' | 'posted' | 'salary' | 'sort' | 'source' | 'uae' | 'saved'
+// Frontend sort option -> backend `sort` query param. 'newest' is the
+// backend's own default (sent as no param at all — see below) so it isn't
+// listed here.
+const SORT_PARAM: Record<string, string> = {
+  oldest:      'date_asc',
+  salary_high: 'salary_desc',
+  salary_low:  'salary_asc',
+}
+
+type PanelId = 'emirate' | 'stack' | 'type' | 'posted' | 'sort' | 'source' | 'saved'
 
 // Static fallback shown instantly while the dynamic list loads.
 // Replaced by the live /jobs/publishers response once it arrives.
@@ -108,13 +94,6 @@ function toggleSet<T>(set: Set<T>, v: T): Set<T> {
   const n = new Set(set)
   if (n.has(v)) { n.delete(v) } else { n.add(v) }
   return n
-}
-function salaryRange(b: string): [number, number | null] {
-  const m: Record<string, [number, number | null]> = {
-    '0-5k': [0, 5000], '5k-10k': [5000, 10000], '10k-20k': [10000, 20000],
-    '20k-30k': [20000, 30000], '30k-50k': [30000, 50000], '50k+': [50000, null],
-  }
-  return m[b] ?? [0, null]
 }
 function postedAfterMs(k: string): number {
   const d: Record<string, number> = { '24h': 1, '3d': 3, '7d': 7, '14d': 14, '30d': 30 }
@@ -148,18 +127,13 @@ export default function JobBrowse() {
   const [company,         setCompany]        = useState(() => searchParams.get('company') ?? '')
   const [emirates,        setEmirates]       = useState<Set<Emirate>>(() => new Set(searchParams.getAll('emirate') as Emirate[]))
   const [jobCats,         setJobCats]        = useState<Set<JobCategory>>(() => new Set(searchParams.getAll('category') as JobCategory[]))
-  const [levels,          setLevels]         = useState<Set<string>>(() => new Set(searchParams.getAll('level')))
   const [jobTypes,        setJobTypes]       = useState<Set<string>>(() => new Set(searchParams.getAll('jobType')))
   const [posted,          setPosted]         = useState(() => searchParams.get('posted') ?? '')
-  const [salaryBucket,    setSalary]         = useState(() => searchParams.get('salary') ?? '')
   const [sortBy,          setSortBy]         = useState(() => searchParams.get('sort') ?? 'newest')
   const [sources,         setSources]        = useState<Set<string>>(() => new Set(searchParams.getAll('publisher')))
   // Kept as the same 'linkedin=easy' URL param used before this was simplified
   // from a dropdown to a toggle, so old bookmarks/saved searches keep working.
   const [easyApplyOnly,   setEasyApplyOnly]   = useState(() => searchParams.get('linkedin') === 'easy')
-  const [remoteUae,       setRemoteUae]       = useState(() => searchParams.get('remoteUae') === 'true')
-  const [immediateJoiner, setImmediateJoiner] = useState(() => searchParams.get('immediateJoiner') === 'true')
-  const [visaType,        setVisaType]        = useState(() => searchParams.get('visaType') ?? '')
 
   // dynamic publisher list — loaded once, falls back to static list while fetching
   const [publishers, setPublishers] = useState<Publisher[]>(SOURCE_FALLBACK)
@@ -204,18 +178,13 @@ export default function JobBrowse() {
     if (company.trim())     p.set('company',   company.trim())
     emirates.forEach(e      => p.append('emirate',  e))
     jobCats.forEach(c       => p.append('category', c))
-    levels.forEach(l        => p.append('level',    l))
     jobTypes.forEach(t      => p.append('jobType',  t))
     if (posted)             p.set('posted',    posted)
-    if (salaryBucket)       p.set('salary',    salaryBucket)
     if (sortBy !== 'newest') p.set('sort',     sortBy)
     sources.forEach(s       => p.append('publisher', s))
     if (easyApplyOnly)       p.set('linkedin', 'easy')
-    if (remoteUae)           p.set('remoteUae', 'true')
-    if (immediateJoiner)     p.set('immediateJoiner', 'true')
-    if (visaType)            p.set('visaType', visaType)
     setSearchParams(p, { replace: true })
-  }, [query, company, emirates, jobCats, levels, jobTypes, posted, salaryBucket, sortBy, sources, easyApplyOnly, remoteUae, immediateJoiner, visaType, setSearchParams])
+  }, [query, company, emirates, jobCats, jobTypes, posted, sortBy, sources, easyApplyOnly, setSearchParams])
 
   // fetch — search + all filtering in a single DB round-trip via filterMulti.
   // The 'q' param drives plainto_tsquery full-text ranking server-side so
@@ -226,28 +195,20 @@ export default function JobBrowse() {
 
     const eArr = Array.from(emirates)
     const cArr = Array.from(jobCats)
-    const lArr = Array.from(levels)
     const tArr = Array.from(jobTypes)
     const sArr = Array.from(sources)
 
-    const [salMin, salMax] = salaryBucket ? salaryRange(salaryBucket) : [undefined, undefined]
     const params: FilterMultiParams = {
       page: 0, size: 80,
       ...(debouncedQuery.trim() && { q:              debouncedQuery.trim() }),
       ...(company.trim()        && { company:        company.trim() }),
       ...(eArr.length           && { emirate:         eArr }),
       ...(cArr.length           && { category:        cArr }),
-      ...(lArr.length           && { experienceLevel: lArr }),
       ...(tArr.length           && { jobType:         tArr }),
       ...(posted                && { postedAfter:     new Date(Date.now() - postedAfterMs(posted)).toISOString() }),
-      ...(salMin != null        && { salaryMin:       salMin }),
-      ...(salMax != null        && { salaryMax:       salMax }),
-      ...(sortBy !== 'newest'   && { sort:            sortBy === 'salary_high' ? 'salary_desc' : 'salary_asc' }),
+      ...(sortBy !== 'newest'   && { sort:            SORT_PARAM[sortBy] }),
       ...(sArr.length           && { publisher:       sArr }),
       ...(easyApplyOnly         && { linkedinEasyApply: true }),
-      ...(remoteUae             && { remoteUae: true }),
-      ...(immediateJoiner       && { immediateJoiner: true }),
-      ...(visaType              && { visaType }),
     }
     const req = jobsApi.filterMulti(params)
 
@@ -264,7 +225,7 @@ export default function JobBrowse() {
       }
     }).catch(() => {}).finally(() => { if (ok) setJobsLoading(false) })
     return () => { ok = false }
-  }, [debouncedQuery, company, emirates, jobCats, levels, jobTypes, posted, salaryBucket, sortBy, sources, easyApplyOnly, remoteUae, immediateJoiner, visaType])
+  }, [debouncedQuery, company, emirates, jobCats, jobTypes, posted, sortBy, sources, easyApplyOnly])
 
   useEffect(() => {
     if (!selectedId) return
@@ -341,10 +302,9 @@ export default function JobBrowse() {
 
   function clearAll() {
     setQuery(''); setCompany(''); setEmirates(new Set()); setJobCats(new Set())
-    setLevels(new Set()); setJobTypes(new Set())
-    setPosted(''); setSalary(''); setSortBy('newest'); setSources(new Set())
+    setJobTypes(new Set())
+    setPosted(''); setSortBy('newest'); setSources(new Set())
     setEasyApplyOnly(false)
-    setRemoteUae(false); setImmediateJoiner(false); setVisaType('')
   }
 
   const saveJob = useCallback(async (id: number, e: React.MouseEvent) => {
@@ -375,15 +335,10 @@ export default function JobBrowse() {
     ...(company.trim() ? [{ key: 'co', label: company.trim(), onRemove: () => setCompany('') }] : []),
     ...Array.from(emirates).map(v => ({ key: `e-${v}`, label: EMIRATES.find(x => x.value === v)?.label ?? v, onRemove: () => setEmirates(toggleSet(emirates, v)) })),
     ...Array.from(jobCats).map(v  => ({ key: `c-${v}`, label: JOB_CATEGORIES.find(x => x.value === v)?.label ?? v, onRemove: () => setJobCats(toggleSet(jobCats, v)) })),
-    ...Array.from(levels).map(v   => ({ key: `l-${v}`, label: LEVELS.find(x => x.value === v)?.label ?? v,         onRemove: () => setLevels(toggleSet(levels, v)) })),
     ...Array.from(jobTypes).map(v => ({ key: `t-${v}`, label: JOB_TYPES.find(x => x.value === v)?.label ?? v,      onRemove: () => setJobTypes(toggleSet(jobTypes, v)) })),
     ...Array.from(sources).map(v  => ({ key: `s-${v}`, label: publishers.find(p => p.key === v)?.label ?? v, onRemove: () => setSources(toggleSet(sources, v)) })),
     ...(posted       ? [{ key: 'posted', label: POSTED_OPTIONS.find(x => x.value === posted)?.label  ?? posted,  onRemove: () => setPosted('')  }] : []),
-    ...(salaryBucket ? [{ key: 'sal',    label: SALARY_OPTIONS.find(x => x.value === salaryBucket)?.label ?? salaryBucket, onRemove: () => setSalary('') }] : []),
     ...(easyApplyOnly ? [{ key: 'ea', label: 'Easy Apply', onRemove: () => setEasyApplyOnly(false) }] : []),
-    ...(remoteUae ? [{ key: 'remote', label: 'Remote UAE', onRemove: () => setRemoteUae(false) }] : []),
-    ...(immediateJoiner ? [{ key: 'immediate', label: 'Immediate Joiner', onRemove: () => setImmediateJoiner(false) }] : []),
-    ...(visaType ? [{ key: 'visa', label: VISA_OPTIONS.find(x => x.value === visaType)?.label ?? visaType, onRemove: () => setVisaType('') }] : []),
   ]
 
   const activeCount = chips.length
@@ -393,16 +348,11 @@ export default function JobBrowse() {
     query, onQueryChange: setQuery,
     emirates, onEmiratesChange: setEmirates,
     jobCats, onJobCatsChange: setJobCats,
-    levels, onLevelsChange: setLevels,
     jobTypes, onJobTypesChange: setJobTypes,
     posted, onPostedChange: setPosted,
-    salaryBucket, onSalaryChange: setSalary,
     sortBy, onSortChange: setSortBy,
     sources, onSourcesChange: setSources,
     easyApplyOnly, onEasyApplyOnlyChange: setEasyApplyOnly,
-    remoteUae, onRemoteUaeChange: setRemoteUae,
-    immediateJoiner, onImmediateJoinerChange: setImmediateJoiner,
-    visaType, onVisaTypeChange: setVisaType,
     publishers,
     chips, activeCount, total, loading: jobsLoading,
     onClearAll: clearAll, hasFilters,
@@ -510,16 +460,11 @@ interface SharedFilterProps {
   query: string;             onQueryChange: (v: string) => void
   emirates: Set<Emirate>;    onEmiratesChange: (s: Set<Emirate>) => void
   jobCats: Set<JobCategory>; onJobCatsChange: (s: Set<JobCategory>) => void
-  levels: Set<string>;       onLevelsChange: (s: Set<string>) => void
   jobTypes: Set<string>;     onJobTypesChange: (s: Set<string>) => void
   posted: string;            onPostedChange: (v: string) => void
-  salaryBucket: string;      onSalaryChange: (v: string) => void
   sortBy: string;            onSortChange: (v: string) => void
   sources: Set<string>;      onSourcesChange: (s: Set<string>) => void
   easyApplyOnly: boolean;    onEasyApplyOnlyChange: (v: boolean) => void
-  remoteUae: boolean;         onRemoteUaeChange: (v: boolean) => void
-  immediateJoiner: boolean;   onImmediateJoinerChange: (v: boolean) => void
-  visaType: string;           onVisaTypeChange: (v: string) => void
   publishers: Publisher[]
   chips: { key: string; label: string; onRemove: () => void }[]
   activeCount: number; hasFilters: boolean
@@ -541,13 +486,11 @@ function FilterBar(props: SharedFilterProps & SavedSearchProps & { onMobileOpen:
   const {
     query, onQueryChange,
     emirates, onEmiratesChange, jobCats, onJobCatsChange,
-    levels, onLevelsChange, jobTypes, onJobTypesChange,
-    posted, onPostedChange, salaryBucket, onSalaryChange,
+    jobTypes, onJobTypesChange,
+    posted, onPostedChange,
     sortBy, onSortChange,
     sources, onSourcesChange, publishers,
     easyApplyOnly, onEasyApplyOnlyChange,
-    remoteUae, onRemoteUaeChange, immediateJoiner, onImmediateJoinerChange,
-    visaType, onVisaTypeChange,
     chips, activeCount, hasFilters, total, loading,
     onClearAll, onMobileOpen,
     isJobSeeker, savedSearches, applySavedSearch, deleteSavedSearch,
@@ -632,9 +575,15 @@ function FilterBar(props: SharedFilterProps & SavedSearchProps & { onMobileOpen:
       <div className="hidden md:block border-t border-gray-100 px-4 py-2">
         <div className="flex items-center justify-center gap-1.5">
 
-          {/* Relevance — "is this even my kind of job, and where" — leads the
-              bar. A job seeker opens this page asking that first, not
-              wondering which site a listing came from. */}
+          {/* Source leads the bar — which job board a listing came from. */}
+          <FilterDropdown label="Source"   count={sources.size}         open={openPanel === 'source'}  onToggle={() => tog('source')}  onClose={close}>
+            <CheckboxPanel
+              options={publishers.map(p => ({ value: p.key, label: p.count > 0 ? `${p.label} (${p.count})` : p.label }))}
+              selected={sources}
+              onToggle={v => onSourcesChange(toggleSet(sources, v))}
+            />
+          </FilterDropdown>
+
           <FilterDropdown label="Stack"    count={jobCats.size}         open={openPanel === 'stack'}   onToggle={() => tog('stack')}   onClose={close}>
             <CheckboxPanel options={JOB_CATEGORIES.map(c => ({ value: c.value, label: c.label }))} selected={jobCats as Set<string>} onToggle={v => onJobCatsChange(toggleSet(jobCats, v as JobCategory))} />
           </FilterDropdown>
@@ -643,41 +592,14 @@ function FilterBar(props: SharedFilterProps & SavedSearchProps & { onMobileOpen:
             <CheckboxPanel options={EMIRATES} selected={emirates as Set<string>} onToggle={v => onEmiratesChange(toggleSet(emirates, v as Emirate))} />
           </FilterDropdown>
 
-          <FilterDropdown label="Level"    count={levels.size}          open={openPanel === 'level'}   onToggle={() => tog('level')}   onClose={close}>
-            <CheckboxPanel options={LEVELS} selected={levels} onToggle={v => onLevelsChange(toggleSet(levels, v))} />
-          </FilterDropdown>
-
           <FilterDropdown label="Job Type" count={jobTypes.size}        open={openPanel === 'type'}    onToggle={() => tog('type')}    onClose={close}>
             <CheckboxPanel options={JOB_TYPES} selected={jobTypes} onToggle={v => onJobTypesChange(toggleSet(jobTypes, v))} />
           </FilterDropdown>
 
           <Sep />
 
-          {/* The actual frustrations — "will it pay, is it even still open,
-              can I take it, can I apply without a fight." */}
-          <FilterDropdown label="Salary"   count={salaryBucket ? 1 : 0} open={openPanel === 'salary'}  onToggle={() => tog('salary')}  onClose={close}>
-            <RadioPanel options={SALARY_OPTIONS} selected={salaryBucket} onSelect={v => { onSalaryChange(v); close() }} />
-          </FilterDropdown>
-
           <FilterDropdown label="Posted"   count={posted ? 1 : 0}       open={openPanel === 'posted'}  onToggle={() => tog('posted')}  onClose={close}>
             <RadioPanel options={POSTED_OPTIONS} selected={posted} onSelect={v => { onPostedChange(v); close() }} />
-          </FilterDropdown>
-
-          <FilterDropdown
-            label="UAE"
-            count={(visaType ? 1 : 0) + (remoteUae ? 1 : 0) + (immediateJoiner ? 1 : 0)}
-            open={openPanel === 'uae'} onToggle={() => tog('uae')} onClose={close}
-          >
-            <RadioPanel options={VISA_OPTIONS} selected={visaType} onSelect={onVisaTypeChange} />
-            <div className="mx-3.5 border-t border-gray-100" />
-            <CheckboxPanel
-              options={[
-                { value: 'remote', label: 'Remote within UAE' },
-                { value: 'immediate', label: 'Immediate joiner' },
-              ]}
-              selected={new Set([...(remoteUae ? ['remote'] : []), ...(immediateJoiner ? ['immediate'] : [])])}
-              onToggle={(v) => v === 'remote' ? onRemoteUaeChange(!remoteUae) : onImmediateJoinerChange(!immediateJoiner)}
-            />
           </FilterDropdown>
 
           <button
@@ -694,16 +616,6 @@ function FilterBar(props: SharedFilterProps & SavedSearchProps & { onMobileOpen:
           </button>
 
           <Sep />
-
-          {/* Where it came from — meta info a job seeker on a one-stop board
-              shouldn't need to think about, so it trails everything else. */}
-          <FilterDropdown label="Source"   count={sources.size}         open={openPanel === 'source'}  onToggle={() => tog('source')}  onClose={close}>
-            <CheckboxPanel
-              options={publishers.map(p => ({ value: p.key, label: p.count > 0 ? `${p.label} (${p.count})` : p.label }))}
-              selected={sources}
-              onToggle={v => onSourcesChange(toggleSet(sources, v))}
-            />
-          </FilterDropdown>
 
           {/* Sort */}
           <FilterDropdown
@@ -819,13 +731,11 @@ function MobileFilterSheet(props: SharedFilterProps & { open: boolean; onClose: 
   const {
     open, onClose,
     emirates, onEmiratesChange, jobCats, onJobCatsChange,
-    levels, onLevelsChange, jobTypes, onJobTypesChange,
-    posted, onPostedChange, salaryBucket, onSalaryChange,
+    jobTypes, onJobTypesChange,
+    posted, onPostedChange,
     sortBy, onSortChange,
     sources, onSourcesChange, publishers,
     easyApplyOnly, onEasyApplyOnlyChange,
-    remoteUae, onRemoteUaeChange, immediateJoiner, onImmediateJoinerChange,
-    visaType, onVisaTypeChange,
     total, loading, onClearAll, activeCount,
   } = props
 
@@ -842,6 +752,23 @@ function MobileFilterSheet(props: SharedFilterProps & { open: boolean; onClose: 
         </div>
 
         <div className="flex-1 overflow-y-auto px-5 py-4 space-y-7">
+
+          <SheetSection label="Source">
+            <div className="flex flex-wrap gap-2">
+              {publishers.map(({ key, label, count }) => {
+                const on = sources.has(key)
+                return (
+                  <button key={key}
+                    onClick={() => onSourcesChange(toggleSet(sources, key))}
+                    className="inline-flex items-center gap-1.5 rounded-full border px-3.5 py-2 text-[13px] font-medium transition-all"
+                    style={on ? { background: PINK_BG, borderColor: PINK_RING, color: PINK } : { borderColor: '#e5e7eb', color: '#374151', background: '#fff' }}>
+                    {label}
+                    {count > 0 && <span className="text-[11px] font-normal" style={{ color: on ? PINK : '#9ca3af' }}>({count})</span>}
+                  </button>
+                )
+              })}
+            </div>
+          </SheetSection>
 
           <SheetSection label="Specialization">
             <div className="grid grid-cols-2 gap-2">
@@ -869,18 +796,6 @@ function MobileFilterSheet(props: SharedFilterProps & { open: boolean; onClose: 
             </div>
           </SheetSection>
 
-          <SheetSection label="Experience Level">
-            <div className="flex flex-wrap gap-1.5">
-              {LEVELS.map(({ value, label }) => (
-                <button key={value} onClick={() => onLevelsChange(toggleSet(levels, value))}
-                  className="inline-flex h-9 items-center whitespace-nowrap rounded-lg border px-3.5 font-sans text-[13px] font-medium transition-colors"
-                  style={levels.has(value) ? { background: PINK, color: '#fff', borderColor: PINK } : { borderColor: '#E5E7EB', color: '#374151', background: '#fff' }}>
-                  {label}
-                </button>
-              ))}
-            </div>
-          </SheetSection>
-
           <SheetSection label="Job Type">
             <div className="flex flex-wrap gap-1.5">
               {JOB_TYPES.map(({ value, label }) => (
@@ -888,23 +803,6 @@ function MobileFilterSheet(props: SharedFilterProps & { open: boolean; onClose: 
                   className="inline-flex h-9 items-center whitespace-nowrap rounded-lg border px-3.5 font-sans text-[13px] font-medium transition-colors"
                   style={jobTypes.has(value) ? { background: PINK, color: '#fff', borderColor: PINK } : { borderColor: '#E5E7EB', color: '#374151', background: '#fff' }}>
                   {label}
-                </button>
-              ))}
-            </div>
-          </SheetSection>
-
-          <SheetSection label="Salary (AED / month)">
-            <div className="grid gap-0.5">
-              {SALARY_OPTIONS.map(({ value, label }) => (
-                <button key={value} onClick={() => onSalaryChange(salaryBucket === value ? '' : value)}
-                  className="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors hover:bg-[#FAFAFA]">
-                  <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full border-2 transition-colors"
-                    style={salaryBucket === value ? { borderColor: PINK, background: PINK } : { borderColor: '#D1D5DB', background: '#fff' }}>
-                    {salaryBucket === value && <span className="h-1.5 w-1.5 rounded-full bg-white" />}
-                  </span>
-                  <span className="font-sans text-[13px] font-medium" style={{ color: salaryBucket === value ? PINK : '#374151' }}>
-                    {label}
-                  </span>
                 </button>
               ))}
             </div>
@@ -927,48 +825,6 @@ function MobileFilterSheet(props: SharedFilterProps & { open: boolean; onClose: 
             </div>
           </SheetSection>
 
-          <SheetSection label="Visa">
-            <div className="grid gap-0.5">
-              {VISA_OPTIONS.map(({ value, label }) => (
-                <button key={value} onClick={() => onVisaTypeChange(visaType === value ? '' : value)}
-                  className="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors hover:bg-[#FAFAFA]">
-                  <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full border-2 transition-colors"
-                    style={visaType === value ? { borderColor: PINK, background: PINK } : { borderColor: '#D1D5DB', background: '#fff' }}>
-                    {visaType === value && <span className="h-1.5 w-1.5 rounded-full bg-white" />}
-                  </span>
-                  <span className="font-sans text-[13px] font-medium" style={{ color: visaType === value ? PINK : '#374151' }}>
-                    {label}
-                  </span>
-                </button>
-              ))}
-            </div>
-          </SheetSection>
-
-          <SheetSection label="UAE Essentials">
-            <div className="grid gap-0.5">
-              <button onClick={() => onRemoteUaeChange(!remoteUae)}
-                className="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors hover:bg-[#FAFAFA]">
-                <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded border-2 transition-colors"
-                  style={remoteUae ? { borderColor: PINK, background: PINK } : { borderColor: '#D1D5DB', background: '#fff' }}>
-                  {remoteUae && <span className="h-2 w-2 rounded-[1px] bg-white" />}
-                </span>
-                <span className="font-sans text-[13px] font-medium" style={{ color: remoteUae ? PINK : '#374151' }}>
-                  Remote within UAE
-                </span>
-              </button>
-              <button onClick={() => onImmediateJoinerChange(!immediateJoiner)}
-                className="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors hover:bg-[#FAFAFA]">
-                <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded border-2 transition-colors"
-                  style={immediateJoiner ? { borderColor: PINK, background: PINK } : { borderColor: '#D1D5DB', background: '#fff' }}>
-                  {immediateJoiner && <span className="h-2 w-2 rounded-[1px] bg-white" />}
-                </span>
-                <span className="font-sans text-[13px] font-medium" style={{ color: immediateJoiner ? PINK : '#374151' }}>
-                  Immediate joiner
-                </span>
-              </button>
-            </div>
-          </SheetSection>
-
           <SheetSection label="Apply">
             <button onClick={() => onEasyApplyOnlyChange(!easyApplyOnly)}
               className="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors hover:bg-[#FAFAFA]">
@@ -980,23 +836,6 @@ function MobileFilterSheet(props: SharedFilterProps & { open: boolean; onClose: 
                 Easy Apply only
               </span>
             </button>
-          </SheetSection>
-
-          <SheetSection label="Source">
-            <div className="flex flex-wrap gap-2">
-              {publishers.map(({ key, label, count }) => {
-                const on = sources.has(key)
-                return (
-                  <button key={key}
-                    onClick={() => onSourcesChange(toggleSet(sources, key))}
-                    className="inline-flex items-center gap-1.5 rounded-full border px-3.5 py-2 text-[13px] font-medium transition-all"
-                    style={on ? { background: PINK_BG, borderColor: PINK_RING, color: PINK } : { borderColor: '#e5e7eb', color: '#374151', background: '#fff' }}>
-                    {label}
-                    {count > 0 && <span className="text-[11px] font-normal" style={{ color: on ? PINK : '#9ca3af' }}>({count})</span>}
-                  </button>
-                )
-              })}
-            </div>
           </SheetSection>
 
           <SheetSection label="Sort By">
