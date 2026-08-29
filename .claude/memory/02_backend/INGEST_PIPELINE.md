@@ -43,9 +43,40 @@ IngestedJob
   │
   └─ 6. Persist new
         populateNewJob(job, incoming, hash, now)
+          — description_sections (JSONB) ← descriptionFormatter.parseSections(raw)
+          — description             ← descriptionFormatter.format(raw)
+          — description_html        ← formatterRegistry.forVendor(source).toHtml(raw)
+          — requirements             ← incoming.requirements() verbatim (see note below)
         jobRepository.save(job)
         → Inserted
 ```
+
+## Description formatting — what it does and does NOT do
+
+`description_html` (the field every page actually renders) comes from
+`DescriptionFormatterRegistry.forVendor(source).toHtml(raw)`, resolved in this
+order: (1) a vendor-specific formatter registered for that exact `source` string,
+(2) the bean registered under `"default"` (currently `LlmDescriptionFormatter` —
+OpenAI/Gemini/Claude, configurable via `app.llm.provider`), (3) always-on fallback
+`HeuristicDescriptionFormatter` (regex-based).
+
+**This step only re-formats text that was already scraped — it cannot fetch or
+invent content.** `LlmDescriptionFormatter`'s own system prompt explicitly
+instructs the model to preserve the original wording exactly and never
+paraphrase, summarise, or add new content; its job is purely to wrap flat text in
+semantic `<h3>/<p>/<ul>/<li>` HTML. If the upstream scraper only captured a
+one-line teaser, the LLM formats *that same teaser* — a thin description is
+always a scraping-stage problem (see `04_scraper/SOURCES.md` → "Description
+completeness"), never something this step can compensate for. On any failure
+(disabled, missing key, timeout, malformed/non-HTML response), it silently falls
+back to the heuristic formatter — a job is never dropped over an LLM failure, but
+also never gets richer than what was actually scraped.
+
+**`requirements`** is stored directly from `incoming.requirements()` with no
+processing. As of 2026-08 this is empty for 100% of jobs from every real
+source — no scraper currently extracts a requirements section as a distinct
+field, even where the source page has one (GulfTalent, NaukriGulf fold it into
+the general description text instead; see their per-source docs).
 
 ## Normalizers.normalizeLocation behaviour
 ```java
