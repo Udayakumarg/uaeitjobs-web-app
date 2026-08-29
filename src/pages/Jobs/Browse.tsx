@@ -458,7 +458,7 @@ export default function JobBrowse() {
                 <p className="text-sm text-gray-400">Select a role from the list to view details.</p>
               </div>
             ) : detailLoading ? (
-              <div className="p-10 space-y-4">
+              <div className="mx-auto max-w-3xl p-10 space-y-4">
                 <div className="h-3 w-32 shimmer" /><div className="h-8 w-3/4 shimmer" />
                 <div className="h-3 w-1/2 shimmer" /><div className="h-24 shimmer mt-6" />
               </div>
@@ -1116,7 +1116,7 @@ function DetailPanel({ job, onSave, isSaved, isApplied, onApply }: {
   const emirateLabel = EMIRATES.find(e => e.value === job.emirate)?.label
 
   return (
-    <div className="p-8 xl:p-10">
+    <div className="mx-auto max-w-3xl p-8 xl:p-10">
       <div className="flex items-start justify-between gap-4 mb-6">
         <div className="min-w-0">
           <div className="flex items-center gap-2 mb-3">
