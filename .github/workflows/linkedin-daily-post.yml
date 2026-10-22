@@ -9,6 +9,11 @@ on:
   schedule:
     - cron: '0 4 * * *' # 04:00 UTC = 08:00 in the UAE
   workflow_dispatch:
+  push:
+    # runs once whenever this file itself is edited, so a change is tested immediately
+    branches: [main]
+    paths:
+      - '.github/workflows/linkedin-daily-post.yml'
 
 permissions:
   contents: write # only used to update the dedicated `social-feed` branch
