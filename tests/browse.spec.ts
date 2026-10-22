@@ -208,4 +208,18 @@ test.describe('Theme', () => {
     await page.goto(`${baseUrl}/jobs`)
     await expect(page.locator('html')).toHaveAttribute('data-theme', 'light')
   })
+
+  test('offers the curated accent colours and migrates retired ones', async ({ page }) => {
+    await mockJobsApi(page)
+    await page.addInitScript(() => localStorage.setItem('uaeitjobs.accent', 'indigo'))
+    await page.goto(`${baseUrl}/jobs`)
+    await expect(page.locator('html')).toHaveAttribute('data-accent', 'blue')
+
+    await page.getByRole('button', { name: 'Theme and colour' }).click()
+    for (const name of ['Rose', 'Blue', 'Teal', 'Green', 'Graphite']) {
+      await expect(page.getByRole('menuitemradio', { name })).toBeVisible()
+    }
+    await expect(page.getByRole('menuitemradio', { name: 'Orange' })).toHaveCount(0)
+    await expect(page.getByRole('menuitemradio', { name: 'Indigo' })).toHaveCount(0)
+  })
 })

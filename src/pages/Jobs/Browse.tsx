@@ -90,9 +90,10 @@ const SOURCE_FALLBACK: Publisher[] = [
 
 // Brand colours
 const PINK      = 'var(--accent)'
-const PINK_HOV  = 'var(--accent-hover)'
 const PINK_BG   = 'var(--accent-soft)'
 const PINK_RING = 'var(--accent-ring)'
+const PINK_FILL = 'var(--accent-fill)'      // solid fills that carry white text
+const PINK_FILL_HOV = 'var(--accent-fill-hover)'
 
 function toggleSet<T>(set: Set<T>, v: T): Set<T> {
   const n = new Set(set)
@@ -635,7 +636,7 @@ function FilterBar(props: SharedFilterProps & SavedSearchProps & { onMobileOpen:
           <SlidersHorizontal size={13} />
           Filters
           {activeCount > 0 && (
-            <span className="inline-flex h-[17px] min-w-[17px] items-center justify-center rounded-full px-1 text-[9px] font-bold text-white leading-none" style={{ background: PINK }}>
+            <span className="inline-flex h-[17px] min-w-[17px] items-center justify-center rounded-full px-1 text-[9px] font-bold text-white leading-none" style={{ background: PINK_FILL }}>
               {activeCount}
             </span>
           )}
@@ -715,7 +716,7 @@ function FilterBar(props: SharedFilterProps & SavedSearchProps & { onMobileOpen:
                         onClick={saveCurrentSearch}
                         disabled={!searchName.trim()}
                         className="shrink-0 rounded-md px-2 py-1 font-sans text-[12px] font-medium text-white disabled:opacity-40"
-                        style={{ background: PINK }}
+                        style={{ background: PINK_FILL }}
                       >
                         Save
                       </button>
@@ -907,7 +908,7 @@ function MobileFilterSheet(props: SharedFilterProps & { open: boolean; onClose: 
               {JOB_TYPES.map(({ value, label }) => (
                 <button key={value} onClick={() => onJobTypesChange(toggleSet(jobTypes, value))}
                   className="inline-flex h-9 items-center whitespace-nowrap rounded-lg border px-3.5 font-sans text-[13px] font-medium transition-colors"
-                  style={jobTypes.has(value) ? { background: PINK, color: '#fff', borderColor: PINK } : { borderColor: 'var(--border)', color: 'var(--text-body)', background: 'var(--surface)' }}>
+                  style={jobTypes.has(value) ? { background: PINK_FILL, color: '#fff', borderColor: PINK } : { borderColor: 'var(--border)', color: 'var(--text-body)', background: 'var(--surface)' }}>
                   {label}
                 </button>
               ))}
@@ -920,7 +921,7 @@ function MobileFilterSheet(props: SharedFilterProps & { open: boolean; onClose: 
                 <button key={value} onClick={() => onPostedChange(posted === value ? '' : value)}
                   className="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors hover:bg-[var(--surface-2)]">
                   <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full border-2 transition-colors"
-                    style={posted === value ? { borderColor: PINK, background: PINK } : { borderColor: 'var(--border-strong)', background: 'var(--surface)' }}>
+                    style={posted === value ? { borderColor: PINK, background: PINK_FILL } : { borderColor: 'var(--border-strong)', background: 'var(--surface)' }}>
                     {posted === value && <span className="h-1.5 w-1.5 rounded-full bg-white" />}
                   </span>
                   <span className="font-sans text-[13px] font-medium" style={{ color: posted === value ? PINK : 'var(--text-body)' }}>
@@ -935,7 +936,7 @@ function MobileFilterSheet(props: SharedFilterProps & { open: boolean; onClose: 
             <button onClick={() => onEasyApplyOnlyChange(!easyApplyOnly)}
               className="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors hover:bg-[var(--surface-2)]">
               <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded border-2 transition-colors"
-                style={easyApplyOnly ? { borderColor: PINK, background: PINK } : { borderColor: 'var(--border-strong)', background: 'var(--surface)' }}>
+                style={easyApplyOnly ? { borderColor: PINK, background: PINK_FILL } : { borderColor: 'var(--border-strong)', background: 'var(--surface)' }}>
                 {easyApplyOnly && <span className="h-2 w-2 rounded-[1px] bg-white" />}
               </span>
               <span className="font-sans text-[13px] font-medium" style={{ color: easyApplyOnly ? PINK : 'var(--text-body)' }}>
@@ -950,7 +951,7 @@ function MobileFilterSheet(props: SharedFilterProps & { open: boolean; onClose: 
                 <button key={value} onClick={() => onSortChange(value)}
                   className="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors hover:bg-[var(--surface-2)]">
                   <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full border-2 transition-colors"
-                    style={sortBy === value ? { borderColor: PINK, background: PINK } : { borderColor: 'var(--border-strong)', background: 'var(--surface)' }}>
+                    style={sortBy === value ? { borderColor: PINK, background: PINK_FILL } : { borderColor: 'var(--border-strong)', background: 'var(--surface)' }}>
                     {sortBy === value && <span className="h-1.5 w-1.5 rounded-full bg-white" />}
                   </span>
                   <span className="font-sans text-[13px] font-medium" style={{ color: sortBy === value ? PINK : 'var(--text-body)' }}>
@@ -974,9 +975,9 @@ function MobileFilterSheet(props: SharedFilterProps & { open: boolean; onClose: 
           <button
             onClick={onClose}
             className="flex-1 text-white font-sans text-[13.5px] font-semibold py-3 rounded-xl transition-colors"
-            style={{ background: PINK }}
-            onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = PINK_HOV }}
-            onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = PINK }}
+            style={{ background: PINK_FILL }}
+            onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = PINK_FILL_HOV }}
+            onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = PINK_FILL }}
           >
             {loading ? '…' : `Show ${total.toLocaleString()} roles`}
           </button>
@@ -1017,7 +1018,7 @@ function FilterDropdown({ label, count, open, onToggle, onClose, children, noHig
         <span className="flex items-center gap-1.5">
           {label}
           {isActive && (
-            <span className="inline-flex h-[16px] min-w-[16px] items-center justify-center rounded-full px-1 text-white text-[9px] font-bold leading-none" style={{ background: PINK }}>
+            <span className="inline-flex h-[16px] min-w-[16px] items-center justify-center rounded-full px-1 text-white text-[9px] font-bold leading-none" style={{ background: PINK_FILL }}>
               {count}
             </span>
           )}
@@ -1065,7 +1066,7 @@ function CheckboxPanel({ options, selected, onToggle }: {
             {/* Custom checkbox */}
             <span
               className={`flex h-[15px] w-[15px] shrink-0 items-center justify-center rounded-[3px] border transition-all duration-150 ${on ? 'border-transparent' : 'border-gray-300 group-hover:border-gray-400'}`}
-              style={on ? { background: PINK } : {}}
+              style={on ? { background: PINK_FILL } : {}}
             >
               {on && (
                 <svg width="8" height="6" viewBox="0 0 8 6" fill="none">
@@ -1107,7 +1108,7 @@ function RadioPanel({ options, selected, onSelect }: {
           >
             <span
               className={`flex h-[15px] w-[15px] shrink-0 items-center justify-center rounded-full border-[1.75px] transition-all duration-150 ${on ? 'border-transparent' : 'border-gray-300'}`}
-              style={on ? { background: PINK } : {}}
+              style={on ? { background: PINK_FILL } : {}}
             >
               {on && <span className="h-1.5 w-1.5 rounded-full bg-white" />}
             </span>
@@ -1147,7 +1148,7 @@ function SheetToggle({ on, onToggle, children }: { on: boolean; onToggle: () => 
   return (
     <button onClick={onToggle} aria-pressed={on} className="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors hover:bg-[var(--surface-2)]">
       <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded border-2 transition-colors"
-        style={on ? { borderColor: PINK, background: PINK } : { borderColor: 'var(--border-strong)', background: 'var(--surface)' }}>
+        style={on ? { borderColor: PINK, background: PINK_FILL } : { borderColor: 'var(--border-strong)', background: 'var(--surface)' }}>
         {on && <span className="h-2 w-2 rounded-[1px] bg-white" />}
       </span>
       <span className="font-sans text-[13px] font-medium" style={{ color: on ? PINK : 'var(--text-body)' }}>{children}</span>
@@ -1211,19 +1212,19 @@ function DetailPanel({ job, onSave, isSaved, isApplied, onApply }: {
   const applyButton = (compact = false) => {
     const cls = `inline-flex items-center gap-2 text-white font-sans text-sm font-bold rounded-lg transition-colors ${compact ? 'px-4 py-2' : 'px-5 py-2.5'}`
     const hover = {
-      onMouseEnter: (e: React.MouseEvent<HTMLElement>) => { e.currentTarget.style.background = PINK_HOV },
-      onMouseLeave: (e: React.MouseEvent<HTMLElement>) => { e.currentTarget.style.background = PINK },
+      onMouseEnter: (e: React.MouseEvent<HTMLElement>) => { e.currentTarget.style.background = PINK_FILL_HOV },
+      onMouseLeave: (e: React.MouseEvent<HTMLElement>) => { e.currentTarget.style.background = PINK_FILL },
     }
     if (isGated) {
       return (
-        <Link to="/login" state={{ from: `/jobs/${job.id}` }} className={cls} style={{ background: PINK }} {...hover}>
+        <Link to="/login" state={{ from: `/jobs/${job.id}` }} className={cls} style={{ background: PINK_FILL }} {...hover}>
           Sign in to apply
         </Link>
       )
     }
     if (isDirectApply) {
       return (
-        <Link to={`/jobs/${job.id}`} className={cls} style={{ background: PINK }} {...hover}>
+        <Link to={`/jobs/${job.id}`} className={cls} style={{ background: PINK_FILL }} {...hover}>
           {isApplied ? 'Apply Again' : 'Apply Now'}
         </Link>
       )
@@ -1235,7 +1236,7 @@ function DetailPanel({ job, onSave, isSaved, isApplied, onApply }: {
           target="_blank"
           rel="noopener noreferrer"
           className={cls}
-          style={{ background: PINK }}
+          style={{ background: PINK_FILL }}
           {...hover}
           onClick={() => {
             // Track the apply click — fire-and-forget, never blocks the navigation
@@ -1407,14 +1408,14 @@ const JobListItem = memo(function JobListItem({
       onMouseEnter={e => { if (!active) e.currentTarget.style.background = 'var(--surface-2)' }}
       onMouseLeave={e => { if (!active) e.currentTarget.style.background = '' }}
     >
-      {active && <span className="absolute left-0 top-0 bottom-0 w-[3px]" style={{ background: PINK }} />}
+      {active && <span className="absolute left-0 top-0 bottom-0 w-[3px]" style={{ background: PINK_FILL }} />}
       <div className="flex items-center gap-2 mb-2">
         <CompanyLogo logoUrl={job.companyLogoUrl} companyName={job.companyName} size="sm" className="shrink-0" />
         <span className="font-mono text-[10px] font-bold uppercase tracking-widest truncate" style={{ color: active ? PINK : '#9CA3AF' }}>
           {job.companyName}
         </span>
         {isNew && (
-          <span className="shrink-0 rounded px-1.5 py-px font-mono text-[9px] font-bold uppercase tracking-wider text-white" style={{ background: PINK }}>New</span>
+          <span className="shrink-0 rounded px-1.5 py-px font-mono text-[9px] font-bold uppercase tracking-wider text-white" style={{ background: PINK_FILL }}>New</span>
         )}
         <span className="ml-auto font-mono text-[10px] text-gray-400 shrink-0">{postedAgo}</span>
         {/* Save toggle — stopPropagation prevents the card click from firing */}

@@ -34,6 +34,8 @@ const PINK      = 'var(--accent)'
 const PINK_HOV  = 'var(--accent-hover)'
 const PINK_BG   = 'var(--accent-soft)'
 const PINK_RING = 'var(--accent-ring)'
+const PINK_FILL = 'var(--accent-fill)'      // solid fills that carry white text
+const PINK_FILL_HOV = 'var(--accent-fill-hover)'
 
 // ── Static data ───────────────────────────────────────────────────────────────
 const CATEGORIES = [
@@ -143,9 +145,9 @@ export default function Landing() {
                 <button
                   type="submit"
                   className="shrink-0 rounded-lg px-5 py-2.5 font-sans text-sm font-bold text-white transition"
-                  style={{ background: PINK }}
-                  onMouseEnter={e => ((e.currentTarget as HTMLButtonElement).style.background = PINK_HOV)}
-                  onMouseLeave={e => ((e.currentTarget as HTMLButtonElement).style.background = PINK)}
+                  style={{ background: PINK_FILL }}
+                  onMouseEnter={e => ((e.currentTarget as HTMLButtonElement).style.background = PINK_FILL_HOV)}
+                  onMouseLeave={e => ((e.currentTarget as HTMLButtonElement).style.background = PINK_FILL)}
                 >
                   Search
                 </button>
@@ -220,7 +222,7 @@ export default function Landing() {
                       >
                         {val === 'Hiring now' ? (
                           <span className="flex items-center gap-1.5">
-                            <span className="h-1.5 w-1.5 animate-pulse-soft rounded-full" style={{ background: PINK }} />
+                            <span className="h-1.5 w-1.5 animate-pulse-soft rounded-full" style={{ background: PINK_FILL }} />
                             {val}
                           </span>
                         ) : val}
@@ -232,9 +234,9 @@ export default function Landing() {
                 <div className="flex gap-2">
                   <button
                     className="flex-1 rounded-lg py-2 font-sans text-xs font-bold text-white transition"
-                    style={{ background: PINK }}
-                    onMouseEnter={e => ((e.currentTarget as HTMLButtonElement).style.background = PINK_HOV)}
-                    onMouseLeave={e => ((e.currentTarget as HTMLButtonElement).style.background = PINK)}
+                    style={{ background: PINK_FILL }}
+                    onMouseEnter={e => ((e.currentTarget as HTMLButtonElement).style.background = PINK_FILL_HOV)}
+                    onMouseLeave={e => ((e.currentTarget as HTMLButtonElement).style.background = PINK_FILL)}
                     onClick={() => navigate('/jobs')}
                   >
                     Apply in one click
@@ -378,9 +380,9 @@ export default function Landing() {
                 ))}
               </ol>
               <Link to="/register" className="mt-7 inline-flex items-center gap-2 rounded-lg px-4 py-2.5 font-sans text-sm font-bold text-white transition"
-                style={{ background: PINK }}
-                onMouseEnter={e => ((e.currentTarget as HTMLAnchorElement).style.background = PINK_HOV)}
-                onMouseLeave={e => ((e.currentTarget as HTMLAnchorElement).style.background = PINK)}
+                style={{ background: PINK_FILL }}
+                onMouseEnter={e => ((e.currentTarget as HTMLAnchorElement).style.background = PINK_FILL_HOV)}
+                onMouseLeave={e => ((e.currentTarget as HTMLAnchorElement).style.background = PINK_FILL)}
               >
                 Create job seeker account <ArrowRight size={15} />
               </Link>
@@ -554,7 +556,7 @@ export default function Landing() {
                       <div className="h-1.5 overflow-hidden rounded-full bg-[var(--surface-3)]">
                         <div
                           className="h-full rounded-full"
-                          style={{ width: `${pct}%`, background: PINK }}
+                          style={{ width: `${pct}%`, background: PINK_FILL }}
                         />
                       </div>
                     </div>

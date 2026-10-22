@@ -1,15 +1,18 @@
 import { create } from 'zustand'
 
 export type ThemeMode = 'light' | 'dark' | 'system'
-export type Accent = 'pink' | 'indigo' | 'teal' | 'emerald' | 'orange'
+export type Accent = 'pink' | 'blue' | 'teal' | 'green' | 'graphite'
 
 export const ACCENTS: { key: Accent; label: string; swatch: string }[] = [
   { key: 'pink', label: 'Rose', swatch: '#be185d' },
-  { key: 'indigo', label: 'Indigo', swatch: '#4338ca' },
+  { key: 'blue', label: 'Blue', swatch: '#1d4ed8' },
   { key: 'teal', label: 'Teal', swatch: '#0f766e' },
-  { key: 'emerald', label: 'Emerald', swatch: '#047857' },
-  { key: 'orange', label: 'Orange', swatch: '#c2410c' },
+  { key: 'green', label: 'Green', swatch: '#15803d' },
+  { key: 'graphite', label: 'Graphite', swatch: '#334155' },
 ]
+
+// Accents renamed or retired in an earlier release; map saved choices to the closest current one.
+const LEGACY_ACCENTS: Record<string, Accent> = { indigo: 'blue', emerald: 'green', orange: 'pink' }
 
 const MODE_KEY = 'uaeitjobs.theme'
 const ACCENT_KEY = 'uaeitjobs.accent'
@@ -21,6 +24,16 @@ function read<T extends string>(key: string, allowed: readonly T[], fallback: T)
     return value && allowed.includes(value) ? value : fallback
   } catch {
     return fallback
+  }
+}
+
+function readAccent(): Accent {
+  try {
+    const saved = localStorage.getItem(ACCENT_KEY) ?? ''
+    if (ACCENTS.some((a) => a.key === saved)) return saved as Accent
+    return LEGACY_ACCENTS[saved] ?? 'pink'
+  } catch {
+    return 'pink'
   }
 }
 
@@ -51,7 +64,7 @@ interface ThemeState {
 
 export const useThemeStore = create<ThemeState>((set, get) => ({
   mode: read<ThemeMode>(MODE_KEY, ['light', 'dark', 'system'], 'system'),
-  accent: read<Accent>(ACCENT_KEY, ['pink', 'indigo', 'teal', 'emerald', 'orange'], 'pink'),
+  accent: readAccent(),
   setMode: (mode) => {
     write(MODE_KEY, mode)
     set({ mode })

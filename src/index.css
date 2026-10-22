@@ -5,6 +5,8 @@
   --font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, sans-serif;
   --accent: #BE185D;
   --accent-hover: #9D174D;
+  --accent-fill: #BE185D;
+  --accent-fill-hover: #9D174D;
   --accent-soft: #FDF2F8;
   --accent-ring: #FBCFE8;
   --border: #E5E7EB;
@@ -183,59 +185,128 @@ html[data-theme='dark'] .text-black { color: var(--text); }
 html[data-theme='dark'] .hover\:text-black:hover { color: var(--text); }
 html[data-theme='dark'] .logo-mute { filter: grayscale(1) opacity(0.7) invert(0.9); }
 
-/* Accent palettes: re-point the pink scale (the default brand colour). */
-html[data-accent='indigo'] {
-  --accent: #4338ca; --accent-hover: #3730a3; --accent-soft: #eef2ff; --accent-ring: #c7d2fe;
-  --color-pink-50: #eef2ff;  --color-pink-100: #e0e7ff; --color-pink-200: #c7d2fe; --color-pink-300: #a5b4fc;
-  --color-pink-400: #818cf8; --color-pink-500: #6366f1; --color-pink-600: #4f46e5; --color-pink-700: #4338ca;
-  --color-pink-800: #3730a3; --color-pink-900: #312e81;
+/* Accent palettes. Tailwind's pink scale is the default brand colour, so each accent re-points it.
+   --accent       text, borders and icons (deep in light mode, light in dark mode)
+   --accent-fill  solid backgrounds that carry white text (AA contrast in both themes) */
+html[data-accent='blue'] {
+  --accent: #1d4ed8; --accent-hover: #1e40af; --accent-fill: #1d4ed8; --accent-fill-hover: #1e40af;
+  --accent-soft: #eff6ff; --accent-ring: #bfdbfe;
+  --color-pink-50: #eff6ff;
+  --color-pink-100: #dbeafe;
+  --color-pink-200: #bfdbfe;
+  --color-pink-300: #93c5fd;
+  --color-pink-400: #60a5fa;
+  --color-pink-500: #3b82f6;
+  --color-pink-600: #2563eb;
+  --color-pink-700: #1d4ed8;
+  --color-pink-800: #1e40af;
+  --color-pink-900: #1e3a8a;
 }
 html[data-accent='teal'] {
-  --accent: #0f766e; --accent-hover: #115e59; --accent-soft: #f0fdfa; --accent-ring: #99f6e4;
-  --color-pink-50: #f0fdfa;  --color-pink-100: #ccfbf1; --color-pink-200: #99f6e4; --color-pink-300: #5eead4;
-  --color-pink-400: #2dd4bf; --color-pink-500: #14b8a6; --color-pink-600: #0d9488; --color-pink-700: #0f766e;
-  --color-pink-800: #115e59; --color-pink-900: #134e4a;
+  --accent: #0f766e; --accent-hover: #115e59; --accent-fill: #0f766e; --accent-fill-hover: #115e59;
+  --accent-soft: #f0fdfa; --accent-ring: #99f6e4;
+  --color-pink-50: #f0fdfa;
+  --color-pink-100: #ccfbf1;
+  --color-pink-200: #99f6e4;
+  --color-pink-300: #5eead4;
+  --color-pink-400: #2dd4bf;
+  --color-pink-500: #14b8a6;
+  --color-pink-600: #0d9488;
+  --color-pink-700: #0f766e;
+  --color-pink-800: #115e59;
+  --color-pink-900: #134e4a;
 }
-html[data-accent='emerald'] {
-  --accent: #047857; --accent-hover: #065f46; --accent-soft: #ecfdf5; --accent-ring: #a7f3d0;
-  --color-pink-50: #ecfdf5;  --color-pink-100: #d1fae5; --color-pink-200: #a7f3d0; --color-pink-300: #6ee7b7;
-  --color-pink-400: #34d399; --color-pink-500: #10b981; --color-pink-600: #059669; --color-pink-700: #047857;
-  --color-pink-800: #065f46; --color-pink-900: #064e3b;
+html[data-accent='green'] {
+  --accent: #15803d; --accent-hover: #166534; --accent-fill: #15803d; --accent-fill-hover: #166534;
+  --accent-soft: #f0fdf4; --accent-ring: #bbf7d0;
+  --color-pink-50: #f0fdf4;
+  --color-pink-100: #dcfce7;
+  --color-pink-200: #bbf7d0;
+  --color-pink-300: #86efac;
+  --color-pink-400: #4ade80;
+  --color-pink-500: #22c55e;
+  --color-pink-600: #16a34a;
+  --color-pink-700: #15803d;
+  --color-pink-800: #166534;
+  --color-pink-900: #14532d;
 }
-html[data-accent='orange'] {
-  --accent: #c2410c; --accent-hover: #9a3412; --accent-soft: #fff7ed; --accent-ring: #fed7aa;
-  --color-pink-50: #fff7ed;  --color-pink-100: #ffedd5; --color-pink-200: #fed7aa; --color-pink-300: #fdba74;
-  --color-pink-400: #fb923c; --color-pink-500: #f97316; --color-pink-600: #ea580c; --color-pink-700: #c2410c;
-  --color-pink-800: #9a3412; --color-pink-900: #7c2d12;
+html[data-accent='graphite'] {
+  --accent: #334155; --accent-hover: #1e293b; --accent-fill: #334155; --accent-fill-hover: #1e293b;
+  --accent-soft: #f8fafc; --accent-ring: #e2e8f0;
+  --color-pink-50: #f8fafc;
+  --color-pink-100: #f1f5f9;
+  --color-pink-200: #e2e8f0;
+  --color-pink-300: #cbd5e1;
+  --color-pink-400: #94a3b8;
+  --color-pink-500: #64748b;
+  --color-pink-600: #475569;
+  --color-pink-700: #334155;
+  --color-pink-800: #1e293b;
+  --color-pink-900: #0f172a;
 }
 
-/* Dark + accent: mid-tone accent (readable as text on dark, and white text stays readable on it as a fill);
-   tints are mixed from the accent so every palette works. Declared last so it wins over the palettes above. */
-html[data-theme='dark'],
-html[data-theme='dark'][data-accent] {
-  --accent: #db2777;
-  --accent-hover: #ec4899;
-  --accent-soft: color-mix(in srgb, var(--accent) 16%, var(--surface));
-  --accent-ring: color-mix(in srgb, var(--accent) 40%, var(--surface));
-  --color-pink-50: color-mix(in srgb, var(--accent) 14%, var(--surface));
-  --color-pink-100: color-mix(in srgb, var(--accent) 22%, var(--surface));
-  --color-pink-200: color-mix(in srgb, var(--accent) 34%, var(--surface));
-  --color-pink-300: color-mix(in srgb, var(--accent) 55%, white);
-  --color-pink-400: color-mix(in srgb, var(--accent) 60%, white);
-  --color-pink-500: color-mix(in srgb, var(--accent) 65%, white);
-  --color-pink-600: color-mix(in srgb, var(--accent) 65%, white);
-  --color-pink-700: color-mix(in srgb, var(--accent) 60%, white);
-  --color-pink-800: color-mix(in srgb, var(--accent) 45%, white);
-  --color-pink-900: color-mix(in srgb, var(--accent) 35%, white);
+/* Dark theme: one block per accent (pink is the default when no accent is set). */
+html[data-theme='dark']:not([data-accent]),
+html[data-theme='dark'][data-accent='pink'] {
+  --accent: #f472b6; --accent-hover: #f9a8d4; --accent-fill: #be185d; --accent-fill-hover: #db2777;
+  --accent-soft: color-mix(in srgb, #be185d 18%, var(--surface));
+  --accent-ring: color-mix(in srgb, #be185d 48%, var(--surface));
+  --color-pink-50: color-mix(in srgb, #be185d 14%, var(--surface));
+  --color-pink-100: color-mix(in srgb, #be185d 22%, var(--surface));
+  --color-pink-200: color-mix(in srgb, #be185d 36%, var(--surface));
+  --color-pink-300: #f9a8d4;
+  --color-pink-400: #f472b6; --color-pink-500: #f472b6; --color-pink-600: #f472b6; --color-pink-700: #f472b6;
+  --color-pink-800: #f9a8d4; --color-pink-900: #fbcfe8;
 }
-html[data-theme='dark'][data-accent='indigo'] { --accent: #6366f1; --accent-hover: #818cf8; }
-html[data-theme='dark'][data-accent='teal'] { --accent: #0d9488; --accent-hover: #14b8a6; }
-html[data-theme='dark'][data-accent='emerald'] { --accent: #059669; --accent-hover: #10b981; }
-html[data-theme='dark'][data-accent='orange'] { --accent: #ea580c; --accent-hover: #f97316; }
-/* Filled brand buttons keep the solid accent with white text instead of the lightened text tint. */
-html[data-theme='dark'] .bg-pink-700 { background-color: var(--accent); }
-html[data-theme='dark'] .hover\:bg-pink-800:hover { background-color: var(--accent-hover); }
-html[data-theme='dark'] .bg-pink-600 { background-color: var(--accent); }
+html[data-theme='dark'][data-accent='blue'] {
+  --accent: #60a5fa; --accent-hover: #93c5fd; --accent-fill: #1d4ed8; --accent-fill-hover: #2563eb;
+  --accent-soft: color-mix(in srgb, #1d4ed8 18%, var(--surface));
+  --accent-ring: color-mix(in srgb, #1d4ed8 48%, var(--surface));
+  --color-pink-50: color-mix(in srgb, #1d4ed8 14%, var(--surface));
+  --color-pink-100: color-mix(in srgb, #1d4ed8 22%, var(--surface));
+  --color-pink-200: color-mix(in srgb, #1d4ed8 36%, var(--surface));
+  --color-pink-300: #93c5fd;
+  --color-pink-400: #60a5fa; --color-pink-500: #60a5fa; --color-pink-600: #60a5fa; --color-pink-700: #60a5fa;
+  --color-pink-800: #93c5fd; --color-pink-900: #bfdbfe;
+}
+html[data-theme='dark'][data-accent='teal'] {
+  --accent: #2dd4bf; --accent-hover: #5eead4; --accent-fill: #0f766e; --accent-fill-hover: #0d9488;
+  --accent-soft: color-mix(in srgb, #0f766e 18%, var(--surface));
+  --accent-ring: color-mix(in srgb, #0f766e 48%, var(--surface));
+  --color-pink-50: color-mix(in srgb, #0f766e 14%, var(--surface));
+  --color-pink-100: color-mix(in srgb, #0f766e 22%, var(--surface));
+  --color-pink-200: color-mix(in srgb, #0f766e 36%, var(--surface));
+  --color-pink-300: #5eead4;
+  --color-pink-400: #2dd4bf; --color-pink-500: #2dd4bf; --color-pink-600: #2dd4bf; --color-pink-700: #2dd4bf;
+  --color-pink-800: #5eead4; --color-pink-900: #99f6e4;
+}
+html[data-theme='dark'][data-accent='green'] {
+  --accent: #4ade80; --accent-hover: #86efac; --accent-fill: #15803d; --accent-fill-hover: #16a34a;
+  --accent-soft: color-mix(in srgb, #15803d 18%, var(--surface));
+  --accent-ring: color-mix(in srgb, #15803d 48%, var(--surface));
+  --color-pink-50: color-mix(in srgb, #15803d 14%, var(--surface));
+  --color-pink-100: color-mix(in srgb, #15803d 22%, var(--surface));
+  --color-pink-200: color-mix(in srgb, #15803d 36%, var(--surface));
+  --color-pink-300: #86efac;
+  --color-pink-400: #4ade80; --color-pink-500: #4ade80; --color-pink-600: #4ade80; --color-pink-700: #4ade80;
+  --color-pink-800: #86efac; --color-pink-900: #bbf7d0;
+}
+html[data-theme='dark'][data-accent='graphite'] {
+  --accent: #94a3b8; --accent-hover: #cbd5e1; --accent-fill: #475569; --accent-fill-hover: #64748b;
+  --accent-soft: color-mix(in srgb, #475569 18%, var(--surface));
+  --accent-ring: color-mix(in srgb, #475569 48%, var(--surface));
+  --color-pink-50: color-mix(in srgb, #475569 14%, var(--surface));
+  --color-pink-100: color-mix(in srgb, #475569 22%, var(--surface));
+  --color-pink-200: color-mix(in srgb, #475569 36%, var(--surface));
+  --color-pink-300: #cbd5e1;
+  --color-pink-400: #94a3b8; --color-pink-500: #94a3b8; --color-pink-600: #94a3b8; --color-pink-700: #94a3b8;
+  --color-pink-800: #cbd5e1; --color-pink-900: #e2e8f0;
+}
+/* Filled brand buttons (Button variant="accent") use the solid fill, not the lightened text tone. */
+html[data-theme='dark'] .bg-pink-600,
+html[data-theme='dark'] .bg-pink-700 { background-color: var(--accent-fill); }
+html[data-theme='dark'] .hover\:bg-pink-700:hover,
+html[data-theme='dark'] .hover\:bg-pink-800:hover { background-color: var(--accent-fill-hover); }
 
 /* Always-dark sections (hero, CTA panels, dark buttons) use light slate text on dark slate. Inverting the scale
    there would make them unreadable, so these "islands" get the original scale back for themselves and children. */

@@ -128,7 +128,7 @@ export default function Login() {
             </p>
           ) : null}
 
-          <Button size="lg" disabled={isSubmitting} className="mt-2 bg-[var(--accent)] hover:bg-[var(--accent-hover)]">
+          <Button size="lg" disabled={isSubmitting} className="mt-2 bg-[var(--accent-fill)] hover:bg-[var(--accent-fill-hover)]">
             {isSubmitting ? 'Signing in...' : 'Sign in'}
             <ArrowRight size={18} />
           </Button>
