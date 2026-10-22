@@ -108,6 +108,7 @@ export default function CompaniesDirectory() {
     raw: true,
     description:
       'Browse UAE organisations hiring for IT and technology roles. Click straight through to each company’s careers page. Banks, telecoms, government, startups and consultancies.',
+    canonical: 'https://www.uaeitjobs.com/companies',
     jsonLd,
   })
 

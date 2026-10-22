@@ -80,6 +80,7 @@ export default function CompanyDetail() {
           ? `${company.name}: ${company.description.slice(0, 150)}`
           : `${company.name} hires IT and technology professionals in ${company.city ?? 'the UAE'}. View open careers and recent roles.`)
       : undefined,
+    canonical: `https://www.uaeitjobs.com/companies/${slug}`,
     jsonLd: jsonLd ?? undefined,
   })
 

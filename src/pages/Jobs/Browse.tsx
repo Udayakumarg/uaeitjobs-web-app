@@ -111,6 +111,8 @@ export default function JobBrowse() {
   useDocumentMeta({
     title: 'Browse UAE IT roles',
     description: 'UAE IT and technology jobs — filter by stack, emirate, salary and more.',
+    // Filters live in the query string; without this every filter combination was its own canonical URL.
+    canonical: 'https://www.uaeitjobs.com/jobs',
   })
 
   const navigate = useNavigate()
