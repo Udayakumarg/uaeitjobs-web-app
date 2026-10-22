@@ -400,9 +400,9 @@ export default function JobBrowse() {
       {/* ── Filter bar ─────────────────────────────────────────── */}
       <FilterBar {...fp} onMobileOpen={() => setMobileOpen(true)} />
 
-      {/* ── Panels (fill the full width; detail content centres itself) ── */}
+      {/* ── Panels (centred, same max width as the header) ─────── */}
       <div className="flex flex-1 overflow-hidden min-h-0">
-        <div className="flex w-full overflow-hidden min-h-0">
+        <div className="mx-auto flex w-full max-w-7xl overflow-hidden min-h-0">
 
           {/* Job list */}
           <aside className="w-full md:w-[380px] xl:w-[420px] shrink-0 flex flex-col border-r border-[var(--border)]">
