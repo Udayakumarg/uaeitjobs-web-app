@@ -1,0 +1,52 @@
+name: LinkedIn daily post feed
+
+# Builds today's LinkedIn post (text + image) from live job data and publishes it as plain files on
+# the `social-feed` branch. A connector you authorise yourself (Make.com / Zapier / Buffer) reads
+# those files and posts to the company page. Nothing here holds LinkedIn credentials, and the run
+# only reads the public API. See marketing/linkedin/README.md.
+
+on:
+  schedule:
+    - cron: '0 4 * * *' # 04:00 UTC = 08:00 in the UAE
+  workflow_dispatch:
+
+permissions:
+  contents: write # only used to update the dedicated `social-feed` branch
+
+concurrency:
+  group: linkedin-feed
+  cancel-in-progress: false
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - run: npx playwright install --with-deps chromium
+
+      - name: Generate today's post
+        env:
+          CI: 'true'
+        run: node marketing/linkedin/daily_post.mjs
+
+      - name: Publish to the social-feed branch
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/feed
+          cp marketing/linkedin/out/latest/* /tmp/feed/
+          cd /tmp/feed
+          git init -q -b social-feed
+          git config user.name "uaeitjobs-social-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add -A
+          git commit -q -m "LinkedIn post for $(date -u +%F)"
+          git remote add origin "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git"
+          git push -f origin social-feed

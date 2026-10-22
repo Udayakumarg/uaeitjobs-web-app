@@ -1,0 +1,42 @@
+[
+  {
+    "question": "Dubai or Abu Dhabi for your next tech role?",
+    "context": "Salary, commute, culture, the type of employers: everyone weighs these differently.",
+    "tags": ["#DubaiJobs", "#AbuDhabiJobs"]
+  },
+  {
+    "question": "What is the one skill you are learning this month?",
+    "context": "Cloud, data, security, AI, something else? Sharing it keeps you accountable and helps others decide what to learn next.",
+    "tags": ["#Upskilling", "#TechCareers"]
+  },
+  {
+    "question": "Remote, hybrid or on-site: what would make you say yes to an offer?",
+    "context": "For many people in the UAE the answer depends on the commute, the team and the package, not only the title.",
+    "tags": ["#RemoteWork", "#FutureOfWork"]
+  },
+  {
+    "question": "What is the most useful interview question you have ever been asked?",
+    "context": "The good ones make you think. Share yours so others can prepare.",
+    "tags": ["#InterviewTips"]
+  },
+  {
+    "question": "What do you wish job ads in the UAE told you upfront?",
+    "context": "Salary range, visa, notice period, team size, remote policy? Tell us what would save you time.",
+    "tags": ["#UAEJobs", "#JobSearch"]
+  },
+  {
+    "question": "Which part of the job hunt takes you the most time?",
+    "context": "Finding roles, tailoring your CV, waiting for replies, preparing for interviews? Tell us and we will focus on it.",
+    "tags": ["#JobSearch", "#CareerAdvice"]
+  },
+  {
+    "question": "Which tech role do you think the UAE needs more people in?",
+    "context": "Security, data, DevOps, AI, QA, product? Say what you are seeing on the ground.",
+    "tags": ["#TechCareers", "#UAEJobs"]
+  },
+  {
+    "question": "What helped you land your first job in the UAE?",
+    "context": "A referral, a recruiter, a portfolio, a certification? New arrivals and graduates would love to hear it.",
+    "tags": ["#CareerAdvice", "#DubaiJobs"]
+  }
+]

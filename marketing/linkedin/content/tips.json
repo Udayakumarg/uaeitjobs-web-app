@@ -1,0 +1,107 @@
+[
+  {
+    "title": "Your CV's first three lines decide if it gets read.",
+    "body": "Recruiters skim. Open with one line each:\n• who you are (role + years of experience)\n• your three strongest skills\n• where you are and when you can start\n\nEverything below that is proof.",
+    "tags": ["#CVTips"]
+  },
+  {
+    "title": "State your notice period and visa status up front.",
+    "body": "In the UAE, start date and visa situation are among the first things a recruiter needs to know. Put both at the top of your CV and LinkedIn profile and you save a round of back-and-forth, and you stay in the pile.",
+    "tags": ["#CVTips", "#DubaiJobs"]
+  },
+  {
+    "title": "Numbers beat adjectives.",
+    "body": "“Responsible for deployments” tells a hiring manager nothing.\n“Cut release time from 2 hours to 15 minutes” tells them everything.\n\nFor each role, add one result you can measure: time saved, cost cut, users served, incidents avoided.",
+    "tags": ["#CVTips", "#SoftwareEngineering"]
+  },
+  {
+    "title": "Mirror the job ad, honestly.",
+    "body": "Before you apply, copy the five requirements that matter most. Make sure the top third of your CV uses the same words, wherever they truly describe your experience. Many companies use software that scans for exactly those terms.",
+    "tags": ["#CVTips"]
+  },
+  {
+    "title": "Two pages is plenty.",
+    "body": "A tight two-page CV with a link to your GitHub or portfolio gets read. A five-page one usually does not. If it does not support the role you are applying for, cut it.",
+    "tags": ["#CVTips"]
+  },
+  {
+    "title": "Fix your LinkedIn headline in five minutes.",
+    "body": "A headline that works: Role | key skills | city.\n\nExample: Senior DevOps Engineer | AWS, Kubernetes, Terraform | Dubai\n\nIt is what recruiters see in search results, so it is the highest-value line on your profile.",
+    "tags": ["#LinkedInTips", "#DevOps"]
+  },
+  {
+    "title": "Apply early.",
+    "body": "Roles tend to get the most attention in the first day or two after they go live. Set a routine: check new listings each morning and apply to the best matches while the pile is still small.",
+    "tags": ["#JobSearch"]
+  },
+  {
+    "title": "Prepare two stories per core skill.",
+    "body": "Interviewers ask for examples. For each skill you claim, have two short stories ready: the situation, what you did, the result. Practise them out loud once. You will sound clear instead of rehearsed.",
+    "tags": ["#InterviewTips"]
+  },
+  {
+    "title": "Ask about the team in your first call.",
+    "body": "Good questions to ask early: who would I work with, how is success measured in the first 90 days, and what does the process look like from here. It shows you think like an owner and it saves you from a bad fit.",
+    "tags": ["#InterviewTips"]
+  },
+  {
+    "title": "Talk about the total package, not just the salary.",
+    "body": "In the UAE, packages often include housing or an allowance, flights, health insurance and end-of-service benefits. When you discuss pay, give a range and ask what the full package includes so you can compare offers fairly.",
+    "tags": ["#SalaryTips", "#DubaiJobs"]
+  },
+  {
+    "title": "Know who your employer actually is.",
+    "body": "Free zone or mainland? Which legal entity issues your contract and visa? These affect insurance, notice terms and paperwork. Ask before you accept, and keep the answer in writing.",
+    "tags": ["#DubaiJobs", "#CareerAdvice"]
+  },
+  {
+    "title": "A real job never asks you to pay.",
+    "body": "Legitimate employers do not charge candidates for recruitment, interviews or visas. If someone asks you for money to “secure” a role, walk away and report it to the relevant authority.",
+    "tags": ["#JobScams", "#UAEJobs"]
+  },
+  {
+    "title": "Four red flags in a job post.",
+    "body": "• Pay far above market for a junior role\n• Interviews only on WhatsApp or Telegram\n• A free email address instead of a company domain\n• Pressure to decide today\n\nCheck the company on its own website before you share any documents.",
+    "tags": ["#JobScams", "#CareerAdvice"]
+  },
+  {
+    "title": "Pin three repositories that tell your story.",
+    "body": "On GitHub, pin your three best projects and give each a README that says what it does, why you built it and how to run it. Many hiring managers will look at your profile before they ever speak to you.",
+    "tags": ["#SoftwareEngineering", "#GitHub"]
+  },
+  {
+    "title": "Remote role open to the UAE? Check three things.",
+    "body": "1. Time-zone overlap with the team\n2. Which legal entity would employ or pay you\n3. Whether the role expects you to be in the UAE or just allows it\n\nA quick question on the first call saves weeks of confusion.",
+    "tags": ["#RemoteWork", "#UAEJobs"]
+  },
+  {
+    "title": "Follow the companies you want, not just the roles.",
+    "body": "Make a list of 15 UAE companies you would love to work for. Follow their pages, read their careers sites weekly, and message someone on the team when a role opens. Warm applications win.",
+    "tags": ["#JobSearch", "#Networking"]
+  },
+  {
+    "title": "Line up your references before you need them.",
+    "body": "Ask two former managers or colleagues now, not at offer stage. Tell them what roles you are applying for and send them your CV. A prepared reference turns a good interview into an offer.",
+    "tags": ["#JobSearch"]
+  },
+  {
+    "title": "Send a short thank-you after the interview.",
+    "body": "Within a day: three sentences. Thank them, name one thing you enjoyed learning, and restate why you fit. It takes two minutes and many candidates skip it.",
+    "tags": ["#InterviewTips"]
+  },
+  {
+    "title": "Take-home tasks: ask how long it should take.",
+    "body": "Before starting a coding or case task, ask the time budget and what they will judge. Then stay inside it, write a clear README and note what you would improve with more time. It shows judgement, not just output.",
+    "tags": ["#InterviewTips", "#SoftwareEngineering"]
+  },
+  {
+    "title": "One finished certificate beats five half-started courses.",
+    "body": "Pick the skill your target roles ask for most, finish one credible course or certification, and build something small with it. Depth you can demonstrate is worth more than a long list of tools.",
+    "tags": ["#Upskilling", "#TechCareers"]
+  },
+  {
+    "title": "Check how a company treats its people before you accept.",
+    "body": "Ask to speak to someone on the team, look at how long people stay on LinkedIn, and read the contract carefully, especially probation, notice and end-of-service terms. Questions now prevent regret later.",
+    "tags": ["#CareerAdvice", "#DubaiJobs"]
+  }
+]
