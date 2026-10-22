@@ -1,3 +1,5 @@
+import { mkdir, readFile, writeFile } from 'node:fs/promises'
+import path from 'node:path'
 import { Page } from 'playwright'
 import { ScrapedJob } from '../types'
 import { delayWithJitter } from '../utils/delay'
@@ -24,6 +26,35 @@ const SEARCH_SLUGS = [
 ]
 
 const MAX_PAGES = parseInt(process.env.MAX_PAGES ?? '3', 10)
+
+/**
+ * Detail pages visited per run. A run scrapes ~800 cards every few hours, most of them jobs the backend
+ * already has or will reject as non-IT, and every page visit adds to NaukriGulf's block score from this
+ * server's IP. So: only new, IT-looking jobs, a hard cap, and an early stop if the site starts refusing.
+ */
+const MAX_DETAIL = parseInt(process.env.NAUKRI_MAX_DETAIL ?? '60', 10)
+const FAIL_STREAK_LIMIT = 5
+const KNOWN_FILE = path.join(__dirname, '..', '..', '.cache', 'naukrigulf-known.json')
+const KNOWN_LIMIT = 20_000
+const IT_TITLE = /\b(engineer|developer|devops|sre|data|software|cloud|security|cyber|qa|test|analyst|architect|network|system|sysadmin|infrastructure|full.?stack|back.?end|front.?end|mobile|machine learning|ml|ai|ux|ui|database|dba|scrum|technical|programmer|it)\b/i
+
+/** Job ids already handled in earlier runs; they are not visited again. */
+async function loadKnown(): Promise<Set<string>> {
+  try {
+    return new Set(JSON.parse(await readFile(KNOWN_FILE, 'utf-8')) as string[])
+  } catch {
+    return new Set()
+  }
+}
+
+async function saveKnown(known: Set<string>): Promise<void> {
+  try {
+    await mkdir(path.dirname(KNOWN_FILE), { recursive: true })
+    await writeFile(KNOWN_FILE, JSON.stringify([...known].slice(-KNOWN_LIMIT)))
+  } catch (err) {
+    console.warn('  [naukrigulf] could not save the known-jobs cache:', (err as Error).message)
+  }
+}
 
 function extractJobId(url: string): string | null {
   // NaukriGulf job URLs carry an explicit marker: .../job-title-...-jid-220826001091
@@ -147,6 +178,10 @@ export async function scrapeNaukrigulf(page: Page): Promise<ScrapedJob[]> {
   const seen = new Set<string>()
   const jobs: ScrapedJob[] = []
   let detailOk = 0
+  let detailVisited = 0
+  let failStreak = 0
+  let detailsStopped = false
+  const known = await loadKnown()
   const detailFailures: Record<DetailFailure, number> = { blocked: 0, 'no-description': 0, error: 0 }
 
   for (const slug of SEARCH_SLUGS) {
@@ -228,16 +263,33 @@ export async function scrapeNaukrigulf(page: Page): Promise<ScrapedJob[]> {
         // Pass 2: now that the listing page's data is safely extracted, visit
         // each new job's own detail page for the real description.
         for (const c of cards) {
-          const detail = await fetchDetailDescription(page, c.applyUrl)
-          await delayWithJitter(page, 1_200)
-          if ('text' in detail) detailOk++
-          else detailFailures[detail.failure]++
+          // Skip jobs we have already handled and titles that are clearly not IT (the backend would reject them).
+          const eligible = !known.has(c.jobId) && IT_TITLE.test(c.title)
+          const wantDetail = eligible && !detailsStopped && detailVisited < MAX_DETAIL
+          let detail: Awaited<ReturnType<typeof fetchDetailDescription>> | null = null
+          if (wantDetail) {
+            detail = await fetchDetailDescription(page, c.applyUrl)
+            detailVisited++
+            await delayWithJitter(page, 1_200)
+            if ('text' in detail) {
+              detailOk++
+              failStreak = 0
+            } else {
+              detailFailures[detail.failure]++
+              if (++failStreak >= FAIL_STREAK_LIMIT && !detailsStopped) {
+                detailsStopped = true
+                console.warn(`  [naukrigulf] ${FAIL_STREAK_LIMIT} detail fetches failed in a row — stopping detail visits for this run`)
+              }
+            }
+          }
+          // Remember handled jobs; jobs skipped only because of the cap stay unknown so a later run picks them up.
+          if (wantDetail || !eligible) known.add(c.jobId)
 
           jobs.push({
             externalId: c.jobId,
             title: c.title,
             company: c.company,
-            description: 'text' in detail ? detail.text : (c.snippet || c.title),
+            description: detail && 'text' in detail ? detail.text : (c.snippet || c.title),
             location: c.location.includes('AE') || c.location.includes('Emirates') ? c.location : `${c.location}, AE`,
             emirate: inferEmirate(c.location),
             applyUrl: c.applyUrl,
@@ -259,9 +311,10 @@ export async function scrapeNaukrigulf(page: Page): Promise<ScrapedJob[]> {
     }
   }
 
+  await saveKnown(known)
   console.log(`  [naukrigulf] total scraped: ${jobs.length}`)
   console.log(
-    `  [naukrigulf] full descriptions: ${detailOk}/${jobs.length} ` +
+    `  [naukrigulf] detail pages visited: ${detailVisited} (cap ${MAX_DETAIL}); full descriptions: ${detailOk}/${detailVisited} ` +
     `(card-snippet fallback — blocked: ${detailFailures.blocked}, no description: ${detailFailures['no-description']}, error: ${detailFailures.error})`,
   )
   return jobs
