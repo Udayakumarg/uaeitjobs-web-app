@@ -1,6 +1,7 @@
 import { Page } from 'playwright'
 import { ScrapedJob } from '../types'
 import { delayWithJitter } from '../utils/delay'
+import { blockHtmlToText } from '../utils/html'
 import { inferEmirate } from '../utils/location'
 
 /**
@@ -31,6 +32,15 @@ import { inferEmirate } from '../utils/location'
  * draw — re-verified live 2026-08 that GulfTalent's detail page is NOT
  * blocked (plain HTTP, same technique as its search page, real 200 with a
  * full description). Indeed's block is specific to Indeed.
+ *
+ * Update 2026-10: a normal interactive browser session loads the detail page
+ * with no challenge and exposes the full posting as `JobPosting` JSON-LD
+ * (verified live — ~7k-char description plus salary). So detail enrichment is
+ * attempted, but conservatively and only as a best effort: it runs AFTER all
+ * searches (so it can't disturb them), is capped per run, waits long between
+ * pages, never retries, and stops for the rest of the run at the first block
+ * page. It does not try to get past a challenge — a blocked run simply keeps
+ * the card-only description, exactly as before.
  */
 
 // Kept deliberately short — every entry here is one more HTTP request this
@@ -51,6 +61,9 @@ const SEARCH_TERMS = [
 const LOCATION = 'Dubai'
 
 const MAX_PAGES = 1
+
+/** Upper bound on detail-page visits per run; every request adds to the block score. */
+const MAX_DETAIL = parseInt(process.env.INDEED_MAX_DETAIL ?? '12', 10)
 const BASE = 'https://ae.indeed.com'
 
 /** "AED 8,000 - 12,000 a month" -> {min, max, currency}. Best-effort only — salary is absent on most cards. */
@@ -135,6 +148,88 @@ async function fetchPage(page: Page, term: string, start: number): Promise<Scrap
   return jobs
 }
 
+const BLOCK_MARKERS = ['security check', 'just a moment', 'verify you are human', 'access denied', 'captcha', 'unusual traffic']
+
+interface IndeedDetail {
+  description: string
+  salaryMin?: number
+  salaryMax?: number
+  salaryCurrency?: string
+}
+
+/**
+ * Runs inside the page: returns the JobPosting JSON-LD fields we use, or null.
+ * No closures — Playwright serialises it.
+ */
+export function readJobPostingInPage(): { description: string; min?: number; max?: number; currency?: string } | null {
+  for (const node of Array.from(document.querySelectorAll('script[type="application/ld+json"]'))) {
+    try {
+      const data = JSON.parse(node.textContent ?? '')
+      for (const item of Array.isArray(data) ? data : [data]) {
+        if (item && item['@type'] === 'JobPosting' && typeof item.description === 'string') {
+          const value = item.baseSalary?.value
+          return {
+            description: item.description,
+            min: typeof value?.minValue === 'number' ? value.minValue : undefined,
+            max: typeof value?.maxValue === 'number' ? value.maxValue : undefined,
+            currency: typeof item.baseSalary?.currency === 'string' ? item.baseSalary.currency : undefined,
+          }
+        }
+      }
+    } catch {
+      /* ignore malformed JSON-LD */
+    }
+  }
+  return null
+}
+
+/** 'blocked' tells the caller to stop visiting detail pages for the rest of the run. */
+async function fetchDetail(page: Page, jk: string): Promise<IndeedDetail | 'blocked' | null> {
+  try {
+    const resp = await page.goto(`${BASE}/viewjob?jk=${encodeURIComponent(jk)}`, { waitUntil: 'domcontentloaded', timeout: 30_000 })
+    const title = (await page.title()).toLowerCase()
+    if ((resp && [401, 403, 429].includes(resp.status())) || BLOCK_MARKERS.some(m => title.includes(m))) return 'blocked'
+
+    const posting = await page.evaluate(readJobPostingInPage)
+    if (!posting) return null
+    const description = blockHtmlToText(posting.description)
+    if (description.length < 120) return null
+    return { description, salaryMin: posting.min, salaryMax: posting.max, salaryCurrency: posting.currency }
+  } catch (err) {
+    console.warn(`  [indeed] detail fetch error for ${jk}:`, (err as Error).message)
+    return null
+  }
+}
+
+/** Best-effort enrichment of card-only jobs. Mutates `jobs`; never throws. */
+async function enrichWithDetail(page: Page, jobs: ScrapedJob[]): Promise<void> {
+  const targets = jobs.slice(0, MAX_DETAIL)
+  let enriched = 0
+  let stoppedBy: string | null = null
+  for (const job of targets) {
+    const result = await fetchDetail(page, job.externalId)
+    if (result === 'blocked') {
+      stoppedBy = 'block page'
+      break
+    }
+    if (result) {
+      job.description = result.description
+      if (job.salaryMin == null && result.salaryMin != null) {
+        job.salaryMin = result.salaryMin
+        job.salaryMax = result.salaryMax
+        job.salaryCurrency = result.salaryCurrency ?? job.salaryCurrency
+      }
+      enriched++
+    }
+    // Long, human-scale gap — this is the most block-sensitive source.
+    await delayWithJitter(page, 6_000)
+  }
+  console.log(
+    `  [indeed] full descriptions: ${enriched}/${targets.length} attempted` +
+    (stoppedBy ? ` — stopped early on ${stoppedBy}; remaining jobs keep the card-only description` : ''),
+  )
+}
+
 export async function scrapeIndeed(page: Page): Promise<ScrapedJob[]> {
   const seen = new Set<string>()
   const jobs: ScrapedJob[] = []
@@ -163,6 +258,8 @@ export async function scrapeIndeed(page: Page): Promise<ScrapedJob[]> {
       await delayWithJitter(page, 5_000)
     }
   }
+
+  if (MAX_DETAIL > 0 && jobs.length > 0) await enrichWithDetail(page, jobs)
 
   console.log(`  [indeed] total: ${jobs.length}`)
   return jobs
