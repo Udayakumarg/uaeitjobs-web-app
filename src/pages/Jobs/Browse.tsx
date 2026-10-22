@@ -1,5 +1,7 @@
 import DOMPurify from 'dompurify'
 import {
+  BadgeCheck,
+  Bell,
   Bookmark,
   BookmarkCheck,
   BriefcaseBusiness,
@@ -7,6 +9,7 @@ import {
   Check,
   ChevronDown,
   ExternalLink,
+  Laptop,
   MapPin,
   Pencil,
   Search,
@@ -136,6 +139,13 @@ export default function JobBrowse() {
   // Kept as the same 'linkedin=easy' URL param used before this was simplified
   // from a dropdown to a toggle, so old bookmarks/saved searches keep working.
   const [easyApplyOnly,   setEasyApplyOnly]   = useState(() => searchParams.get('linkedin') === 'easy')
+  // Quick toggles for the three things UAE candidates check first: visa, remote, start date.
+  const [visaFree,        setVisaFree]        = useState(() => searchParams.get('visa') === 'free')
+  const [remoteOnly,      setRemoteOnly]      = useState(() => searchParams.get('remote') === '1')
+  const [immediateOnly,   setImmediateOnly]   = useState(() => searchParams.get('immediate') === '1')
+  const [nudgeHidden,     setNudgeHidden]     = useState(() => {
+    try { return localStorage.getItem('uaeitjobs.browseNudge') === '1' } catch { return false }
+  })
 
   // dynamic publisher list — loaded once, falls back to static list while fetching
   const [publishers, setPublishers] = useState<Publisher[]>(SOURCE_FALLBACK)
@@ -187,8 +197,11 @@ export default function JobBrowse() {
     if (sortBy !== 'newest') p.set('sort',     sortBy)
     sources.forEach(s       => p.append('publisher', s))
     if (easyApplyOnly)       p.set('linkedin', 'easy')
+    if (visaFree)            p.set('visa',      'free')
+    if (remoteOnly)          p.set('remote',    '1')
+    if (immediateOnly)       p.set('immediate', '1')
     setSearchParams(p, { replace: true })
-  }, [query, company, emirates, jobCats, jobTypes, posted, sortBy, sources, easyApplyOnly, setSearchParams])
+  }, [query, company, emirates, jobCats, jobTypes, posted, sortBy, sources, easyApplyOnly, visaFree, remoteOnly, immediateOnly, setSearchParams])
 
   // fetch — search + all filtering in a single DB round-trip via filterMulti.
   // The 'q' param drives plainto_tsquery full-text ranking server-side so
@@ -213,6 +226,9 @@ export default function JobBrowse() {
       ...(sortBy !== 'newest'   && { sort:            SORT_PARAM[sortBy] }),
       ...(sArr.length           && { publisher:       sArr }),
       ...(easyApplyOnly         && { linkedinEasyApply: true }),
+      ...(visaFree              && { visaType:        'free_visa' }),
+      ...(remoteOnly            && { remoteUae:       true }),
+      ...(immediateOnly         && { immediateJoiner: true }),
     }
     const req = jobsApi.filterMulti(params)
 
@@ -229,7 +245,7 @@ export default function JobBrowse() {
       }
     }).catch(() => {}).finally(() => { if (ok) setJobsLoading(false) })
     return () => { ok = false }
-  }, [debouncedQuery, company, emirates, jobCats, jobTypes, posted, sortBy, sources, easyApplyOnly])
+  }, [debouncedQuery, company, emirates, jobCats, jobTypes, posted, sortBy, sources, easyApplyOnly, visaFree, remoteOnly, immediateOnly])
 
   useEffect(() => {
     if (!selectedId) return
@@ -330,7 +346,7 @@ export default function JobBrowse() {
     setQuery(''); setCompany(''); setEmirates(new Set()); setJobCats(new Set())
     setJobTypes(new Set())
     setPosted(''); setSortBy('newest'); setSources(new Set())
-    setEasyApplyOnly(false)
+    setEasyApplyOnly(false); setVisaFree(false); setRemoteOnly(false); setImmediateOnly(false)
   }
 
   const saveJob = useCallback(async (id: number, e: React.MouseEvent) => {
@@ -365,7 +381,17 @@ export default function JobBrowse() {
     ...Array.from(sources).map(v  => ({ key: `s-${v}`, label: publishers.find(p => p.key === v)?.label ?? v, onRemove: () => setSources(toggleSet(sources, v)) })),
     ...(posted       ? [{ key: 'posted', label: POSTED_OPTIONS.find(x => x.value === posted)?.label  ?? posted,  onRemove: () => setPosted('')  }] : []),
     ...(easyApplyOnly ? [{ key: 'ea', label: 'Easy Apply', onRemove: () => setEasyApplyOnly(false) }] : []),
+    ...(visaFree      ? [{ key: 'visa', label: 'Visa provided', onRemove: () => setVisaFree(false) }] : []),
+    ...(remoteOnly    ? [{ key: 'remote', label: 'Remote UAE', onRemove: () => setRemoteOnly(false) }] : []),
+    ...(immediateOnly ? [{ key: 'now', label: 'Immediate joiner', onRemove: () => setImmediateOnly(false) }] : []),
   ]
+
+  const newestAgo = jobs.length ? relativeTime(jobs[0].postedAt ?? jobs[0].createdAt) : ''
+
+  function dismissNudge() {
+    setNudgeHidden(true)
+    try { localStorage.setItem('uaeitjobs.browseNudge', '1') } catch { /* storage blocked — hides for this visit only */ }
+  }
 
   const activeCount = chips.length
   const hasFilters  = activeCount > 0
@@ -379,6 +405,9 @@ export default function JobBrowse() {
     sortBy, onSortChange: setSortBy,
     sources, onSourcesChange: setSources,
     easyApplyOnly, onEasyApplyOnlyChange: setEasyApplyOnly,
+    visaFree, onVisaFreeChange: setVisaFree,
+    remoteOnly, onRemoteOnlyChange: setRemoteOnly,
+    immediateOnly, onImmediateOnlyChange: setImmediateOnly,
     publishers,
     chips, activeCount, total, loading: jobsLoading,
     onClearAll: clearAll, hasFilters,
@@ -396,24 +425,41 @@ export default function JobBrowse() {
        view. 100dvh tracks the real visible viewport as the address bar
        shows/hides. */
     <div className="flex flex-col bg-white h-[calc(100dvh-57px)]">
+      <h1 className="sr-only">Browse UAE IT roles</h1>
 
       {/* ── Filter bar ─────────────────────────────────────────── */}
       <FilterBar {...fp} onMobileOpen={() => setMobileOpen(true)} />
 
       {/* ── Panels (centred, same max width as the header) ─────── */}
       <div className="flex flex-1 overflow-hidden min-h-0">
-        <div className="mx-auto flex w-full max-w-7xl overflow-hidden min-h-0">
+        <div className="mx-auto flex w-full max-w-7xl overflow-hidden min-h-0 md:px-6 lg:px-8">
 
           {/* Job list */}
           <aside className="w-full md:w-[380px] xl:w-[420px] shrink-0 flex flex-col border-r border-[var(--border)]">
-            <div className="px-4 py-2.5 border-b border-[var(--border)] shrink-0 flex items-center justify-between">
-              <span className="font-mono text-xs font-bold text-black">
-                {jobsLoading ? '…' : `${total.toLocaleString()} roles`}
+            <div className="px-4 py-2.5 border-b border-[var(--border)] shrink-0 flex items-center justify-between gap-2">
+              <span className="font-mono text-xs font-bold text-black" aria-live="polite">
+                {jobsLoading ? '…' : `${total.toLocaleString()} ${total === 1 ? 'role' : 'roles'}`}
+                {!jobsLoading && hasFilters && (
+                  <span className="ml-2 font-mono text-[10px] uppercase tracking-wider" style={{ color: PINK }}>filtered</span>
+                )}
               </span>
-              {!jobsLoading && hasFilters && (
-                <span className="font-mono text-[10px] uppercase tracking-wider" style={{ color: PINK }}>filtered</span>
+              {!jobsLoading && newestAgo && sortBy === 'newest' && (
+                <span className="font-mono text-[10px] text-gray-400">Newest {newestAgo}</span>
               )}
             </div>
+
+            {!user && !nudgeHidden && !jobsLoading && jobs.length > 0 && (
+              <div className="flex shrink-0 items-start gap-2.5 border-b border-[var(--border)] px-4 py-2.5" style={{ background: PINK_BG }}>
+                <Bell size={13} className="mt-[3px] shrink-0" style={{ color: PINK }} />
+                <p className="min-w-0 flex-1 text-[12px] leading-5 text-gray-600">
+                  <Link to="/register" className="font-semibold hover:underline" style={{ color: PINK }}>Create a free profile</Link>
+                  {' '}to save roles and track your applications.
+                </p>
+                <button onClick={dismissNudge} aria-label="Dismiss" className="shrink-0 rounded p-0.5 text-gray-400 hover:text-gray-700">
+                  <X size={12} />
+                </button>
+              </div>
+            )}
 
             <div className="flex-1 overflow-y-auto">
               <div className="h-2" />
@@ -429,8 +475,13 @@ export default function JobBrowse() {
                 </div>
               ) : jobs.length === 0 ? (
                 <div className="p-10 text-center">
-                  <div className="font-mono text-[10px] uppercase tracking-widest text-gray-300 mb-2">No results</div>
-                  <button onClick={clearAll} className="text-xs hover:underline font-mono" style={{ color: PINK }}>Clear filters</button>
+                  <p className="text-sm font-semibold text-black">No roles match these filters</p>
+                  <p className="mt-1 text-xs leading-5 text-gray-500">Try removing a filter or searching a broader skill, for example “developer” instead of a framework.</p>
+                  {hasFilters && (
+                    <button onClick={clearAll} className="mt-4 rounded-lg border px-3.5 py-2 text-xs font-semibold transition-colors hover:bg-[var(--accent-soft)]" style={{ borderColor: PINK_RING, color: PINK }}>
+                      Clear all filters
+                    </button>
+                  )}
                 </div>
               ) : (
                 <div className="divide-y divide-[var(--border)]">
@@ -492,6 +543,9 @@ interface SharedFilterProps {
   sortBy: string;            onSortChange: (v: string) => void
   sources: Set<string>;      onSourcesChange: (s: Set<string>) => void
   easyApplyOnly: boolean;    onEasyApplyOnlyChange: (v: boolean) => void
+  visaFree: boolean;         onVisaFreeChange: (v: boolean) => void
+  remoteOnly: boolean;       onRemoteOnlyChange: (v: boolean) => void
+  immediateOnly: boolean;    onImmediateOnlyChange: (v: boolean) => void
   publishers: Publisher[]
   chips: { key: string; label: string; onRemove: () => void }[]
   activeCount: number; hasFilters: boolean
@@ -522,7 +576,8 @@ function FilterBar(props: SharedFilterProps & SavedSearchProps & { onMobileOpen:
     sortBy, onSortChange,
     sources, onSourcesChange, publishers,
     easyApplyOnly, onEasyApplyOnlyChange,
-    chips, activeCount, hasFilters, total, loading,
+    visaFree, onVisaFreeChange, remoteOnly, onRemoteOnlyChange, immediateOnly, onImmediateOnlyChange,
+    chips, activeCount, hasFilters,
     onClearAll, onMobileOpen,
     isJobSeeker, savedSearches, applySavedSearch, deleteSavedSearch,
     savingSearch, setSavingSearch, searchName, setSearchName, saveCurrentSearch,
@@ -548,10 +603,10 @@ function FilterBar(props: SharedFilterProps & SavedSearchProps & { onMobileOpen:
   }, [openPanel]) // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
-    <div className="shrink-0 z-20 bg-white" style={{ boxShadow: '0 1px 0 0 #e5e7eb' }}>
+    <div className="shrink-0 z-20 bg-white" style={{ boxShadow: '0 1px 0 0 var(--border)' }}>
 
       {/* ── Search row ───────────────────────────────────────────── */}
-      <div className="flex items-center gap-2.5 px-4 pt-3.5 pb-3">
+      <div className="mx-auto flex w-full max-w-7xl items-center gap-2.5 px-4 pt-3.5 pb-3 sm:px-6 lg:px-8">
 
         {/* Search input */}
         <div className="relative flex-1 md:mx-auto md:max-w-[560px]">
@@ -604,8 +659,8 @@ function FilterBar(props: SharedFilterProps & SavedSearchProps & { onMobileOpen:
       {/* ── Filter row (desktop only) ─────────────────────────────────────────
            overflow must NOT be set here — it would clip the absolutely-positioned
            dropdown panels. Centering is via justify-center on the inner flex row. */}
-      <div className="hidden md:block border-t border-gray-100 px-4 py-2">
-        <div className="flex items-center justify-center gap-1.5">
+      <div className="hidden md:block border-t border-gray-100 py-2">
+        <div className="mx-auto flex w-full max-w-7xl flex-wrap items-center justify-center gap-x-1.5 gap-y-2 px-6 lg:px-8">
 
           {/* Source leads the bar — which job board a listing came from. */}
           <FilterDropdown label="Source"   count={sources.size}         open={openPanel === 'source'}  onToggle={() => tog('source')}  onClose={close}>
@@ -634,18 +689,18 @@ function FilterBar(props: SharedFilterProps & SavedSearchProps & { onMobileOpen:
             <RadioPanel options={POSTED_OPTIONS} selected={posted} onSelect={v => { onPostedChange(v); close() }} />
           </FilterDropdown>
 
-          <button
-            onClick={() => onEasyApplyOnlyChange(!easyApplyOnly)}
-            className={`inline-flex h-[30px] shrink-0 items-center gap-1.5 rounded-full border px-3.5 font-sans text-[12.5px] font-medium whitespace-nowrap transition-all duration-150 select-none ${
-              easyApplyOnly
-                ? 'bg-[var(--accent-soft)] border-[var(--accent-ring)] text-[var(--accent)] hover:bg-[var(--accent-soft)]'
-                : 'bg-white border-gray-200 text-gray-500 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-700'
-            }`}
-            title="Jobs where the candidate can apply without leaving the source site"
-          >
-            <Zap size={11} strokeWidth={2.5} className={easyApplyOnly ? 'text-[var(--accent)]' : 'text-gray-400'} />
-            Easy Apply
-          </button>
+          <QuickToggle on={visaFree} onToggle={() => onVisaFreeChange(!visaFree)} title="Employer provides the work visa">
+            <BadgeCheck size={12} strokeWidth={2.5} /> Visa provided
+          </QuickToggle>
+          <QuickToggle on={remoteOnly} onToggle={() => onRemoteOnlyChange(!remoteOnly)} title="Roles you can do remotely from the UAE">
+            <Laptop size={12} strokeWidth={2.5} /> Remote
+          </QuickToggle>
+          <QuickToggle on={immediateOnly} onToggle={() => onImmediateOnlyChange(!immediateOnly)} title="Employer wants someone who can start right away">
+            <Zap size={11} strokeWidth={2.5} /> Immediate joiner
+          </QuickToggle>
+          <QuickToggle on={easyApplyOnly} onToggle={() => onEasyApplyOnlyChange(!easyApplyOnly)} title="Jobs where the candidate can apply without leaving the source site">
+            <Zap size={11} strokeWidth={2.5} /> Easy Apply
+          </QuickToggle>
 
           <Sep />
 
@@ -769,11 +824,13 @@ function FilterBar(props: SharedFilterProps & SavedSearchProps & { onMobileOpen:
 
       {/* ── Active filter chips ───────────────────────────────────────────────── */}
       {chips.length > 0 && (
-        <div className="flex items-center gap-1.5 overflow-x-auto border-t border-gray-100 bg-gray-50/70 px-4 py-2 scrollbar-none">
+        <div className="border-t border-gray-100 bg-gray-50/70">
+         <div className="mx-auto flex w-full max-w-7xl items-center gap-1.5 overflow-x-auto px-4 py-2 sm:px-6 lg:px-8 scrollbar-none">
           {chips.map(chip => (
             <button
               key={chip.key}
               onClick={chip.onRemove}
+              aria-label={`Remove filter: ${chip.label}`}
               className="inline-flex shrink-0 items-center gap-1 rounded-full px-2.5 py-1 font-sans text-[11.5px] font-medium transition-all hover:opacity-70"
               style={{ background: PINK_BG, border: `1px solid ${PINK_RING}`, color: PINK }}
             >
@@ -781,9 +838,7 @@ function FilterBar(props: SharedFilterProps & SavedSearchProps & { onMobileOpen:
               <X size={9} strokeWidth={3} />
             </button>
           ))}
-          {!loading && (
-            <span className="ml-auto shrink-0 font-mono text-[11px] text-gray-400 tabular-nums pl-2">{total.toLocaleString()} roles</span>
-          )}
+         </div>
         </div>
       )}
     </div>
@@ -800,6 +855,7 @@ function MobileFilterSheet(props: SharedFilterProps & { open: boolean; onClose: 
     sortBy, onSortChange,
     sources, onSourcesChange, publishers,
     easyApplyOnly, onEasyApplyOnlyChange,
+    visaFree, onVisaFreeChange, remoteOnly, onRemoteOnlyChange, immediateOnly, onImmediateOnlyChange,
     total, loading, onClearAll, activeCount,
   } = props
 
@@ -816,6 +872,14 @@ function MobileFilterSheet(props: SharedFilterProps & { open: boolean; onClose: 
         </div>
 
         <div className="flex-1 overflow-y-auto px-5 py-4 space-y-7">
+
+          <SheetSection label="Quick filters">
+            <div className="grid gap-0.5">
+              <SheetToggle on={visaFree} onToggle={() => onVisaFreeChange(!visaFree)}>Visa provided</SheetToggle>
+              <SheetToggle on={remoteOnly} onToggle={() => onRemoteOnlyChange(!remoteOnly)}>Remote UAE</SheetToggle>
+              <SheetToggle on={immediateOnly} onToggle={() => onImmediateOnlyChange(!immediateOnly)}>Immediate joiner</SheetToggle>
+            </div>
+          </SheetSection>
 
           <SheetSection label="Source">
             <div className="flex flex-wrap gap-2">
@@ -1084,6 +1148,35 @@ function RadioPanel({ options, selected, onSelect }: {
 
 function Sep() { return <span className="h-4 w-px bg-gray-200 shrink-0 mx-0.5" /> }
 
+function QuickToggle({ on, onToggle, title, children }: { on: boolean; onToggle: () => void; title: string; children: React.ReactNode }) {
+  return (
+    <button
+      onClick={onToggle}
+      aria-pressed={on}
+      title={title}
+      className={`inline-flex h-[30px] shrink-0 items-center gap-1.5 rounded-full border px-3.5 font-sans text-[12.5px] font-medium whitespace-nowrap transition-all duration-150 select-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-gray-300 ${
+        on
+          ? 'bg-[var(--accent-soft)] border-[var(--accent-ring)] text-[var(--accent)] hover:bg-[var(--accent-soft)]'
+          : 'bg-white border-gray-200 text-gray-500 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-700'
+      }`}
+    >
+      {children}
+    </button>
+  )
+}
+
+function SheetToggle({ on, onToggle, children }: { on: boolean; onToggle: () => void; children: React.ReactNode }) {
+  return (
+    <button onClick={onToggle} aria-pressed={on} className="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors hover:bg-[var(--surface-2)]">
+      <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded border-2 transition-colors"
+        style={on ? { borderColor: PINK, background: PINK } : { borderColor: 'var(--border-strong)', background: 'var(--surface)' }}>
+        {on && <span className="h-2 w-2 rounded-[1px] bg-white" />}
+      </span>
+      <span className="font-sans text-[13px] font-medium" style={{ color: on ? PINK : 'var(--text-body)' }}>{children}</span>
+    </button>
+  )
+}
+
 function SheetSection({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div>
@@ -1103,7 +1196,7 @@ function DetailPanel({ job, onSave, isSaved, isApplied, onApply }: {
 }) {
   const { user }     = useAuthStore()
   const skills       = parseSkills(job.skills)
-  const salary       = money(job.salaryMin, job.salaryMax, job.salaryCurrency)
+  const salary       = job.salaryMin || job.salaryMax ? money(job.salaryMin, job.salaryMax, job.salaryCurrency) : ''
   const isLinkedIn     = !!(job.linkedinUrl || job.applyUrl?.toLowerCase().includes('linkedin.com'))
   const isGated        = !user && job.applyUrl == null && job.linkedinUrl == null
   const isDirectApply  = !!user && !job.applyUrl && !job.linkedinUrl
@@ -1114,6 +1207,72 @@ function DetailPanel({ job, onSave, isSaved, isApplied, onApply }: {
   const applyUrl       = isSafeUrl(rawApplyUrl) ? rawApplyUrl : null
   const half = Math.ceil(skills.length / 2)
   const emirateLabel = EMIRATES.find(e => e.value === job.emirate)?.label
+
+  // Keep the primary action reachable while the candidate reads a long description:
+  // once the header buttons scroll out of view, a slim bar pins Apply to the bottom.
+  const actionsRef = useRef<HTMLDivElement>(null)
+  const [pinApply, setPinApply] = useState(false)
+  useEffect(() => {
+    const el = actionsRef.current
+    const pane = el?.closest('main')
+    if (!el || !pane) return
+    let frame = 0
+    const update = () => {
+      frame = 0
+      setPinApply(el.getBoundingClientRect().bottom < pane.getBoundingClientRect().top)
+    }
+    const onScroll = () => { if (!frame) frame = requestAnimationFrame(update) }
+    update()
+    pane.addEventListener('scroll', onScroll, { passive: true })
+    return () => {
+      pane.removeEventListener('scroll', onScroll)
+      if (frame) cancelAnimationFrame(frame)
+    }
+  }, [job.id])
+
+  const applyButton = (compact = false) => {
+    const cls = `inline-flex items-center gap-2 text-white font-sans text-sm font-bold rounded-lg transition-colors ${compact ? 'px-4 py-2' : 'px-5 py-2.5'}`
+    const hover = {
+      onMouseEnter: (e: React.MouseEvent<HTMLElement>) => { e.currentTarget.style.background = PINK_HOV },
+      onMouseLeave: (e: React.MouseEvent<HTMLElement>) => { e.currentTarget.style.background = PINK },
+    }
+    if (isGated) {
+      return (
+        <Link to="/login" state={{ from: `/jobs/${job.id}` }} className={cls} style={{ background: PINK }} {...hover}>
+          Sign in to apply
+        </Link>
+      )
+    }
+    if (isDirectApply) {
+      return (
+        <Link to={`/jobs/${job.id}`} className={cls} style={{ background: PINK }} {...hover}>
+          {isApplied ? 'Apply Again' : 'Apply Now'}
+        </Link>
+      )
+    }
+    if (applyUrl) {
+      return (
+        <a
+          href={applyUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className={cls}
+          style={{ background: PINK }}
+          {...hover}
+          onClick={() => {
+            // Track the apply click — fire-and-forget, never blocks the navigation
+            if (user?.userType === 'job_seeker') {
+              onApply?.(job.id)
+              seekerApi.trackApply(job.id).catch(() => {})
+            }
+          }}
+        >
+          <ExternalLink size={14} /> {isApplied ? 'Apply Again' : 'Apply Now'}
+        </a>
+      )
+    }
+    return null
+  }
 
   return (
     <div className="mx-auto max-w-3xl p-8 xl:p-10">
@@ -1127,7 +1286,7 @@ function DetailPanel({ job, onSave, isSaved, isApplied, onApply }: {
           </div>
           <h1 className="text-3xl font-bold tracking-tight text-black leading-tight">{job.title}</h1>
         </div>
-        <div className="flex items-center gap-2 shrink-0 mt-1 flex-wrap justify-end">
+        <div ref={actionsRef} className="flex items-center gap-2 shrink-0 mt-1 flex-wrap justify-end">
           {/* Applied badge — shown above the button, never disables it */}
           {isApplied && (
             <span className="w-full text-right font-mono text-[10px] font-bold uppercase tracking-wider text-emerald-600 flex items-center justify-end gap-1 mb-1">
@@ -1135,44 +1294,7 @@ function DetailPanel({ job, onSave, isSaved, isApplied, onApply }: {
               Applied
             </span>
           )}
-          {isGated ? (
-            <Link to="/login" state={{ from: `/jobs/${job.id}` }}
-              className="inline-flex items-center gap-2 text-white font-sans text-sm font-bold px-5 py-2.5 rounded-lg transition-colors"
-              style={{ background: PINK }}
-              onMouseEnter={e => (e.currentTarget as HTMLAnchorElement).style.background = PINK_HOV}
-              onMouseLeave={e => (e.currentTarget as HTMLAnchorElement).style.background = PINK}
-            >
-              Sign in to apply
-            </Link>
-          ) : isDirectApply ? (
-            <Link to={`/jobs/${job.id}`}
-              className="inline-flex items-center gap-2 text-white font-sans text-sm font-bold px-5 py-2.5 rounded-lg transition-colors"
-              style={{ background: PINK }}
-              onMouseEnter={e => (e.currentTarget as HTMLAnchorElement).style.background = PINK_HOV}
-              onMouseLeave={e => (e.currentTarget as HTMLAnchorElement).style.background = PINK}
-            >
-              {isApplied ? 'Apply Again' : 'Apply Now'}
-            </Link>
-          ) : applyUrl ? (
-            <a
-              href={applyUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 text-white font-sans text-sm font-bold px-5 py-2.5 rounded-lg transition-colors"
-              style={{ background: PINK }}
-              onMouseEnter={e => (e.currentTarget as HTMLAnchorElement).style.background = PINK_HOV}
-              onMouseLeave={e => (e.currentTarget as HTMLAnchorElement).style.background = PINK}
-              onClick={() => {
-                // Track the apply click — fire-and-forget, never blocks the navigation
-                if (user?.userType === 'job_seeker') {
-                  onApply?.(job.id)
-                  seekerApi.trackApply(job.id).catch(() => {})
-                }
-              }}
-            >
-              <ExternalLink size={14} /> {isApplied ? 'Apply Again' : 'Apply Now'}
-            </a>
-          ) : null}
+          {applyButton()}
           <button
             onClick={(e) => onSave(job.id, e)}
             className="border rounded-lg p-2.5 transition-colors"
@@ -1201,8 +1323,10 @@ function DetailPanel({ job, onSave, isSaved, isApplied, onApply }: {
         {job.experienceLevel && <InfoPill accent>{labelize(job.experienceLevel)}</InfoPill>}
         {/* Job type */}
         {job.jobType && <InfoPill>{labelize(job.jobType)}</InfoPill>}
-        {/* Salary — secondary */}
-        {salary && <InfoPill sal>{salary}</InfoPill>}
+        {/* Salary — shown as a highlight only when the employer listed one; otherwise a quiet, honest note */}
+        {salary
+          ? <InfoPill sal>{salary}</InfoPill>
+          : <span className="inline-flex items-center px-1 py-1.5 font-mono text-xs text-gray-400">Salary not listed by employer</span>}
         {/* Badges */}
         {(job.visaType === 'free_visa' || job.visaType === 'employment_visa') && <InfoPill>Visa Provided</InfoPill>}
         {job.visaType === 'own_visa' && <InfoPill>Own Visa Required</InfoPill>}
@@ -1247,6 +1371,26 @@ function DetailPanel({ job, onSave, isSaved, isApplied, onApply }: {
           More from {job.companyName} →
         </a>
       </div>
+
+      {pinApply && applyButton(true) && (
+        <div className="pointer-events-none sticky bottom-0 -mx-8 xl:-mx-10 mt-6">
+          <div className="pointer-events-auto flex items-center gap-3 border-t border-[var(--border)] bg-white/95 px-8 py-3 backdrop-blur xl:px-10">
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-sm font-bold text-black">{job.title}</p>
+              <p className="truncate font-mono text-[10px] uppercase tracking-wider text-gray-500">{job.companyName}</p>
+            </div>
+            <button
+              onClick={(e) => onSave(job.id, e)}
+              className="shrink-0 rounded-lg border p-2 transition-colors hover:bg-[var(--surface-2)]"
+              aria-label={isSaved ? 'Remove from saved' : 'Save job'}
+              style={{ borderColor: isSaved ? PINK_RING : 'var(--border)', background: isSaved ? PINK_BG : 'var(--surface)' }}
+            >
+              {isSaved ? <BookmarkCheck size={15} style={{ color: PINK }} /> : <Bookmark size={15} className="text-slate-400" />}
+            </button>
+            {applyButton(true)}
+          </div>
+        </div>
+      )}
     </div>
   )
 }
@@ -1259,19 +1403,31 @@ const JobListItem = memo(function JobListItem({
   onSave: (id: number, e: React.MouseEvent) => void
   onClick: (j: Job) => void
 }) {
-  const sal          = money(job.salaryMin, job.salaryMax, job.salaryCurrency)
+  const sal          = job.salaryMin || job.salaryMax ? money(job.salaryMin, job.salaryMax, job.salaryCurrency) : ''
+  const postedIso    = job.postedAt ?? job.createdAt
+  const postedAgo    = relativeTime(postedIso)
+  const isNew        = /^(just now|\d+ min ago|\d+h ago|1d ago)$/.test(postedAgo)
   const skills       = parseSkills(job.skills).slice(0, 3)
   const emirateLabel = EMIRATES.find(e => e.value === job.emirate)?.label
   const metaFallback = [emirateLabel, job.experienceLevel ? labelize(job.experienceLevel) : null].filter(Boolean).join(' · ')
   const isLinkedIn   = !!(job.linkedinUrl || job.applyUrl?.toLowerCase().includes('linkedin.com'))
 
   return (
-    <button
+    // A div, not a <button>: the save toggle inside is itself a button, and nesting
+    // buttons is invalid HTML (and breaks keyboard/AT behaviour).
+    <div
+      role="button"
+      tabIndex={0}
+      aria-current={active ? 'true' : undefined}
       onClick={() => onClick(job)}
-      className="relative w-full text-left px-4 py-5 transition-colors"
+      onKeyDown={e => {
+        if (e.target !== e.currentTarget) return
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick(job) }
+      }}
+      className="relative w-full cursor-pointer text-left px-4 py-5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--accent)]"
       style={{ background: active ? PINK_BG : undefined }}
-      onMouseEnter={e => { if (!active) (e.currentTarget as HTMLButtonElement).style.background = 'var(--surface-2)' }}
-      onMouseLeave={e => { if (!active) (e.currentTarget as HTMLButtonElement).style.background = '' }}
+      onMouseEnter={e => { if (!active) e.currentTarget.style.background = 'var(--surface-2)' }}
+      onMouseLeave={e => { if (!active) e.currentTarget.style.background = '' }}
     >
       {active && <span className="absolute left-0 top-0 bottom-0 w-[3px]" style={{ background: PINK }} />}
       <div className="flex items-center gap-2 mb-2">
@@ -1279,7 +1435,10 @@ const JobListItem = memo(function JobListItem({
         <span className="font-mono text-[10px] font-bold uppercase tracking-widest truncate" style={{ color: active ? PINK : '#9CA3AF' }}>
           {job.companyName}
         </span>
-        <span className="ml-auto font-mono text-[10px] text-gray-400 shrink-0">{relativeTime(job.postedAt ?? job.createdAt)}</span>
+        {isNew && (
+          <span className="shrink-0 rounded px-1.5 py-px font-mono text-[9px] font-bold uppercase tracking-wider text-white" style={{ background: PINK }}>New</span>
+        )}
+        <span className="ml-auto font-mono text-[10px] text-gray-400 shrink-0">{postedAgo}</span>
         {/* Save toggle — stopPropagation prevents the card click from firing */}
         <button
           onClick={(e) => onSave(job.id, e)}
@@ -1320,7 +1479,7 @@ const JobListItem = memo(function JobListItem({
           }
         </div>
       </div>
-    </button>
+    </div>
   )
 })
 
