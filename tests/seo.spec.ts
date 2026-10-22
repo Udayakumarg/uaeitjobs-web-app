@@ -19,7 +19,7 @@ test.describe('SEO signals in the page head', () => {
 test.describe('nginx crawler rule', () => {
   const conf = readFileSync(new URL('../nginx.conf', import.meta.url), 'utf-8')
 
-  test('the bot user-agent pattern has no capturing group, so $1 stays the job id', () => {
+  test('the bot user-agent pattern has no capturing group', () => {
     const match = /\$http_user_agent ~\* "([^"]+)"/.exec(conf)
     expect(match, 'bot user-agent rule not found').not.toBeNull()
     const pattern = match![1]
@@ -30,9 +30,9 @@ test.describe('nginx crawler rule', () => {
     expect(new RegExp(pattern, 'i').test('Mozilla/5.0 (Windows NT 10.0) Chrome/126 Safari/537.36')).toBe(false)
   })
 
-  test('the redirect target uses $1 from the location regex', () => {
-    expect(conf).toContain('location ~* ^/jobs/(')
-    expect(conf).toContain('+)$ {')
-    expect(conf).toContain('return 302 https://www.uaeitjobs.com/api/v1/seo/job/$1;')
+  test('the redirect target uses the NAMED capture, because nginx resets $1 on any later regex match', () => {
+    expect(conf).toContain('location ~* ^/jobs/(?<job_id>')
+    expect(conf).toContain('return 302 https://www.uaeitjobs.com/api/v1/seo/job/$job_id;')
+    expect(conf, 'a numbered capture is clobbered by the user-agent `if` and yields an empty id').not.toContain('/seo/job/$1')
   })
 })
