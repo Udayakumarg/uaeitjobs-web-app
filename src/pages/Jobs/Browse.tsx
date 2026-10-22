@@ -29,7 +29,7 @@ import { useAuthStore } from '../../store/authStore'
 import { useToastStore } from '../../components/Toast'
 import { JOB_CATEGORIES } from '../../types'
 import type { Emirate, Job, JobCategory } from '../../types'
-import { isThinDescription, labelize, money, parseSkills, relativeTime } from '../../utils/format'
+import { experienceLabel, isThinDescription, labelize, locationLabel, money, parseSkills, relativeTime } from '../../utils/format'
 import { isSafeUrl } from '../../utils/url'
 
 // ── Static data ───────────────────────────────────────────────────────────────
@@ -427,14 +427,14 @@ export default function JobBrowse() {
           {/* Job list */}
           <aside className="w-full md:w-[380px] xl:w-[420px] shrink-0 flex flex-col border-r border-[var(--border)]">
             <div className="px-4 py-2.5 border-b border-[var(--border)] shrink-0 flex items-center justify-between gap-2">
-              <span className="font-mono text-xs font-bold text-black" aria-live="polite">
+              <span className="text-xs font-bold text-black" aria-live="polite">
                 {jobsLoading ? '…' : `${total.toLocaleString()} ${total === 1 ? 'role' : 'roles'}`}
                 {!jobsLoading && hasFilters && (
-                  <span className="ml-2 font-mono text-[10px] uppercase tracking-wider" style={{ color: PINK }}>filtered</span>
+                  <span className="ml-2 text-xs uppercase tracking-wider" style={{ color: PINK }}>filtered</span>
                 )}
               </span>
               {!jobsLoading && newestAgo && sortBy === 'newest' && (
-                <span className="font-mono text-[10px] text-gray-400">Newest {newestAgo}</span>
+                <span className="text-xs text-gray-500">Newest {newestAgo}</span>
               )}
             </div>
 
@@ -445,7 +445,7 @@ export default function JobBrowse() {
                   <Link to="/register" className="font-semibold hover:underline" style={{ color: PINK }}>Create a free profile</Link>
                   {' '}to save roles and track your applications.
                 </p>
-                <button onClick={dismissNudge} aria-label="Dismiss" className="shrink-0 rounded p-0.5 text-gray-400 hover:text-gray-700">
+                <button onClick={dismissNudge} aria-label="Dismiss" className="shrink-0 rounded p-0.5 text-gray-500 hover:text-gray-700">
                   <X size={12} />
                 </button>
               </div>
@@ -495,8 +495,8 @@ export default function JobBrowse() {
           <main ref={detailRef} className="hidden md:block flex-1 overflow-y-auto bg-white">
             {!selectedId ? (
               <div className="h-full flex flex-col items-center justify-center text-center p-10">
-                <div className="font-mono text-[10px] uppercase tracking-[0.2em] text-gray-300 mb-2">No role selected</div>
-                <p className="text-sm text-gray-400">Select a role from the list to view details.</p>
+                <div className="text-xs uppercase tracking-[0.2em] text-gray-300 mb-2">No role selected</div>
+                <p className="text-sm text-gray-500">Select a role from the list to view details.</p>
               </div>
             ) : detailLoading ? (
               <div className="mx-auto max-w-3xl p-10 space-y-4">
@@ -598,13 +598,13 @@ function FilterBar(props: SharedFilterProps & SavedSearchProps & { onMobileOpen:
 
         {/* Search input */}
         <div className="relative flex-1 md:mx-auto md:max-w-[560px]">
-          <Search className="pointer-events-none absolute left-3.5 top-1/2 h-[14px] w-[14px] -translate-y-1/2 text-gray-400" />
+          <Search className="pointer-events-none absolute left-3.5 top-1/2 h-[14px] w-[14px] -translate-y-1/2 text-gray-500" />
           <input
             type="text"
             value={query}
             onChange={e => onQueryChange(e.target.value)}
             placeholder="Search roles, skills, companies…"
-            className="h-[38px] w-full rounded-full border border-gray-200 bg-gray-50 pl-9 pr-9 text-[13.5px] text-gray-900 placeholder:text-gray-400 transition-all outline-none focus:bg-white focus:border-gray-300"
+            className="h-[38px] w-full rounded-full border border-gray-200 bg-gray-50 pl-9 pr-9 text-[13.5px] text-gray-900 placeholder:text-gray-500 transition-all outline-none focus:bg-white focus:border-gray-300"
             onFocus={e => {
               e.currentTarget.style.borderColor = PINK
               e.currentTarget.style.boxShadow = `0 0 0 3px color-mix(in srgb, var(--accent) 10%, transparent)`
@@ -619,7 +619,7 @@ function FilterBar(props: SharedFilterProps & SavedSearchProps & { onMobileOpen:
           {query && (
             <button
               onClick={() => onQueryChange('')}
-              className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full p-0.5 text-gray-400 transition-colors hover:bg-gray-200 hover:text-gray-600"
+              className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full p-0.5 text-gray-500 transition-colors hover:bg-gray-200 hover:text-gray-600"
             >
               <X className="h-3.5 w-3.5" />
             </button>
@@ -637,7 +637,7 @@ function FilterBar(props: SharedFilterProps & SavedSearchProps & { onMobileOpen:
           <SlidersHorizontal size={13} />
           Filters
           {activeCount > 0 && (
-            <span className="inline-flex h-[17px] min-w-[17px] items-center justify-center rounded-full px-1 text-[9px] font-bold text-white leading-none" style={{ background: PINK_FILL }}>
+            <span className="inline-flex h-[17px] min-w-[17px] items-center justify-center rounded-full px-1 text-[11px] font-bold text-white leading-none" style={{ background: PINK_FILL }}>
               {activeCount}
             </span>
           )}
@@ -735,7 +735,7 @@ function FilterBar(props: SharedFilterProps & SavedSearchProps & { onMobileOpen:
                   )}
                 </div>
                 {savedSearches.length === 0 ? (
-                  <p className="px-3.5 py-3 font-sans text-[12px] text-gray-400">No saved searches yet.</p>
+                  <p className="px-3.5 py-3 font-sans text-[12px] text-gray-500">No saved searches yet.</p>
                 ) : (
                   <div className="max-h-[240px] overflow-y-auto py-1">
                     {savedSearches.map(s => (
@@ -755,7 +755,7 @@ function FilterBar(props: SharedFilterProps & SavedSearchProps & { onMobileOpen:
                               // onMouseDown (not onClick) fires before the input's onBlur commits the rename,
                               // so this reads as a deliberate confirm rather than a lost click on a vanished button.
                               onMouseDown={e => { e.preventDefault(); commitRename() }}
-                              className="shrink-0 rounded p-1 text-gray-400 hover:bg-emerald-50 hover:text-emerald-600"
+                              className="shrink-0 rounded p-1 text-gray-500 hover:bg-emerald-50 hover:text-emerald-600"
                               aria-label="Save name"
                             >
                               <Check size={11} strokeWidth={2.5} />
@@ -796,7 +796,7 @@ function FilterBar(props: SharedFilterProps & SavedSearchProps & { onMobileOpen:
           <button
             onClick={onClearAll}
             disabled={!hasFilters}
-            className="ml-0.5 shrink-0 inline-flex h-[30px] items-center gap-1 rounded-full px-3 font-sans text-[11.5px] font-medium transition-all disabled:cursor-not-allowed disabled:text-gray-300 text-gray-400 hover:enabled:text-rose-500 hover:enabled:bg-rose-50"
+            className="ml-0.5 shrink-0 inline-flex h-[30px] items-center gap-1 rounded-full px-3 font-sans text-[11.5px] font-medium transition-all disabled:cursor-not-allowed disabled:text-gray-300 text-gray-500 hover:enabled:text-rose-500 hover:enabled:bg-rose-50"
           >
             <X size={10} strokeWidth={2.5} />
             Clear
@@ -850,7 +850,7 @@ function MobileFilterSheet(props: SharedFilterProps & { open: boolean; onClose: 
 
         <div className="flex items-center justify-between px-5 py-4 border-b border-[var(--border)] shrink-0">
           <span className="font-sans text-sm font-semibold">Filters</span>
-          <button onClick={onClose} className="text-gray-400 hover:text-black transition-colors"><X size={20} /></button>
+          <button onClick={onClose} className="text-gray-500 hover:text-black transition-colors"><X size={20} /></button>
         </div>
 
         <div className="flex-1 overflow-y-auto px-5 py-4 space-y-7">
@@ -871,7 +871,7 @@ function MobileFilterSheet(props: SharedFilterProps & { open: boolean; onClose: 
                     className="inline-flex items-center gap-1.5 rounded-full border px-3.5 py-2 text-[13px] font-medium transition-all"
                     style={on ? { background: PINK_BG, borderColor: PINK_RING, color: PINK } : { borderColor: 'var(--border)', color: 'var(--text-body)', background: 'var(--surface)' }}>
                     {label}
-                    {count > 0 && <span className="text-[11px] font-normal" style={{ color: on ? PINK : '#9ca3af' }}>({count})</span>}
+                    {count > 0 && <span className="text-[11px] font-normal" style={{ color: on ? PINK : 'var(--text-muted)' }}>({count})</span>}
                   </button>
                 )
               })}
@@ -968,7 +968,7 @@ function MobileFilterSheet(props: SharedFilterProps & { open: boolean; onClose: 
           {activeCount > 0 && (
             <button
               onClick={onClearAll}
-              className="shrink-0 font-sans text-[13px] font-medium text-gray-400 transition-colors hover:text-rose-500"
+              className="shrink-0 font-sans text-[13px] font-medium text-gray-500 transition-colors hover:text-rose-500"
             >
               Clear all
             </button>
@@ -1019,7 +1019,7 @@ function FilterDropdown({ label, count, open, onToggle, onClose, children, noHig
         <span className="flex items-center gap-1.5">
           {label}
           {isActive && (
-            <span className="inline-flex h-[16px] min-w-[16px] items-center justify-center rounded-full px-1 text-white text-[9px] font-bold leading-none" style={{ background: PINK_FILL }}>
+            <span className="inline-flex h-[16px] min-w-[16px] items-center justify-center rounded-full px-1 text-white text-[11px] font-bold leading-none" style={{ background: PINK_FILL }}>
               {count}
             </span>
           )}
@@ -1027,7 +1027,7 @@ function FilterDropdown({ label, count, open, onToggle, onClose, children, noHig
         <ChevronDown
           size={11}
           strokeWidth={2.5}
-          className={`shrink-0 transition-transform duration-200 ${isActive ? 'text-[var(--accent)]' : 'text-gray-400'} ${open ? 'rotate-180' : ''}`}
+          className={`shrink-0 transition-transform duration-200 ${isActive ? 'text-[var(--accent)]' : 'text-gray-500'} ${open ? 'rotate-180' : ''}`}
         />
       </button>
 
@@ -1082,7 +1082,7 @@ function CheckboxPanel({ options, selected, onToggle }: {
               {mainLabel}
             </span>
             {countStr && (
-              <span className="font-mono text-[11px] tabular-nums" style={{ color: on ? PINK : '#9CA3AF' }}>
+              <span className="text-[11px] tabular-nums" style={{ color: on ? PINK : 'var(--text-muted)' }}>
                 {countStr}
               </span>
             )}
@@ -1160,7 +1160,7 @@ function SheetToggle({ on, onToggle, children }: { on: boolean; onToggle: () => 
 function SheetSection({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div>
-      <h3 className="font-sans text-[10.5px] font-bold uppercase tracking-[0.12em] text-gray-400 mb-3">{label}</h3>
+      <h3 className="font-sans text-[10.5px] font-bold uppercase tracking-[0.12em] text-gray-500 mb-3">{label}</h3>
       {children}
     </div>
   )
@@ -1260,8 +1260,8 @@ function DetailPanel({ job, onSave, isSaved, isApplied, onApply }: {
         <div className="min-w-0">
           <div className="flex items-center gap-2 mb-3">
             <CompanyLogo logoUrl={job.companyLogoUrl} companyName={job.companyName} size="sm" />
-            <span className="font-mono text-[10px] font-bold uppercase tracking-[0.16em] truncate" style={{ color: PINK }}>
-              {job.companyName}{job.locationUae ? ` · ${job.locationUae}` : ''}{job.remoteUae ? ' · Remote' : ''}
+            <span className="text-sm font-semibold truncate" style={{ color: PINK }}>
+              {job.companyName}{job.locationUae ? ` · ${locationLabel(job.locationUae)}` : ''}{job.remoteUae && !/^remote/i.test(job.locationUae ?? '') ? ' · Remote' : ''}
             </span>
           </div>
           <h1 className="text-3xl font-bold tracking-tight text-black leading-tight">{job.title}</h1>
@@ -1269,7 +1269,7 @@ function DetailPanel({ job, onSave, isSaved, isApplied, onApply }: {
         <div ref={actionsRef} className="flex items-center gap-2 shrink-0 mt-1 flex-wrap justify-end">
           {/* Applied badge — shown above the button, never disables it */}
           {isApplied && (
-            <span className="w-full text-right font-mono text-[10px] font-bold uppercase tracking-wider text-emerald-600 flex items-center justify-end gap-1 mb-1">
+            <span className="w-full text-right text-xs font-bold uppercase tracking-wider text-emerald-600 flex items-center justify-end gap-1 mb-1">
               <svg width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M2 6.5L4.8 9L10 3" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>
               Applied
             </span>
@@ -1296,17 +1296,17 @@ function DetailPanel({ job, onSave, isSaved, isApplied, onApply }: {
         {(emirateLabel || job.locationUae) && (
           <InfoPill loc>
             <MapPin size={11} />
-            {emirateLabel ?? job.locationUae}
+            {emirateLabel ?? locationLabel(job.locationUae)}
           </InfoPill>
         )}
         {/* Experience level */}
-        {job.experienceLevel && <InfoPill accent>{labelize(job.experienceLevel)}</InfoPill>}
+        {job.experienceLevel && <InfoPill accent>{experienceLabel(job.experienceLevel)}</InfoPill>}
         {/* Job type */}
         {job.jobType && <InfoPill>{labelize(job.jobType)}</InfoPill>}
         {/* Salary — shown as a highlight only when the employer listed one; otherwise a quiet, honest note */}
         {salary
           ? <InfoPill sal>{salary}</InfoPill>
-          : <span className="inline-flex items-center px-1 py-1.5 font-mono text-xs text-gray-400">Salary not listed by employer</span>}
+          : <span className="inline-flex items-center px-1 py-1.5 text-xs text-gray-500">Salary not listed by employer</span>}
         {/* Badges */}
         {(job.visaType === 'free_visa' || job.visaType === 'employment_visa') && <InfoPill>Visa Provided</InfoPill>}
         {job.visaType === 'own_visa' && <InfoPill>Own Visa Required</InfoPill>}
@@ -1321,13 +1321,13 @@ function DetailPanel({ job, onSave, isSaved, isApplied, onApply }: {
           <DSection>Core Stack</DSection>
           <div className="grid grid-cols-2 gap-3 mb-8">
             <div className="border border-[var(--border)] p-4 bg-[var(--surface-2)]">
-              <span className="block font-mono text-[9px] uppercase tracking-[0.16em] text-gray-400 mb-2">Required</span>
-              <span className="font-mono text-sm font-semibold text-black">{skills.slice(0, half).join(', ')}</span>
+              <span className="block text-[11px] uppercase tracking-wider text-gray-500 mb-2">Required</span>
+              <span className="text-sm font-semibold text-black">{skills.slice(0, half).join(', ')}</span>
             </div>
             {skills.length > half && (
               <div className="border border-[var(--border)] p-4 bg-[var(--surface-2)]">
-                <span className="block font-mono text-[9px] uppercase tracking-[0.16em] text-gray-400 mb-2">Additional</span>
-                <span className="font-mono text-sm font-semibold text-black">{skills.slice(half).join(', ')}</span>
+                <span className="block text-[11px] uppercase tracking-wider text-gray-500 mb-2">Additional</span>
+                <span className="text-sm font-semibold text-black">{skills.slice(half).join(', ')}</span>
               </div>
             )}
           </div>
@@ -1337,10 +1337,10 @@ function DetailPanel({ job, onSave, isSaved, isApplied, onApply }: {
       <JobDescriptionBlock job={job} />
       {applyUrl && isThinDescription(job) && <FullPostingNotice href={applyUrl} sourceName={sourceLabel(job)} />}
 
-      <div className="mt-10 pt-6 border-t border-[var(--border)] flex items-center justify-between text-xs text-gray-400 font-mono">
+      <div className="mt-10 pt-6 border-t border-[var(--border)] flex items-center justify-between text-xs text-gray-500 ">
         <div className="flex items-center gap-4">
           {(job.postedAt ?? job.createdAt) && <span className="flex items-center gap-1.5"><CalendarDays size={12} />{relativeTime(job.postedAt ?? job.createdAt)}</span>}
-          {job.locationUae && <span className="flex items-center gap-1.5"><MapPin size={12} />{job.locationUae}</span>}
+          {job.locationUae && <span className="flex items-center gap-1.5"><MapPin size={12} />{locationLabel(job.locationUae)}</span>}
           {job.jobType && <span className="flex items-center gap-1.5"><BriefcaseBusiness size={12} />{labelize(job.jobType)}</span>}
         </div>
         {/* Plain <a>, not <Link> — this panel renders while already on /jobs, so a
@@ -1358,7 +1358,7 @@ function DetailPanel({ job, onSave, isSaved, isApplied, onApply }: {
           <div className="pointer-events-auto flex items-center gap-3 border-t border-[var(--border)] bg-white/95 px-8 py-3 backdrop-blur xl:px-10">
             <div className="min-w-0 flex-1">
               <p className="truncate text-sm font-bold text-black">{job.title}</p>
-              <p className="truncate font-mono text-[10px] uppercase tracking-wider text-gray-500">{job.companyName}</p>
+              <p className="truncate text-xs uppercase tracking-wider text-gray-500">{job.companyName}</p>
             </div>
             <button
               onClick={(e) => onSave(job.id, e)}
@@ -1390,7 +1390,7 @@ const JobListItem = memo(function JobListItem({
   const isNew        = /^(just now|\d+ min ago|\d+h ago|1d ago)$/.test(postedAgo)
   const skills       = parseSkills(job.skills).slice(0, 3)
   const emirateLabel = EMIRATES.find(e => e.value === job.emirate)?.label
-  const metaFallback = [emirateLabel, job.experienceLevel ? labelize(job.experienceLevel) : null].filter(Boolean).join(' · ')
+  const metaFallback = [emirateLabel, job.experienceLevel ? experienceLabel(job.experienceLevel) : null].filter(Boolean).join(' · ')
   const isLinkedIn   = !!(job.linkedinUrl || job.applyUrl?.toLowerCase().includes('linkedin.com'))
 
   return (
@@ -1413,13 +1413,13 @@ const JobListItem = memo(function JobListItem({
       {active && <span className="absolute left-0 top-0 bottom-0 w-[3px]" style={{ background: PINK_FILL }} />}
       <div className="flex items-center gap-2 mb-2">
         <CompanyLogo logoUrl={job.companyLogoUrl} companyName={job.companyName} size="sm" className="shrink-0" />
-        <span className="font-mono text-[10px] font-bold uppercase tracking-widest truncate" style={{ color: active ? PINK : '#9CA3AF' }}>
+        <span className="text-xs font-semibold truncate" style={{ color: active ? PINK : 'var(--text-body)' }}>
           {job.companyName}
         </span>
         {isNew && (
-          <span className="shrink-0 rounded px-1.5 py-px font-mono text-[9px] font-bold uppercase tracking-wider text-white" style={{ background: PINK_FILL }}>New</span>
+          <span className="shrink-0 rounded px-1.5 py-px text-[11px] font-bold uppercase tracking-wider text-white" style={{ background: PINK_FILL }}>New</span>
         )}
-        <span className="ml-auto font-mono text-[10px] text-gray-400 shrink-0">{postedAgo}</span>
+        <span className="ml-auto text-xs text-gray-500 shrink-0">{postedAgo}</span>
         {/* Save toggle — stopPropagation prevents the card click from firing */}
         <button
           onClick={(e) => onSave(job.id, e)}
@@ -1433,29 +1433,29 @@ const JobListItem = memo(function JobListItem({
       </div>
       <p className="font-bold text-sm text-black leading-snug mb-2.5">{job.title}</p>
       <div className="flex items-center justify-between gap-2">
-        <span className="font-mono text-[10px] text-gray-500 truncate">
-          {skills.length ? skills.join(', ') : (job.locationUae ?? 'UAE')}
+        <span className="text-xs text-gray-500 truncate">
+          {skills.length ? skills.join(', ') : (locationLabel(job.locationUae) || 'UAE')}
         </span>
         <div className="flex items-center gap-1.5 shrink-0">
           {isApplied && (
-            <span className="font-mono text-[9px] uppercase tracking-wider font-bold text-emerald-600 flex items-center gap-0.5">
+            <span className="text-[11px] uppercase tracking-wider font-bold text-emerald-600 flex items-center gap-0.5">
               <svg width="9" height="9" viewBox="0 0 12 12" fill="none"><path d="M2 6.5L4.8 9L10 3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
               Applied
             </span>
           )}
           {isLinkedIn && (
-            <span className="font-mono text-[9px] uppercase tracking-wider font-bold" style={{ color: '#0A66C2' }}>LinkedIn</span>
+            <span className="text-[11px] uppercase tracking-wider font-bold" style={{ color: '#0A66C2' }}>LinkedIn</span>
           )}
           {job.remoteUae && (
-            <span className="font-mono text-[9px] uppercase tracking-wider font-bold" style={{ color: PINK }}>Remote</span>
+            <span className="text-[11px] uppercase tracking-wider font-bold" style={{ color: PINK }}>Remote</span>
           )}
           {job.immediateJoiner && (
-            <span className="font-mono text-[9px] uppercase tracking-wider text-amber-600 font-bold">Now</span>
+            <span className="text-[11px] uppercase tracking-wider text-amber-600 font-bold">Now</span>
           )}
           {sal
-            ? <span className="font-mono text-[11px] font-bold" style={{ color: active ? PINK : 'var(--text)' }}>{sal}</span>
+            ? <span className="text-[11px] font-bold" style={{ color: active ? PINK : 'var(--text)' }}>{sal}</span>
             : metaFallback
-              ? <span className="font-mono text-[10px] text-gray-400 truncate max-w-[130px]">{metaFallback}</span>
+              ? <span className="text-xs text-gray-500 truncate max-w-[130px]">{metaFallback}</span>
               : null
           }
         </div>
@@ -1483,18 +1483,22 @@ function InfoPill({ children, accent, loc, sal, li }: { children: React.ReactNod
           ? { background: 'color-mix(in srgb, #0a66c2 12%, var(--surface))', borderColor: 'color-mix(in srgb, #0a66c2 38%, var(--surface))', color: 'var(--pill-blue)' }
           : { background: 'var(--surface-3)', borderColor: 'var(--border)', color: 'var(--text)' }
   return (
-    <span className="inline-flex items-center gap-1.5 border px-3 py-1.5 font-mono text-xs font-semibold rounded-md" style={cls}>
+    <span className="inline-flex items-center gap-1.5 border px-3 py-1.5 text-xs font-semibold rounded-md" style={cls}>
       {children}
     </span>
   )
 }
 
 function DSection({ children }: { children: React.ReactNode }) {
-  return <h2 className="font-mono text-[10px] font-bold uppercase tracking-[0.18em] text-black mb-3 pb-2 border-b border-[var(--border)]">{children}</h2>
+  return <h2 className="text-xs font-bold uppercase tracking-wider text-black mb-3 pb-2 border-b border-[var(--border)]">{children}</h2>
 }
 
 function JobDescriptionBlock({ job }: { job: Job }) {
-  if (job.descriptionHtml?.trim()) return (<><DSection>About the Role</DSection><div className="prose-job" dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(job.descriptionHtml) }} /></>)
+  if (job.descriptionHtml?.trim()) {
+    // The formatter usually opens with its own heading; adding another one printed "About the Role" twice.
+    const hasOwnHeading = /^\s*<h[1-4][\s>]/i.test(job.descriptionHtml)
+    return (<>{!hasOwnHeading && <DSection>About the Role</DSection>}<div className="prose-job" dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(job.descriptionHtml) }} /></>)
+  }
   let sections: { heading: string; items: string[] }[] = []
   if (job.descriptionSections) {
     try {
@@ -1512,7 +1516,7 @@ function JobDescriptionBlock({ job }: { job: Job }) {
               <ul className="space-y-3">
                 {s.items.map((item, i) => (
                   <li key={i} className="flex items-start gap-3 text-sm text-gray-700 leading-relaxed">
-                    <span className="font-mono font-bold mt-0.5 shrink-0" style={{ color: PINK }}>→</span>{item}
+                    <span className="font-bold mt-0.5 shrink-0" style={{ color: PINK }}>→</span>{item}
                   </li>
                 ))}
               </ul>

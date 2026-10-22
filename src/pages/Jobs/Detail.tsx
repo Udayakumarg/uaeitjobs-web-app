@@ -30,7 +30,7 @@ import { useDocumentMeta } from '../../hooks/useDocumentMeta'
 import { errorMessage, jobsApi, seekerAiApi, seekerApi } from '../../services/api'
 import { useAuthStore } from '../../store/authStore'
 import type { Job } from '../../types'
-import { isThinDescription, labelize, money, parseSkills, relativeTime } from '../../utils/format'
+import { experienceLabel, isThinDescription, labelize, locationLabel, money, parseSkills, relativeTime } from '../../utils/format'
 import { isSafeUrl } from '../../utils/url'
 
 function buildJobPostingJsonLd(job: Job): Record<string, unknown> {
@@ -251,7 +251,7 @@ export default function JobDetail() {
         <div className="mt-5 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-slate-500">
           {job.locationUae ? (
             <span className="flex items-center gap-1.5">
-              <MapPin size={14} className="shrink-0" /> {job.locationUae}
+              <MapPin size={14} className="shrink-0" /> {locationLabel(job.locationUae)}
             </span>
           ) : null}
           {job.jobType ? (
@@ -260,7 +260,7 @@ export default function JobDetail() {
             </span>
           ) : null}
           {job.experienceLevel ? (
-            <span className="font-medium text-slate-700">{labelize(job.experienceLevel)}</span>
+            <span className="font-medium text-slate-700">{experienceLabel(job.experienceLevel)}</span>
           ) : null}
           {posted ? (
             <span className="flex items-center gap-1.5">
@@ -276,7 +276,7 @@ export default function JobDetail() {
             {(job.emirate || job.locationUae) ? (
               <span className="flex items-center gap-1.5 rounded-full bg-slate-100 px-4 py-1.5 text-sm font-semibold text-slate-700 ring-1 ring-inset ring-slate-200">
                 <MapPin size={13} className="shrink-0" />
-                {job.emirate ? labelize(job.emirate) : job.locationUae}
+                {job.emirate ? labelize(job.emirate) : locationLabel(job.locationUae)}
               </span>
             ) : null}
             {/* Primary — experience level */}

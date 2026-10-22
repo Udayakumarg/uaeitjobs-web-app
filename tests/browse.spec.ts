@@ -163,6 +163,29 @@ test.describe('Browse jobs page', () => {
     await expect(page.getByRole('note')).toHaveCount(0)
   })
 
+  test('formats locations and experience for people and prints one description heading', async ({ page }) => {
+    await mockJobsApi(page)
+    const tidy = makeJob(7, {
+      locationUae: 'Abu Dhabi, Abu Dhabi Emirate, AE',
+      emirate: null,
+      experienceLevel: 'mid_3_5_yrs',
+      descriptionHtml: '<h3>About the Role</h3><p>' + 'Build and run services for customers across the region. '.repeat(8) + '</p>',
+    })
+    await page.route('**/api/v1/jobs/filter**', (route) =>
+      route.fulfill({ json: { content: [tidy], totalPages: 1, totalElements: 1, number: 0, size: 80 } }),
+    )
+    await page.route(/\/api\/v1\/jobs\/7$/, (route) => route.fulfill({ json: tidy }))
+    await page.setViewportSize({ width: 1440, height: 900 })
+    await page.goto(`${baseUrl}/jobs`)
+    await expect(page.getByRole('heading', { name: 'Engineer 7', level: 1 })).toBeVisible()
+
+    await expect(page.getByText('Mid-level · 3–5 yrs').first()).toBeVisible()
+    await expect(page.getByText('Mid 3 5 Yrs')).toHaveCount(0)
+    await expect(page.getByText('Abu Dhabi Emirate')).toHaveCount(0)
+    await expect(page.getByText(', AE')).toHaveCount(0)
+    await expect(page.getByText('About the Role', { exact: true })).toHaveCount(1)
+  })
+
   test('list items are keyboard accessible without nesting buttons', async ({ page }) => {
     await mockJobsApi(page)
     await page.goto(`${baseUrl}/jobs`)

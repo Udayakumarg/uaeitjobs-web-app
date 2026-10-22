@@ -27,7 +27,7 @@ import { CompanyLogo } from '../components/CompanyLogo'
 import { Button, Container } from '../components/ui'
 import { useDocumentMeta } from '../hooks/useDocumentMeta'
 import type { Job } from '../types'
-import { money, parseSkills } from '../utils/format'
+import { locationLabel, parseSkills } from '../utils/format'
 
 // ── Design tokens (matches Jobs page exactly) ─────────────────────────────────
 const PINK      = 'var(--accent)'
@@ -49,7 +49,7 @@ const CATEGORIES = [
 
 const HOW_IT_WORKS_SEEKER = [
   { icon: Users2,    title: 'Build a verified profile', body: 'Upload your CV, auto-parse skills, and let recruiters discover you directly.' },
-  { icon: Zap,       title: 'Apply in one click',       body: 'Tailored cover letters, saved roles, and instant alerts when matching jobs go live.' },
+  { icon: Zap,       title: 'Apply in one click',       body: 'Save roles, track your applications, and draft a cover letter with your own AI key.' },
   { icon: LineChart, title: 'Track every step',         body: 'See application status, recruiter views, and shortlist progress from one dashboard.' },
 ]
 
@@ -73,6 +73,7 @@ export default function Landing() {
   const navigate = useNavigate()
   const [stats, setStats] = useState({ totalJobs: 0, companies: 0, countriesRepresented: 0 })
   const [featured, setFeatured] = useState<Job[]>([])
+  const [sources, setSources] = useState<{ key: string; label: string; count: number }[]>([])
   const [search, setSearch] = useState('')
 
   useDocumentMeta({
@@ -97,6 +98,7 @@ export default function Landing() {
   useEffect(() => {
     jobsApi.stats().then(({ data }) => setStats(data)).catch(() => undefined)
     jobsApi.list({ page: 0, size: 6 }).then(({ data }) => setFeatured(data.content)).catch(() => undefined)
+    jobsApi.publishers().then(({ data }) => setSources(data.filter(p => p.count > 0))).catch(() => undefined)
   }, [])
 
   const handleHeroSearch = (event: FormEvent) => {
@@ -114,7 +116,7 @@ export default function Landing() {
             <div className="animate-fade-in-up">
 
               {/* Eyebrow — mono style matches Jobs page labels */}
-              <span className="inline-flex items-center gap-2 rounded-md border border-white/15 bg-white/5 px-3 py-1.5 font-mono text-[10px] font-bold uppercase tracking-[0.18em] text-slate-300 backdrop-blur">
+              <span className="inline-flex items-center gap-2 rounded-md border border-white/15 bg-white/5 px-3 py-1.5 text-xs font-bold uppercase tracking-wider text-slate-300 backdrop-blur">
                 <Sparkles size={12} /> UAE tech hiring · 2026
               </span>
 
@@ -125,7 +127,7 @@ export default function Landing() {
 
               <p className="mt-5 max-w-2xl text-[15px] leading-7 text-slate-300 sm:text-base sm:leading-8">
                 Software, cloud, data, cybersecurity, product, and IT roles across Dubai,
-                Abu Dhabi, Sharjah — curated, verified, and hireable in days.
+                Abu Dhabi and Sharjah, gathered from leading job boards and employers.
               </p>
 
               {/* Search */}
@@ -154,8 +156,8 @@ export default function Landing() {
               </form>
 
               {/* Popular searches */}
-              <div className="mt-4 flex flex-wrap items-center gap-x-2 gap-y-2 font-mono text-[10px] text-slate-400">
-                <span className="uppercase tracking-[0.14em]">Popular:</span>
+              <div className="mt-4 flex flex-wrap items-center gap-x-2 gap-y-2 text-xs text-slate-400">
+                <span className="uppercase tracking-wider">Popular:</span>
                 {POPULAR.map((q) => (
                   <Link
                     key={q}
@@ -197,13 +199,13 @@ export default function Landing() {
                   </div>
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-bold text-white">Senior Java Engineer</p>
-                    <p className="font-mono text-[10px] text-slate-400">Etisalat · Dubai · Full-time</p>
+                    <p className="text-xs text-slate-400">Etisalat · Dubai · Full-time</p>
                   </div>
                   <span
-                    className="font-mono text-[9px] font-bold uppercase tracking-wider rounded px-2 py-1"
+                    className="text-[11px] font-bold uppercase tracking-wider rounded px-2 py-1"
                     style={{ background: PINK_BG, color: PINK, border: `1px solid ${PINK_RING}` }}
                   >
-                    Featured
+                    Example
                   </span>
                 </div>
 
@@ -215,9 +217,9 @@ export default function Landing() {
                     ['Status', 'Hiring now'],
                   ].map(([label, val]) => (
                     <div key={label} className="rounded-lg border border-white/10 bg-white/5 p-3">
-                      <p className="font-mono text-[9px] uppercase tracking-[0.14em] text-slate-400">{label}</p>
+                      <p className="text-[11px] uppercase tracking-wider text-slate-400">{label}</p>
                       <p
-                        className="mt-1 font-mono text-[11px] font-bold"
+                        className="mt-1 text-[11px] font-bold"
                         style={{ color: val === 'Hiring now' ? PINK : '#fff' }}
                       >
                         {val === 'Hiring now' ? (
@@ -258,9 +260,9 @@ export default function Landing() {
       <Container className="-mt-16 pb-16">
         <div className="grid gap-px rounded-xl border border-[var(--border)] bg-[var(--border)] shadow-sm overflow-hidden sm:grid-cols-3">
           {[
-            { icon: BriefcaseBusiness, label: 'Active roles',      value: stats.totalJobs          ? `${stats.totalJobs.toLocaleString()}+`          : '20+' },
-            { icon: Building2,         label: 'Hiring companies',   value: stats.companies          ? `${stats.companies.toLocaleString()}+`          : '10+' },
-            { icon: Globe2,            label: 'Candidate reach',    value: stats.countriesRepresented ? `${stats.countriesRepresented}+`              : '40+' },
+            { icon: BriefcaseBusiness, label: 'Active roles',      value: stats.totalJobs ? stats.totalJobs.toLocaleString() : '—' },
+            { icon: Building2,         label: 'Hiring companies',   value: stats.companies ? stats.companies.toLocaleString() : '—' },
+            { icon: Globe2,            label: 'Job sources',        value: sources.length ? String(sources.length) : '—' },
           ].map(({ icon: Icon, label, value }) => (
             <div key={label} className="flex items-center gap-4 bg-white px-6 py-5">
               <span
@@ -270,8 +272,8 @@ export default function Landing() {
                 <Icon size={18} />
               </span>
               <div>
-                <p className="font-mono text-xl font-bold text-black">{value}</p>
-                <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-gray-400">{label}</p>
+                <p className="text-xl font-bold text-black">{value}</p>
+                <p className="text-xs uppercase tracking-wider text-gray-500">{label}</p>
               </div>
             </div>
           ))}
@@ -283,7 +285,7 @@ export default function Landing() {
         <Container>
           <div className="mb-8 flex items-end justify-between gap-4">
             <div>
-              <p className="font-mono text-[10px] font-bold uppercase tracking-[0.18em]" style={{ color: PINK }}>Explore</p>
+              <p className="text-xs font-bold uppercase tracking-wider" style={{ color: PINK }}>Explore</p>
               <h2 className="mt-2 text-2xl font-bold tracking-tight text-black sm:text-3xl">
                 Roles built for the UAE tech ecosystem
               </h2>
@@ -293,7 +295,7 @@ export default function Landing() {
             </div>
             <Link
               to="/jobs"
-              className="hidden shrink-0 items-center gap-1.5 font-mono text-xs font-bold uppercase tracking-wider transition sm:flex"
+              className="hidden shrink-0 items-center gap-1.5 text-xs font-bold uppercase tracking-wider transition sm:flex"
               style={{ color: PINK }}
               onMouseEnter={e => ((e.currentTarget as HTMLAnchorElement).style.color = PINK_HOV)}
               onMouseLeave={e => ((e.currentTarget as HTMLAnchorElement).style.color = PINK)}
@@ -320,7 +322,7 @@ export default function Landing() {
                 </span>
                 <div className="min-w-0 flex-1">
                   <p className="text-sm font-bold text-black">{label}</p>
-                  <p className="font-mono text-[10px] text-gray-400">{sub}</p>
+                  <p className="text-xs text-gray-500">{sub}</p>
                 </div>
                 <ArrowRight
                   size={15}
@@ -334,7 +336,7 @@ export default function Landing() {
           <div className="mt-6 text-center sm:hidden">
             <Link
               to="/jobs"
-              className="font-mono text-xs font-bold uppercase tracking-wider"
+              className="text-xs font-bold uppercase tracking-wider"
               style={{ color: PINK }}
             >
               Browse all roles →
@@ -347,7 +349,7 @@ export default function Landing() {
       <section className="border-t border-[var(--border)] px-4 py-16 sm:px-6">
         <Container>
           <div className="mb-10 text-center">
-            <p className="font-mono text-[10px] font-bold uppercase tracking-[0.18em]" style={{ color: PINK }}>How it works</p>
+            <p className="text-xs font-bold uppercase tracking-wider" style={{ color: PINK }}>How it works</p>
             <h2 className="mt-2 text-2xl font-bold tracking-tight text-black sm:text-3xl">Two workspaces. One platform.</h2>
             <p className="mx-auto mt-2 max-w-lg text-sm text-gray-500">
               Built ground-up for candidates and recruiters in the UAE — not adapted from a generic job board.
@@ -358,7 +360,7 @@ export default function Landing() {
 
             {/* Job seeker */}
             <div className="rounded-xl border border-[var(--border)] bg-[var(--surface-2)] p-7">
-              <p className="font-mono text-[10px] font-bold uppercase tracking-[0.18em]" style={{ color: PINK }}>For job seekers</p>
+              <p className="text-xs font-bold uppercase tracking-wider" style={{ color: PINK }}>For job seekers</p>
               <h3 className="mt-2 text-xl font-bold tracking-tight text-black">Land your next UAE role</h3>
               <ol className="mt-6 grid gap-5">
                 {HOW_IT_WORKS_SEEKER.map(({ icon: Icon, title, body }, idx) => (
@@ -371,7 +373,7 @@ export default function Landing() {
                     </span>
                     <div>
                       <p className="text-sm font-bold text-black">
-                        <span className="font-mono mr-2 text-[10px]" style={{ color: PINK }}>0{idx + 1}</span>
+                        <span className="mr-2 text-xs" style={{ color: PINK }}>0{idx + 1}</span>
                         {title}
                       </p>
                       <p className="mt-1 text-sm leading-6 text-gray-500">{body}</p>
@@ -390,8 +392,8 @@ export default function Landing() {
 
             {/* HR */}
             <div className="rounded-xl border border-slate-800 bg-slate-950 p-7 text-white">
-              <p className="font-mono text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400">For HR &amp; recruiters</p>
-              <h3 className="mt-2 text-xl font-bold tracking-tight">Hire UAE talent, 10× faster</h3>
+              <p className="text-xs font-bold uppercase tracking-wider text-slate-400">For HR &amp; recruiters</p>
+              <h3 className="mt-2 text-xl font-bold tracking-tight">Post a role in minutes</h3>
               <ol className="mt-6 grid gap-5">
                 {HOW_IT_WORKS_HR.map(({ icon: Icon, title, body }, idx) => (
                   <li key={title} className="flex gap-4">
@@ -403,7 +405,7 @@ export default function Landing() {
                     </span>
                     <div>
                       <p className="text-sm font-bold">
-                        <span className="font-mono mr-2 text-[10px]" style={{ color: PINK }}>0{idx + 1}</span>
+                        <span className="mr-2 text-xs" style={{ color: PINK }}>0{idx + 1}</span>
                         {title}
                       </p>
                       <p className="mt-1 text-sm leading-6 text-slate-400">{body}</p>
@@ -425,13 +427,13 @@ export default function Landing() {
           <Container>
             <div className="mb-6 flex items-end justify-between gap-4">
               <div>
-                <p className="font-mono text-[10px] font-bold uppercase tracking-[0.18em]" style={{ color: PINK }}>Latest</p>
+                <p className="text-xs font-bold uppercase tracking-wider" style={{ color: PINK }}>Latest</p>
                 <h2 className="mt-2 text-2xl font-bold tracking-tight text-black sm:text-3xl">Open roles right now</h2>
                 <p className="mt-1 text-sm text-gray-500">Refreshed continuously across UAE's leading technology employers.</p>
               </div>
               <Link
                 to="/jobs"
-                className="hidden shrink-0 items-center gap-1.5 font-mono text-xs font-bold uppercase tracking-wider transition sm:flex"
+                className="hidden shrink-0 items-center gap-1.5 text-xs font-bold uppercase tracking-wider transition sm:flex"
                 style={{ color: PINK }}
                 onMouseEnter={e => ((e.currentTarget as HTMLAnchorElement).style.color = PINK_HOV)}
                 onMouseLeave={e => ((e.currentTarget as HTMLAnchorElement).style.color = PINK)}
@@ -444,7 +446,6 @@ export default function Landing() {
             <div className="overflow-hidden rounded-xl border border-[var(--border)] bg-white">
               <div className="divide-y divide-[var(--border)]">
                 {featured.map((job) => {
-                  const sal = money(job.salaryMin, job.salaryMax, job.salaryCurrency)
                   const skills = parseSkills(job.skills).slice(0, 3)
                   return (
                     <Link
@@ -455,22 +456,21 @@ export default function Landing() {
                       <CompanyLogo logoUrl={job.companyLogoUrl} companyName={job.companyName} size="sm" className="shrink-0" />
                       <div className="min-w-0 flex-1">
                         <div className="flex items-baseline gap-2">
-                          <span className="font-mono text-[10px] font-bold uppercase tracking-widest text-gray-400">{job.companyName}</span>
+                          <span className="text-xs font-semibold text-gray-600">{job.companyName}</span>
                         </div>
                         <p className="mt-0.5 text-sm font-bold text-black">{job.title}</p>
-                        <p className="font-mono text-[10px] text-gray-400">
-                          {skills.length ? skills.join(', ') : (job.locationUae ?? 'UAE')}
+                        <p className="text-xs text-gray-500">
+                          {skills.length ? skills.join(', ') : (locationLabel(job.locationUae) || 'UAE')}
                         </p>
                       </div>
                       <div className="flex shrink-0 flex-col items-end gap-1.5">
-                        {sal && <span className="font-mono text-[11px] font-bold text-black">{sal}</span>}
                         {job.locationUae && (
-                          <span className="flex items-center gap-1 font-mono text-[10px] text-gray-400">
-                            <MapPin size={9} /> {job.locationUae}
+                          <span className="flex items-center gap-1 text-xs text-gray-500">
+                            <MapPin size={11} /> {locationLabel(job.locationUae)}
                           </span>
                         )}
                         {job.remoteUae && (
-                          <span className="font-mono text-[9px] font-bold uppercase tracking-wider" style={{ color: PINK }}>Remote</span>
+                          <span className="text-[11px] font-bold uppercase tracking-wider" style={{ color: PINK }}>Remote</span>
                         )}
                       </div>
                     </Link>
@@ -480,7 +480,7 @@ export default function Landing() {
               <div className="border-t border-[var(--border)] px-5 py-3.5">
                 <Link
                   to="/jobs"
-                  className="font-mono text-xs font-bold uppercase tracking-wider transition"
+                  className="text-xs font-bold uppercase tracking-wider transition"
                   style={{ color: PINK }}
                   onMouseEnter={e => ((e.currentTarget as HTMLAnchorElement).style.color = PINK_HOV)}
                   onMouseLeave={e => ((e.currentTarget as HTMLAnchorElement).style.color = PINK)}
@@ -498,7 +498,7 @@ export default function Landing() {
         <Container>
           <div className="grid gap-12 lg:grid-cols-[1fr_1.15fr] lg:items-center">
             <div>
-              <p className="font-mono text-[10px] font-bold uppercase tracking-[0.18em]" style={{ color: PINK }}>Why uaeitjobs</p>
+              <p className="text-xs font-bold uppercase tracking-wider" style={{ color: PINK }}>Why uaeitjobs</p>
               <h2 className="mt-2 text-2xl font-bold tracking-tight text-black sm:text-3xl">
                 Built for serious tech hiring in the UAE.
               </h2>
@@ -508,9 +508,9 @@ export default function Landing() {
               </p>
               <ul className="mt-7 grid gap-3">
                 {[
-                  'Verified UAE-based employers only — no spam reposts',
+                  'A directory of UAE employers with direct careers-page links',
                   'LinkedIn job import — paste a URL, post in seconds',
-                  'Real-time skill autocomplete and salary intelligence',
+                  'Roles from LinkedIn, NaukriGulf, Indeed and remote boards in one list',
                   'Separate dashboards built for candidates and HR teams',
                   'Plain-English, mobile-first — works on the worst Wi-Fi',
                 ].map((point) => (
@@ -522,47 +522,41 @@ export default function Landing() {
               </ul>
             </div>
 
-            {/* Stats panel */}
+            {/* Real numbers only: counts come from the API, never typed in here. */}
             <div className="grid gap-3">
               <div className="grid grid-cols-2 gap-3">
                 {[
-                  { label: 'Time to first interview', value: '4.8 days', sub: '2.3× faster than peers' },
-                  { label: 'Verified employer rate',   value: '100%',     sub: 'Manual review'           },
+                  { label: 'Open roles', value: stats.totalJobs ? stats.totalJobs.toLocaleString() : '—', sub: 'across all sources' },
+                  { label: 'Hiring companies', value: stats.companies ? stats.companies.toLocaleString() : '—', sub: 'in the directory' },
                 ].map(({ label, value, sub }) => (
                   <div key={label} className="rounded-xl border border-[var(--border)] bg-[var(--surface-2)] p-5">
-                    <p className="font-mono text-[9px] uppercase tracking-[0.14em] text-gray-400">{label}</p>
-                    <p className="mt-2 font-mono text-2xl font-bold text-black">{value}</p>
-                    <p className="mt-1 font-mono text-[10px] font-bold" style={{ color: PINK }}>▲ {sub}</p>
+                    <p className="text-xs font-medium text-gray-500">{label}</p>
+                    <p className="mt-2 text-3xl font-bold tracking-tight text-black">{value}</p>
+                    <p className="mt-1 text-xs text-gray-500">{sub}</p>
                   </div>
                 ))}
               </div>
-              <div className="rounded-xl border border-[var(--border)] bg-white p-5">
-                <div className="mb-4 flex items-center justify-between">
-                  <span className="font-mono text-[9px] font-bold uppercase tracking-[0.16em] text-gray-400">Application funnel</span>
-                  <span className="font-mono text-[9px] uppercase tracking-wider" style={{ color: PINK }}>Last 30 days</span>
+              {sources.length > 0 && (
+                <div className="rounded-xl border border-[var(--border)] bg-white p-5">
+                  <p className="mb-4 text-sm font-semibold text-black">Where the roles come from</p>
+                  <div className="grid gap-3">
+                    {[...sources].sort((a, b) => b.count - a.count).slice(0, 6).map(({ key, label, count }) => {
+                      const top = Math.max(...sources.map(x => x.count))
+                      return (
+                        <div key={key}>
+                          <div className="mb-1 flex justify-between text-xs">
+                            <span className="font-medium text-gray-700">{label}</span>
+                            <span className="font-semibold tabular-nums text-gray-500">{count.toLocaleString()}</span>
+                          </div>
+                          <div className="h-1.5 overflow-hidden rounded-full bg-[var(--surface-3)]">
+                            <div className="h-full rounded-full" style={{ width: `${Math.max(4, (count / top) * 100)}%`, background: PINK_FILL }} />
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
                 </div>
-                <div className="grid gap-3">
-                  {[
-                    { label: 'Profile viewed', pct: 92 },
-                    { label: 'Shortlisted',    pct: 68 },
-                    { label: 'Interviewed',    pct: 41 },
-                    { label: 'Offered',        pct: 18 },
-                  ].map(({ label, pct }) => (
-                    <div key={label}>
-                      <div className="mb-1 flex justify-between font-mono text-[10px]">
-                        <span className="font-medium text-gray-600">{label}</span>
-                        <span className="font-bold text-gray-500">{pct}%</span>
-                      </div>
-                      <div className="h-1.5 overflow-hidden rounded-full bg-[var(--surface-3)]">
-                        <div
-                          className="h-full rounded-full"
-                          style={{ width: `${pct}%`, background: PINK_FILL }}
-                        />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
+              )}
             </div>
           </div>
         </Container>
@@ -572,7 +566,7 @@ export default function Landing() {
       <section className="border-t border-[var(--border)] bg-[var(--surface-2)] px-4 py-16 sm:px-6">
         <Container>
           <div className="mb-8 text-center">
-            <p className="font-mono text-[10px] font-bold uppercase tracking-[0.18em]" style={{ color: PINK }}>FAQ</p>
+            <p className="text-xs font-bold uppercase tracking-wider" style={{ color: PINK }}>FAQ</p>
             <h2 className="mt-2 text-2xl font-bold tracking-tight text-black sm:text-3xl">Questions, answered.</h2>
           </div>
           <div className="mx-auto grid max-w-3xl gap-2">
@@ -585,7 +579,7 @@ export default function Landing() {
                   {q}
                   <ChevronDown
                     size={16}
-                    className="shrink-0 text-gray-400 transition group-open:rotate-180"
+                    className="shrink-0 text-gray-500 transition group-open:rotate-180"
                     style={{ color: 'inherit' }}
                   />
                 </summary>
@@ -609,7 +603,7 @@ export default function Landing() {
             />
             <div className="relative grid items-center gap-10 lg:grid-cols-[1.5fr_1fr]">
               <div>
-                <p className="font-mono text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400">Get started</p>
+                <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Get started</p>
                 <h2 className="mt-2 text-3xl font-bold tracking-tight sm:text-4xl">
                   Your next role — or your next hire — is one click away.
                 </h2>

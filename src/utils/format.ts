@@ -100,3 +100,47 @@ export function isThinDescription(job: { descriptionHtml?: string | null; descri
   const source = job.descriptionHtml?.trim() ? job.descriptionHtml.replace(/<[^>]+>/g, ' ') : (job.description ?? '')
   return source.replace(/\s+/g, ' ').trim().length < THIN_DESCRIPTION_CHARS
 }
+
+const EXPERIENCE_LABELS: Record<string, string> = {
+  fresher: 'Entry level',
+  junior_1_2_yrs: 'Junior · 1–2 yrs',
+  mid_3_5_yrs: 'Mid-level · 3–5 yrs',
+  senior_5_plus: 'Senior · 5+ yrs',
+}
+
+/** "mid_3_5_yrs" -> "Mid-level · 3–5 yrs" (falls back to a tidy version of unknown codes). */
+export function experienceLabel(level?: string | null) {
+  if (!level) return ''
+  return EXPERIENCE_LABELS[level] ?? labelize(level)
+}
+
+/**
+ * Cleans the location strings job sources send, e.g.
+ *   "Abu Dhabi, Abu Dhabi Emirate, AE"            -> "Abu Dhabi"
+ *   "Dubai - United Arab Emirates (UAE)"          -> "Dubai"
+ *   "United Arab Emirates, AE"                    -> "UAE"
+ *   "Remote (UAE-friendly)"                       -> "Remote · UAE-friendly"
+ *   "Abu Dhabi , Ajman , Al Ain - United Arab …"  -> "Abu Dhabi, Ajman +1"
+ */
+export function locationLabel(raw?: string | null): string {
+  if (!raw) return ''
+  let s = raw.replace(/\s+/g, ' ').trim()
+
+  const remote = /^remote\s*(?:in\s+)?(?:\((.*?)\)|(.*))$/i.exec(s)
+  if (remote) {
+    const where = locationLabel((remote[1] ?? remote[2] ?? '').trim())
+    return where ? `Remote · ${where}` : 'Remote'
+  }
+
+  s = s
+    .replace(/\s*-\s*United Arab Emirates(?:\s*\(UAE\))?$/i, '')
+    .replace(/,\s*AE$/i, '')
+    .replace(/,\s*(?:Abu Dhabi|Dubai|Sharjah|Ajman|Ras Al[ -]?Khaimah|Fujairah|Umm Al[ -]?Quwain)\s+Emirate$/i, '')
+    .replace(/\s+Emirate$/i, '')
+    .replace(/^United Arab Emirates$/i, 'UAE')
+    .trim()
+
+  const parts = s.split(/\s*,\s*/).filter(Boolean)
+  if (parts.length > 2) return `${parts.slice(0, 2).join(', ')} +${parts.length - 2}`
+  return parts.join(', ')
+}
