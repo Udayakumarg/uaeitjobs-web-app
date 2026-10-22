@@ -276,6 +276,16 @@ export function Layout() {
                   </Link>
                 </li>
                 <li>
+                  <a
+                    href="https://www.linkedin.com/company/uaeitjobs/"
+                    target="_blank"
+                    rel="noopener noreferrer me"
+                    className="text-slate-700 hover:text-pink-700"
+                  >
+                    LinkedIn
+                  </a>
+                </li>
+                <li>
                   <a href="mailto:hello@uaeitjobs.com?subject=Privacy%20enquiry" className="text-slate-700 hover:text-pink-700">
                     Privacy
                   </a>

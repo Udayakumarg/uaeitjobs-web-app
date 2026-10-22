@@ -16,6 +16,21 @@ test.describe('SEO signals in the page head', () => {
   })
 })
 
+test.describe('Brand links', () => {
+  test('the footer links to the LinkedIn company page', async ({ page }) => {
+    await page.goto(`${baseUrl}/login`)
+    await expect(page.getByRole('contentinfo').getByRole('link', { name: 'LinkedIn', exact: true })).toHaveAttribute(
+      'href',
+      'https://www.linkedin.com/company/uaeitjobs/',
+    )
+  })
+
+  test('the site declares the LinkedIn page as the same organisation', async () => {
+    const html = readFileSync(new URL('../index.html', import.meta.url), 'utf-8')
+    expect(html).toContain('"sameAs": ["https://www.linkedin.com/company/uaeitjobs/"]')
+  })
+})
+
 test.describe('nginx crawler rule', () => {
   const conf = readFileSync(new URL('../nginx.conf', import.meta.url), 'utf-8')
 
