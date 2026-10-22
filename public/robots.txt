@@ -7,4 +7,4 @@ Disallow: /login
 Disallow: /register
 Disallow: /access-denied
 
-Sitemap: https://www.uaeitjobs.com/sitemap.xml
+Sitemap: https://www.uaeitjobs.com/api/v1/seo/sitemap.xml

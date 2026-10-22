@@ -2,6 +2,9 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import './index.css'
 import App from './App.tsx'
+import { initTheme } from './store/themeStore'
+
+initTheme()
 
 // VITE_API_URL is optional — empty string means "use relative /api/v1 URLs" (same-origin nginx proxy)
 const requiredEnv: string[] = []

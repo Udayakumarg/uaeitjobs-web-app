@@ -89,7 +89,7 @@ export default function ResetPassword() {
             </p>
             <Link
               to="/login"
-              className="mt-8 inline-flex items-center gap-1.5 rounded-lg bg-[#BE185D] px-5 py-2.5 text-sm font-semibold text-white hover:bg-[#9D174D]"
+              className="mt-8 inline-flex items-center gap-1.5 rounded-lg bg-[var(--accent)] px-5 py-2.5 text-sm font-semibold text-white hover:bg-[var(--accent-hover)]"
             >
               Go to sign in
               <ArrowRight size={14} />
@@ -162,7 +162,7 @@ export default function ResetPassword() {
               <Button
                 size="lg"
                 disabled={isSubmitting || !token}
-                className="mt-2 bg-[#BE185D] hover:bg-[#9D174D]"
+                className="mt-2 bg-[var(--accent)] hover:bg-[var(--accent-hover)]"
               >
                 {isSubmitting ? 'Saving...' : 'Save new password'}
                 <ArrowRight size={18} />

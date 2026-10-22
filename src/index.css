@@ -5,15 +5,24 @@
   --font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, sans-serif;
   --accent: #BE185D;
   --accent-hover: #9D174D;
+  --accent-soft: #FDF2F8;
+  --accent-ring: #FBCFE8;
   --border: #E5E7EB;
+  --border-strong: #D1D5DB;
   --bg-subtle: #FAFAFA;
+  --surface: #ffffff;
+  --surface-2: #FAFAFA;
+  --surface-3: #F3F4F6;
   --text: #000000;
+  --text-body: #374151;
   --text-muted: #6B7280;
+  --pill-green: #065F46;
+  --pill-blue: #0A66C2;
 
   font-family: var(--font-sans);
   font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11', 'ss01';
   color: var(--text);
-  background: #ffffff;
+  background: var(--surface);
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
@@ -22,7 +31,7 @@
 
 * { box-sizing: border-box; }
 html { scroll-behavior: smooth; }
-body { margin: 0; min-width: 320px; background: #ffffff; }
+body { margin: 0; min-width: 320px; background: var(--surface); color: var(--text); }
 
 button, input, select, textarea { font: inherit; }
 input, select, textarea { color: inherit; }
@@ -35,7 +44,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 /* Scrollbars */
 *::-webkit-scrollbar { width: 5px; height: 5px; }
 *::-webkit-scrollbar-track { background: transparent; }
-*::-webkit-scrollbar-thumb { background: #D1D5DB; border-radius: 0; }
+*::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 0; }
 *::-webkit-scrollbar-thumb:hover { background: #9CA3AF; }
 
 /* Custom square checkboxes */
@@ -43,7 +52,7 @@ input[type="checkbox"] {
   appearance: none;
   width: 0.9rem;
   height: 0.9rem;
-  border: 1px solid #000;
+  border: 1px solid var(--text);
   border-radius: 0;
   cursor: pointer;
   display: grid;
@@ -65,15 +74,15 @@ input[type="checkbox"]:checked::before { transform: scale(1); }
 
 /* ── Legacy classes kept for non-Browse pages ─────────────── */
 .card-glow {
-  background: #ffffff;
+  background: var(--surface);
   border: 1px solid var(--border);
   box-shadow: 0 1px 2px rgba(15,23,42,0.04);
   transition: box-shadow 0.15s ease, border-color 0.15s ease;
 }
-.card-glow:hover { box-shadow: 0 4px 12px rgba(15,23,42,0.08); border-color: #D1D5DB; }
+.card-glow:hover { box-shadow: 0 4px 12px rgba(15,23,42,0.08); border-color: var(--border-strong); }
 
 .surface-panel {
-  background: #ffffff;
+  background: var(--surface);
   border: 1px solid var(--border);
   box-shadow: 0 1px 2px rgba(15,23,42,0.04);
 }
@@ -84,7 +93,7 @@ input[type="checkbox"]:checked::before { transform: scale(1); }
   font-weight: 600; letter-spacing: 0.14em;
   text-transform: uppercase; color: var(--accent);
 }
-.eyebrow-dark { color: #f472b6; }
+.eyebrow-dark { color: var(--color-pink-400, #f472b6); }
 
 .line-clamp-1 { display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; }
 .line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
@@ -115,20 +124,140 @@ input[type="checkbox"]:checked::before { transform: scale(1); }
 @keyframes marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
 .animate-marquee { animation: marquee 30s linear infinite; }
 @keyframes shimmer { 0% { background-position: -468px 0; } 100% { background-position: 468px 0; } }
-.shimmer { background: linear-gradient(90deg, #f3f4f6 0%, #f9fafb 50%, #f3f4f6 100%); background-size: 800px 100%; animation: shimmer 1.4s linear infinite; }
+.shimmer { background: linear-gradient(90deg, var(--surface-3) 0%, var(--surface-2) 50%, var(--surface-3) 100%); background-size: 800px 100%; animation: shimmer 1.4s linear infinite; }
 
-.chip { display: inline-flex; align-items: center; gap: 0.375rem; padding: 0.2rem 0.5rem; font-size: 0.7rem; font-weight: 600; letter-spacing: 0.02em; background: #F3F4F6; color: #374151; border: 1px solid var(--border); text-transform: uppercase; font-family: var(--font-mono); }
-.chip-dark { background: rgba(190,24,93,0.1); color: #f472b6; border-color: rgba(190,24,93,0.3); }
+.chip { display: inline-flex; align-items: center; gap: 0.375rem; padding: 0.2rem 0.5rem; font-size: 0.7rem; font-weight: 600; letter-spacing: 0.02em; background: var(--surface-3); color: var(--text-body); border: 1px solid var(--border); text-transform: uppercase; font-family: var(--font-mono); }
+.chip-dark { background: color-mix(in srgb, var(--accent) 12%, transparent); color: var(--color-pink-400, #f472b6); border-color: color-mix(in srgb, var(--accent) 30%, transparent); }
 .logo-mute { filter: grayscale(1) opacity(0.55); transition: filter 0.2s ease; }
 .logo-mute:hover { filter: grayscale(0) opacity(1); }
 
 /* Prose for job descriptions */
-.prose-job { color: #374151; line-height: 1.75; font-size: 0.9375rem; }
-.prose-job strong { color: #000; font-weight: 600; }
-.prose-job h3 { color: #000; font-family: var(--font-mono); font-size: 0.7rem; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; margin-top: 2rem; margin-bottom: 0.75rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border); }
+.prose-job { color: var(--text-body); line-height: 1.75; font-size: 0.9375rem; }
+.prose-job strong { color: var(--text); font-weight: 600; }
+.prose-job h3 { color: var(--text); font-family: var(--font-mono); font-size: 0.7rem; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; margin-top: 2rem; margin-bottom: 0.75rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border); }
 .prose-job h3:first-child { margin-top: 0; }
 .prose-job p { margin-bottom: 0.75rem; }
 .prose-job p:last-child { margin-bottom: 0; }
 .prose-job ul { margin: 0.25rem 0 0.75rem 0; padding: 0; list-style: none; display: grid; gap: 0.5rem; }
 .prose-job li { position: relative; padding-left: 1.5rem; }
 .prose-job li::before { content: "→"; position: absolute; left: 0; top: 0; color: var(--accent); font-family: var(--font-mono); font-size: 0.75rem; }
+
+/* -- Themes ---------------------------------------------------------------
+   Dark mode inverts Tailwind's slate/gray scales through their CSS variables,
+   so existing utility classes follow the theme without per-component changes.
+   Translucent white overlays (bg-white/5, /10) sit on the dark hero and are
+   intentionally left alone. */
+html[data-theme='dark'] {
+  color-scheme: dark;
+  --text: #f1f5f9;
+  --text-body: #cbd5e1;
+  --text-muted: #94a3b8;
+  --border: #26324a;
+  --border-strong: #3a4968;
+  --bg-subtle: #0f172a;
+  --surface: #0b1220;
+  --surface-2: #111a2e;
+  --surface-3: #18233b;
+  --pill-green: #6ee7b7;
+  --pill-blue: #7cb7f0;
+
+  --color-slate-50: #111a2e;  --color-gray-50: #111a2e;  --color-zinc-50: #111a2e;
+  --color-slate-100: #18233b; --color-gray-100: #18233b; --color-zinc-100: #18233b;
+  --color-slate-200: #26324a; --color-gray-200: #26324a; --color-zinc-200: #26324a;
+  --color-slate-300: #3a4968; --color-gray-300: #3a4968; --color-zinc-300: #3a4968;
+  --color-slate-400: #64748b; --color-gray-400: #64748b; --color-zinc-400: #64748b;
+  --color-slate-500: #94a3b8; --color-gray-500: #94a3b8; --color-zinc-500: #94a3b8;
+  --color-slate-600: #b4c0d3; --color-gray-600: #b4c0d3; --color-zinc-600: #b4c0d3;
+  --color-slate-700: #d3dbe8; --color-gray-700: #d3dbe8; --color-zinc-700: #d3dbe8;
+  --color-slate-800: #e5eaf3; --color-gray-800: #e5eaf3; --color-zinc-800: #e5eaf3;
+  --color-slate-900: #f1f5f9; --color-gray-900: #f1f5f9; --color-zinc-900: #f1f5f9;
+  --color-slate-950: #f8fafc; --color-gray-950: #f8fafc; --color-zinc-950: #f8fafc;
+}
+html[data-theme='dark'] .bg-white { background-color: var(--surface); }
+html[data-theme='dark'] .bg-white\/95 { background-color: color-mix(in srgb, var(--surface) 95%, transparent); }
+html[data-theme='dark'] .bg-white\/90 { background-color: color-mix(in srgb, var(--surface) 90%, transparent); }
+html[data-theme='dark'] .bg-white\/85 { background-color: color-mix(in srgb, var(--surface) 85%, transparent); }
+html[data-theme='dark'] .bg-white\/60 { background-color: color-mix(in srgb, var(--surface) 60%, transparent); }
+html[data-theme='dark'] .focus\:bg-white:focus { background-color: var(--surface); }
+html[data-theme='dark'] .text-black { color: var(--text); }
+html[data-theme='dark'] .hover\:text-black:hover { color: var(--text); }
+html[data-theme='dark'] .logo-mute { filter: grayscale(1) opacity(0.7) invert(0.9); }
+
+/* Accent palettes: re-point the pink scale (the default brand colour). */
+html[data-accent='indigo'] {
+  --accent: #4338ca; --accent-hover: #3730a3; --accent-soft: #eef2ff; --accent-ring: #c7d2fe;
+  --color-pink-50: #eef2ff;  --color-pink-100: #e0e7ff; --color-pink-200: #c7d2fe; --color-pink-300: #a5b4fc;
+  --color-pink-400: #818cf8; --color-pink-500: #6366f1; --color-pink-600: #4f46e5; --color-pink-700: #4338ca;
+  --color-pink-800: #3730a3; --color-pink-900: #312e81;
+}
+html[data-accent='teal'] {
+  --accent: #0f766e; --accent-hover: #115e59; --accent-soft: #f0fdfa; --accent-ring: #99f6e4;
+  --color-pink-50: #f0fdfa;  --color-pink-100: #ccfbf1; --color-pink-200: #99f6e4; --color-pink-300: #5eead4;
+  --color-pink-400: #2dd4bf; --color-pink-500: #14b8a6; --color-pink-600: #0d9488; --color-pink-700: #0f766e;
+  --color-pink-800: #115e59; --color-pink-900: #134e4a;
+}
+html[data-accent='emerald'] {
+  --accent: #047857; --accent-hover: #065f46; --accent-soft: #ecfdf5; --accent-ring: #a7f3d0;
+  --color-pink-50: #ecfdf5;  --color-pink-100: #d1fae5; --color-pink-200: #a7f3d0; --color-pink-300: #6ee7b7;
+  --color-pink-400: #34d399; --color-pink-500: #10b981; --color-pink-600: #059669; --color-pink-700: #047857;
+  --color-pink-800: #065f46; --color-pink-900: #064e3b;
+}
+html[data-accent='orange'] {
+  --accent: #c2410c; --accent-hover: #9a3412; --accent-soft: #fff7ed; --accent-ring: #fed7aa;
+  --color-pink-50: #fff7ed;  --color-pink-100: #ffedd5; --color-pink-200: #fed7aa; --color-pink-300: #fdba74;
+  --color-pink-400: #fb923c; --color-pink-500: #f97316; --color-pink-600: #ea580c; --color-pink-700: #c2410c;
+  --color-pink-800: #9a3412; --color-pink-900: #7c2d12;
+}
+
+/* Dark + accent: mid-tone accent (readable as text on dark, and white text stays readable on it as a fill);
+   tints are mixed from the accent so every palette works. Declared last so it wins over the palettes above. */
+html[data-theme='dark'],
+html[data-theme='dark'][data-accent] {
+  --accent: #db2777;
+  --accent-hover: #ec4899;
+  --accent-soft: color-mix(in srgb, var(--accent) 16%, var(--surface));
+  --accent-ring: color-mix(in srgb, var(--accent) 40%, var(--surface));
+  --color-pink-50: color-mix(in srgb, var(--accent) 14%, var(--surface));
+  --color-pink-100: color-mix(in srgb, var(--accent) 22%, var(--surface));
+  --color-pink-200: color-mix(in srgb, var(--accent) 34%, var(--surface));
+  --color-pink-300: color-mix(in srgb, var(--accent) 55%, white);
+  --color-pink-400: color-mix(in srgb, var(--accent) 60%, white);
+  --color-pink-500: color-mix(in srgb, var(--accent) 65%, white);
+  --color-pink-600: color-mix(in srgb, var(--accent) 65%, white);
+  --color-pink-700: color-mix(in srgb, var(--accent) 60%, white);
+  --color-pink-800: color-mix(in srgb, var(--accent) 45%, white);
+  --color-pink-900: color-mix(in srgb, var(--accent) 35%, white);
+}
+html[data-theme='dark'][data-accent='indigo'] { --accent: #6366f1; --accent-hover: #818cf8; }
+html[data-theme='dark'][data-accent='teal'] { --accent: #0d9488; --accent-hover: #14b8a6; }
+html[data-theme='dark'][data-accent='emerald'] { --accent: #059669; --accent-hover: #10b981; }
+html[data-theme='dark'][data-accent='orange'] { --accent: #ea580c; --accent-hover: #f97316; }
+/* Filled brand buttons keep the solid accent with white text instead of the lightened text tint. */
+html[data-theme='dark'] .bg-pink-700 { background-color: var(--accent); }
+html[data-theme='dark'] .hover\:bg-pink-800:hover { background-color: var(--accent-hover); }
+html[data-theme='dark'] .bg-pink-600 { background-color: var(--accent); }
+
+/* Always-dark sections (hero, CTA panels, dark buttons) use light slate text on dark slate. Inverting the scale
+   there would make them unreadable, so these "islands" get the original scale back for themselves and children. */
+html[data-theme='dark'] :is(.hero-stage, [class~='bg-slate-950'], [class~='bg-slate-900'], [class*='bg-slate-950/'], [class*='bg-slate-900/']) {
+  --color-slate-50: #f8fafc;  --color-gray-50: #f9fafb;  --color-zinc-50: #fafafa;
+  --color-slate-100: #f1f5f9; --color-gray-100: #f3f4f6; --color-zinc-100: #f4f4f5;
+  --color-slate-200: #e2e8f0; --color-gray-200: #e5e7eb; --color-zinc-200: #e4e4e7;
+  --color-slate-300: #cbd5e1; --color-gray-300: #d1d5db; --color-zinc-300: #d4d4d8;
+  --color-slate-400: #94a3b8; --color-gray-400: #9ca3af; --color-zinc-400: #a1a1aa;
+  --color-slate-500: #64748b; --color-gray-500: #6b7280; --color-zinc-500: #71717a;
+  --color-slate-600: #475569; --color-gray-600: #4b5563; --color-zinc-600: #52525b;
+  --color-slate-700: #334155; --color-gray-700: #374151; --color-zinc-700: #3f3f46;
+  --color-slate-800: #1e293b; --color-gray-800: #1f2937; --color-zinc-800: #27272a;
+  --color-slate-900: #0f172a; --color-gray-900: #111827; --color-zinc-900: #18181b;
+  --color-slate-950: #020617; --color-gray-950: #030712; --color-zinc-950: #09090b;
+}
+/* A near-black button on the dark page needs an edge to stay visible. */
+html[data-theme='dark'] button[class~='bg-slate-950'],
+html[data-theme='dark'] a[class~='bg-slate-950'] { box-shadow: inset 0 0 0 1px #3a4968; }
+/* The wordmark is dark artwork; give it a light plate so it stays legible and keeps its brand colours. */
+html[data-theme='dark'] img[src$='logo-horizontal.png'],
+html[data-theme='dark'] img[src$='logo-full.png'] { background: #f1f5f9; border-radius: 8px; padding: 3px 10px; }
+/* Inside an island, white fills stay white (e.g. the hero's "Create free account" button). */
+html[data-theme='dark'] :is(.hero-stage, [class~='bg-slate-950'], [class~='bg-slate-900']) .bg-white { background-color: #fff; }
+html[data-theme='dark'] :is(.hero-stage, [class~='bg-slate-950'], [class~='bg-slate-900']) .text-black { color: #000; }

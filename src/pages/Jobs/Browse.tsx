@@ -87,10 +87,10 @@ const SOURCE_FALLBACK: Publisher[] = [
 ]
 
 // Brand colours
-const PINK      = '#BE185D'
-const PINK_HOV  = '#9D174D'
-const PINK_BG   = '#FDF2F8'
-const PINK_RING = '#FBCFE8'
+const PINK      = 'var(--accent)'
+const PINK_HOV  = 'var(--accent-hover)'
+const PINK_BG   = 'var(--accent-soft)'
+const PINK_RING = 'var(--accent-ring)'
 
 function toggleSet<T>(set: Set<T>, v: T): Set<T> {
   const n = new Set(set)
@@ -400,13 +400,13 @@ export default function JobBrowse() {
       {/* ── Filter bar ─────────────────────────────────────────── */}
       <FilterBar {...fp} onMobileOpen={() => setMobileOpen(true)} />
 
-      {/* ── Panels (centered on wide screens) ──────────────────── */}
-      <div className="flex flex-1 overflow-hidden min-h-0 md:pl-14 xl:pl-20 2xl:pl-28">
-        <div className="flex w-full max-w-[1400px] overflow-hidden min-h-0">
+      {/* ── Panels (fill the full width; detail content centres itself) ── */}
+      <div className="flex flex-1 overflow-hidden min-h-0">
+        <div className="flex w-full overflow-hidden min-h-0">
 
           {/* Job list */}
-          <aside className="w-full md:w-[380px] xl:w-[420px] shrink-0 flex flex-col border-r border-[#E5E7EB]">
-            <div className="px-4 py-2.5 border-b border-[#E5E7EB] shrink-0 flex items-center justify-between">
+          <aside className="w-full md:w-[380px] xl:w-[420px] shrink-0 flex flex-col border-r border-[var(--border)]">
+            <div className="px-4 py-2.5 border-b border-[var(--border)] shrink-0 flex items-center justify-between">
               <span className="font-mono text-xs font-bold text-black">
                 {jobsLoading ? '…' : `${total.toLocaleString()} roles`}
               </span>
@@ -418,7 +418,7 @@ export default function JobBrowse() {
             <div className="flex-1 overflow-y-auto">
               <div className="h-2" />
               {jobsLoading ? (
-                <div className="divide-y divide-[#E5E7EB]">
+                <div className="divide-y divide-[var(--border)]">
                   {Array.from({ length: 10 }).map((_, i) => (
                     <div key={i} className="px-4 py-5 space-y-2.5">
                       <div className="h-2 w-20 shimmer" />
@@ -433,7 +433,7 @@ export default function JobBrowse() {
                   <button onClick={clearAll} className="text-xs hover:underline font-mono" style={{ color: PINK }}>Clear filters</button>
                 </div>
               ) : (
-                <div className="divide-y divide-[#E5E7EB]">
+                <div className="divide-y divide-[var(--border)]">
                   {jobs.map(job => (
                     <JobListItem
                       key={job.id}
@@ -564,13 +564,13 @@ function FilterBar(props: SharedFilterProps & SavedSearchProps & { onMobileOpen:
             className="h-[38px] w-full rounded-full border border-gray-200 bg-gray-50 pl-9 pr-9 text-[13.5px] text-gray-900 placeholder:text-gray-400 transition-all outline-none focus:bg-white focus:border-gray-300"
             onFocus={e => {
               e.currentTarget.style.borderColor = PINK
-              e.currentTarget.style.boxShadow = `0 0 0 3px ${PINK}18`
-              e.currentTarget.style.background = '#fff'
+              e.currentTarget.style.boxShadow = `0 0 0 3px color-mix(in srgb, var(--accent) 10%, transparent)`
+              e.currentTarget.style.background = 'var(--surface)'
             }}
             onBlur={e => {
-              e.currentTarget.style.borderColor = '#e5e7eb'
+              e.currentTarget.style.borderColor = 'var(--border)'
               e.currentTarget.style.boxShadow = ''
-              e.currentTarget.style.background = '#f9fafb'
+              e.currentTarget.style.background = 'var(--surface-2)'
             }}
           />
           {query && (
@@ -589,7 +589,7 @@ function FilterBar(props: SharedFilterProps & SavedSearchProps & { onMobileOpen:
           className="md:hidden inline-flex h-[38px] shrink-0 items-center gap-1.5 rounded-full border px-3.5 font-sans text-[13px] font-medium transition-all"
           style={activeCount > 0
             ? { background: PINK_BG, borderColor: PINK_RING, color: PINK }
-            : { borderColor: '#e5e7eb', color: '#4b5563', background: '#f9fafb' }}
+            : { borderColor: 'var(--border)', color: '#4b5563', background: 'var(--surface-2)' }}
         >
           <SlidersHorizontal size={13} />
           Filters
@@ -638,12 +638,12 @@ function FilterBar(props: SharedFilterProps & SavedSearchProps & { onMobileOpen:
             onClick={() => onEasyApplyOnlyChange(!easyApplyOnly)}
             className={`inline-flex h-[30px] shrink-0 items-center gap-1.5 rounded-full border px-3.5 font-sans text-[12.5px] font-medium whitespace-nowrap transition-all duration-150 select-none ${
               easyApplyOnly
-                ? 'bg-[#FDF2F8] border-[#F9A8D4] text-[#BE185D] hover:bg-[#FCE7F3]'
+                ? 'bg-[var(--accent-soft)] border-[var(--accent-ring)] text-[var(--accent)] hover:bg-[var(--accent-soft)]'
                 : 'bg-white border-gray-200 text-gray-500 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-700'
             }`}
             title="Jobs where the candidate can apply without leaving the source site"
           >
-            <Zap size={11} strokeWidth={2.5} className={easyApplyOnly ? 'text-[#BE185D]' : 'text-gray-400'} />
+            <Zap size={11} strokeWidth={2.5} className={easyApplyOnly ? 'text-[var(--accent)]' : 'text-gray-400'} />
             Easy Apply
           </button>
 
@@ -810,7 +810,7 @@ function MobileFilterSheet(props: SharedFilterProps & { open: boolean; onClose: 
       <div className="absolute inset-0 bg-black/50" onClick={onClose} />
       <div className="absolute bottom-0 left-0 right-0 bg-white rounded-t-2xl max-h-[90vh] flex flex-col shadow-2xl">
 
-        <div className="flex items-center justify-between px-5 py-4 border-b border-[#E5E7EB] shrink-0">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-[var(--border)] shrink-0">
           <span className="font-sans text-sm font-semibold">Filters</span>
           <button onClick={onClose} className="text-gray-400 hover:text-black transition-colors"><X size={20} /></button>
         </div>
@@ -825,7 +825,7 @@ function MobileFilterSheet(props: SharedFilterProps & { open: boolean; onClose: 
                   <button key={key}
                     onClick={() => onSourcesChange(toggleSet(sources, key))}
                     className="inline-flex items-center gap-1.5 rounded-full border px-3.5 py-2 text-[13px] font-medium transition-all"
-                    style={on ? { background: PINK_BG, borderColor: PINK_RING, color: PINK } : { borderColor: '#e5e7eb', color: '#374151', background: '#fff' }}>
+                    style={on ? { background: PINK_BG, borderColor: PINK_RING, color: PINK } : { borderColor: 'var(--border)', color: 'var(--text-body)', background: 'var(--surface)' }}>
                     {label}
                     {count > 0 && <span className="text-[11px] font-normal" style={{ color: on ? PINK : '#9ca3af' }}>({count})</span>}
                   </button>
@@ -839,9 +839,9 @@ function MobileFilterSheet(props: SharedFilterProps & { open: boolean; onClose: 
               {JOB_CATEGORIES.map(({ value, label }) => (
                 <label key={value}
                   className="flex items-center gap-2.5 p-2.5 border cursor-pointer transition-colors rounded"
-                  style={jobCats.has(value) ? { borderColor: PINK, background: PINK_BG } : { borderColor: '#E5E7EB' }}>
+                  style={jobCats.has(value) ? { borderColor: PINK, background: PINK_BG } : { borderColor: 'var(--border)' }}>
                   <input type="checkbox" checked={jobCats.has(value)} onChange={() => onJobCatsChange(toggleSet(jobCats, value as JobCategory))} />
-                  <span className="text-sm font-medium" style={{ color: jobCats.has(value) ? PINK : '#374151' }}>{label}</span>
+                  <span className="text-sm font-medium" style={{ color: jobCats.has(value) ? PINK : 'var(--text-body)' }}>{label}</span>
                 </label>
               ))}
             </div>
@@ -852,9 +852,9 @@ function MobileFilterSheet(props: SharedFilterProps & { open: boolean; onClose: 
               {EMIRATES.map(({ value, label }) => (
                 <label key={value}
                   className="flex items-center gap-2.5 p-2.5 border cursor-pointer transition-colors rounded"
-                  style={emirates.has(value) ? { borderColor: PINK, background: PINK_BG } : { borderColor: '#E5E7EB' }}>
+                  style={emirates.has(value) ? { borderColor: PINK, background: PINK_BG } : { borderColor: 'var(--border)' }}>
                   <input type="checkbox" checked={emirates.has(value)} onChange={() => onEmiratesChange(toggleSet(emirates, value))} />
-                  <span className="text-sm font-medium" style={{ color: emirates.has(value) ? PINK : '#374151' }}>{label}</span>
+                  <span className="text-sm font-medium" style={{ color: emirates.has(value) ? PINK : 'var(--text-body)' }}>{label}</span>
                 </label>
               ))}
             </div>
@@ -865,7 +865,7 @@ function MobileFilterSheet(props: SharedFilterProps & { open: boolean; onClose: 
               {JOB_TYPES.map(({ value, label }) => (
                 <button key={value} onClick={() => onJobTypesChange(toggleSet(jobTypes, value))}
                   className="inline-flex h-9 items-center whitespace-nowrap rounded-lg border px-3.5 font-sans text-[13px] font-medium transition-colors"
-                  style={jobTypes.has(value) ? { background: PINK, color: '#fff', borderColor: PINK } : { borderColor: '#E5E7EB', color: '#374151', background: '#fff' }}>
+                  style={jobTypes.has(value) ? { background: PINK, color: '#fff', borderColor: PINK } : { borderColor: 'var(--border)', color: 'var(--text-body)', background: 'var(--surface)' }}>
                   {label}
                 </button>
               ))}
@@ -876,12 +876,12 @@ function MobileFilterSheet(props: SharedFilterProps & { open: boolean; onClose: 
             <div className="grid gap-0.5">
               {POSTED_OPTIONS.map(({ value, label }) => (
                 <button key={value} onClick={() => onPostedChange(posted === value ? '' : value)}
-                  className="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors hover:bg-[#FAFAFA]">
+                  className="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors hover:bg-[var(--surface-2)]">
                   <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full border-2 transition-colors"
-                    style={posted === value ? { borderColor: PINK, background: PINK } : { borderColor: '#D1D5DB', background: '#fff' }}>
+                    style={posted === value ? { borderColor: PINK, background: PINK } : { borderColor: 'var(--border-strong)', background: 'var(--surface)' }}>
                     {posted === value && <span className="h-1.5 w-1.5 rounded-full bg-white" />}
                   </span>
-                  <span className="font-sans text-[13px] font-medium" style={{ color: posted === value ? PINK : '#374151' }}>
+                  <span className="font-sans text-[13px] font-medium" style={{ color: posted === value ? PINK : 'var(--text-body)' }}>
                     {label}
                   </span>
                 </button>
@@ -891,12 +891,12 @@ function MobileFilterSheet(props: SharedFilterProps & { open: boolean; onClose: 
 
           <SheetSection label="Apply">
             <button onClick={() => onEasyApplyOnlyChange(!easyApplyOnly)}
-              className="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors hover:bg-[#FAFAFA]">
+              className="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors hover:bg-[var(--surface-2)]">
               <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded border-2 transition-colors"
-                style={easyApplyOnly ? { borderColor: PINK, background: PINK } : { borderColor: '#D1D5DB', background: '#fff' }}>
+                style={easyApplyOnly ? { borderColor: PINK, background: PINK } : { borderColor: 'var(--border-strong)', background: 'var(--surface)' }}>
                 {easyApplyOnly && <span className="h-2 w-2 rounded-[1px] bg-white" />}
               </span>
-              <span className="font-sans text-[13px] font-medium" style={{ color: easyApplyOnly ? PINK : '#374151' }}>
+              <span className="font-sans text-[13px] font-medium" style={{ color: easyApplyOnly ? PINK : 'var(--text-body)' }}>
                 Easy Apply only
               </span>
             </button>
@@ -906,12 +906,12 @@ function MobileFilterSheet(props: SharedFilterProps & { open: boolean; onClose: 
             <div className="grid gap-0.5">
               {SORT_OPTIONS.map(({ value, label }) => (
                 <button key={value} onClick={() => onSortChange(value)}
-                  className="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors hover:bg-[#FAFAFA]">
+                  className="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors hover:bg-[var(--surface-2)]">
                   <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full border-2 transition-colors"
-                    style={sortBy === value ? { borderColor: PINK, background: PINK } : { borderColor: '#D1D5DB', background: '#fff' }}>
+                    style={sortBy === value ? { borderColor: PINK, background: PINK } : { borderColor: 'var(--border-strong)', background: 'var(--surface)' }}>
                     {sortBy === value && <span className="h-1.5 w-1.5 rounded-full bg-white" />}
                   </span>
-                  <span className="font-sans text-[13px] font-medium" style={{ color: sortBy === value ? PINK : '#374151' }}>
+                  <span className="font-sans text-[13px] font-medium" style={{ color: sortBy === value ? PINK : 'var(--text-body)' }}>
                     {label}
                   </span>
                 </button>
@@ -961,7 +961,7 @@ function FilterDropdown({ label, count, open, onToggle, onClose, children, noHig
 
   // CSS-class driven states — no inline onMouseEnter/onMouseLeave
   const pillCls = isActive
-    ? 'bg-[#FDF2F8] border-[#F9A8D4] text-[#BE185D] hover:bg-[#FCE7F3]'
+    ? 'bg-[var(--accent-soft)] border-[var(--accent-ring)] text-[var(--accent)] hover:bg-[var(--accent-soft)]'
     : open
       ? 'bg-white border-gray-300 text-gray-900 shadow-sm'
       : 'bg-white border-gray-200 text-gray-500 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-700'
@@ -983,7 +983,7 @@ function FilterDropdown({ label, count, open, onToggle, onClose, children, noHig
         <ChevronDown
           size={11}
           strokeWidth={2.5}
-          className={`shrink-0 transition-transform duration-200 ${isActive ? 'text-[#BE185D]' : 'text-gray-400'} ${open ? 'rotate-180' : ''}`}
+          className={`shrink-0 transition-transform duration-200 ${isActive ? 'text-[var(--accent)]' : 'text-gray-400'} ${open ? 'rotate-180' : ''}`}
         />
       </button>
 
@@ -1033,7 +1033,7 @@ function CheckboxPanel({ options, selected, onToggle }: {
             </span>
             <span
               className="flex-1 font-sans text-[13px] leading-none"
-              style={{ color: on ? PINK : '#374151', fontWeight: on ? 500 : 400 }}
+              style={{ color: on ? PINK : 'var(--text-body)', fontWeight: on ? 500 : 400 }}
             >
               {mainLabel}
             </span>
@@ -1071,7 +1071,7 @@ function RadioPanel({ options, selected, onSelect }: {
             </span>
             <span
               className="font-sans text-[13px] leading-none"
-              style={{ color: on ? PINK : '#374151', fontWeight: on ? 500 : 400 }}
+              style={{ color: on ? PINK : 'var(--text-body)', fontWeight: on ? 500 : 400 }}
             >
               {label}
             </span>
@@ -1177,9 +1177,9 @@ function DetailPanel({ job, onSave, isSaved, isApplied, onApply }: {
             onClick={(e) => onSave(job.id, e)}
             className="border rounded-lg p-2.5 transition-colors"
             aria-label={isSaved ? 'Remove from saved' : 'Save job'}
-            style={isSaved ? { background: PINK_BG, borderColor: PINK_RING } : { borderColor: '#E5E7EB', background: '#fff' }}
-            onMouseEnter={e => { if (!isSaved) (e.currentTarget as HTMLButtonElement).style.background = '#F9FAFB' }}
-            onMouseLeave={e => { if (!isSaved) (e.currentTarget as HTMLButtonElement).style.background = '#fff' }}
+            style={isSaved ? { background: PINK_BG, borderColor: PINK_RING } : { borderColor: 'var(--border)', background: 'var(--surface)' }}
+            onMouseEnter={e => { if (!isSaved) (e.currentTarget as HTMLButtonElement).style.background = 'var(--surface-2)' }}
+            onMouseLeave={e => { if (!isSaved) (e.currentTarget as HTMLButtonElement).style.background = 'var(--surface)' }}
           >
             {isSaved
               ? <BookmarkCheck size={16} style={{ color: PINK }} />
@@ -1216,12 +1216,12 @@ function DetailPanel({ job, onSave, isSaved, isApplied, onApply }: {
         <>
           <DSection>Core Stack</DSection>
           <div className="grid grid-cols-2 gap-3 mb-8">
-            <div className="border border-[#E5E7EB] p-4 bg-[#FAFAFA]">
+            <div className="border border-[var(--border)] p-4 bg-[var(--surface-2)]">
               <span className="block font-mono text-[9px] uppercase tracking-[0.16em] text-gray-400 mb-2">Required</span>
               <span className="font-mono text-sm font-semibold text-black">{skills.slice(0, half).join(', ')}</span>
             </div>
             {skills.length > half && (
-              <div className="border border-[#E5E7EB] p-4 bg-[#FAFAFA]">
+              <div className="border border-[var(--border)] p-4 bg-[var(--surface-2)]">
                 <span className="block font-mono text-[9px] uppercase tracking-[0.16em] text-gray-400 mb-2">Additional</span>
                 <span className="font-mono text-sm font-semibold text-black">{skills.slice(half).join(', ')}</span>
               </div>
@@ -1232,7 +1232,7 @@ function DetailPanel({ job, onSave, isSaved, isApplied, onApply }: {
 
       <JobDescriptionBlock job={job} />
 
-      <div className="mt-10 pt-6 border-t border-[#E5E7EB] flex items-center justify-between text-xs text-gray-400 font-mono">
+      <div className="mt-10 pt-6 border-t border-[var(--border)] flex items-center justify-between text-xs text-gray-400 font-mono">
         <div className="flex items-center gap-4">
           {(job.postedAt ?? job.createdAt) && <span className="flex items-center gap-1.5"><CalendarDays size={12} />{relativeTime(job.postedAt ?? job.createdAt)}</span>}
           {job.locationUae && <span className="flex items-center gap-1.5"><MapPin size={12} />{job.locationUae}</span>}
@@ -1270,7 +1270,7 @@ const JobListItem = memo(function JobListItem({
       onClick={() => onClick(job)}
       className="relative w-full text-left px-4 py-5 transition-colors"
       style={{ background: active ? PINK_BG : undefined }}
-      onMouseEnter={e => { if (!active) (e.currentTarget as HTMLButtonElement).style.background = '#FAFAFA' }}
+      onMouseEnter={e => { if (!active) (e.currentTarget as HTMLButtonElement).style.background = 'var(--surface-2)' }}
       onMouseLeave={e => { if (!active) (e.currentTarget as HTMLButtonElement).style.background = '' }}
     >
       {active && <span className="absolute left-0 top-0 bottom-0 w-[3px]" style={{ background: PINK }} />}
@@ -1313,7 +1313,7 @@ const JobListItem = memo(function JobListItem({
             <span className="font-mono text-[9px] uppercase tracking-wider text-amber-600 font-bold">Now</span>
           )}
           {sal
-            ? <span className="font-mono text-[11px] font-bold" style={{ color: active ? PINK : '#000' }}>{sal}</span>
+            ? <span className="font-mono text-[11px] font-bold" style={{ color: active ? PINK : 'var(--text)' }}>{sal}</span>
             : metaFallback
               ? <span className="font-mono text-[10px] text-gray-400 truncate max-w-[130px]">{metaFallback}</span>
               : null
@@ -1328,12 +1328,12 @@ function InfoPill({ children, accent, loc, sal, li }: { children: React.ReactNod
   const cls = accent
     ? { background: PINK_BG, borderColor: PINK_RING, color: PINK }
     : loc
-      ? { background: '#F1F5F9', borderColor: '#E2E8F0', color: '#475569' }
+      ? { background: 'var(--surface-3)', borderColor: 'var(--border)', color: 'var(--text-body)' }
       : sal
-        ? { background: '#ECFDF5', borderColor: '#A7F3D0', color: '#065F46' }
+        ? { background: 'color-mix(in srgb, #10b981 14%, var(--surface))', borderColor: 'color-mix(in srgb, #10b981 38%, var(--surface))', color: 'var(--pill-green)' }
         : li
-          ? { background: '#EBF5FB', borderColor: '#BFDBFE', color: '#0A66C2' }
-          : { background: '#F3F4F6', borderColor: '#E5E7EB', color: '#000' }
+          ? { background: 'color-mix(in srgb, #0a66c2 12%, var(--surface))', borderColor: 'color-mix(in srgb, #0a66c2 38%, var(--surface))', color: 'var(--pill-blue)' }
+          : { background: 'var(--surface-3)', borderColor: 'var(--border)', color: 'var(--text)' }
   return (
     <span className="inline-flex items-center gap-1.5 border px-3 py-1.5 font-mono text-xs font-semibold rounded-md" style={cls}>
       {children}
@@ -1342,7 +1342,7 @@ function InfoPill({ children, accent, loc, sal, li }: { children: React.ReactNod
 }
 
 function DSection({ children }: { children: React.ReactNode }) {
-  return <h2 className="font-mono text-[10px] font-bold uppercase tracking-[0.18em] text-black mb-3 pb-2 border-b border-[#E5E7EB]">{children}</h2>
+  return <h2 className="font-mono text-[10px] font-bold uppercase tracking-[0.18em] text-black mb-3 pb-2 border-b border-[var(--border)]">{children}</h2>
 }
 
 function JobDescriptionBlock({ job }: { job: Job }) {

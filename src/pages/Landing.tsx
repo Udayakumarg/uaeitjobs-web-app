@@ -30,10 +30,10 @@ import type { Job } from '../types'
 import { money, parseSkills } from '../utils/format'
 
 // ── Design tokens (matches Jobs page exactly) ─────────────────────────────────
-const PINK      = '#BE185D'
-const PINK_HOV  = '#9D174D'
-const PINK_BG   = '#FDF2F8'
-const PINK_RING = '#FBCFE8'
+const PINK      = 'var(--accent)'
+const PINK_HOV  = 'var(--accent-hover)'
+const PINK_BG   = 'var(--accent-soft)'
+const PINK_RING = 'var(--accent-ring)'
 
 // ── Static data ───────────────────────────────────────────────────────────────
 const CATEGORIES = [
@@ -254,7 +254,7 @@ export default function Landing() {
 
       {/* ── Stats strip ───────────────────────────────────────────────────── */}
       <Container className="-mt-16 pb-16">
-        <div className="grid gap-px rounded-xl border border-[#E5E7EB] bg-[#E5E7EB] shadow-sm overflow-hidden sm:grid-cols-3">
+        <div className="grid gap-px rounded-xl border border-[var(--border)] bg-[var(--border)] shadow-sm overflow-hidden sm:grid-cols-3">
           {[
             { icon: BriefcaseBusiness, label: 'Active roles',      value: stats.totalJobs          ? `${stats.totalJobs.toLocaleString()}+`          : '20+' },
             { icon: Building2,         label: 'Hiring companies',   value: stats.companies          ? `${stats.companies.toLocaleString()}+`          : '10+' },
@@ -277,7 +277,7 @@ export default function Landing() {
       </Container>
 
       {/* ── Categories ────────────────────────────────────────────────────── */}
-      <section className="border-t border-[#E5E7EB] bg-[#FAFAFA] px-4 py-16 sm:px-6">
+      <section className="border-t border-[var(--border)] bg-[var(--surface-2)] px-4 py-16 sm:px-6">
         <Container>
           <div className="mb-8 flex items-end justify-between gap-4">
             <div>
@@ -305,10 +305,10 @@ export default function Landing() {
               <Link
                 key={label}
                 to={`/jobs?q=${encodeURIComponent(query)}`}
-                className="group flex items-center gap-4 rounded-lg border border-[#E5E7EB] bg-white p-5 transition-colors hover:border-[#FBCFE8]"
+                className="group flex items-center gap-4 rounded-lg border border-[var(--border)] bg-white p-5 transition-colors hover:border-[var(--accent-ring)]"
                 style={{}}
                 onMouseEnter={e => ((e.currentTarget as HTMLAnchorElement).style.borderColor = PINK_RING)}
-                onMouseLeave={e => ((e.currentTarget as HTMLAnchorElement).style.borderColor = '#E5E7EB')}
+                onMouseLeave={e => ((e.currentTarget as HTMLAnchorElement).style.borderColor = 'var(--border)')}
               >
                 <span
                   className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border transition-colors"
@@ -342,7 +342,7 @@ export default function Landing() {
       </section>
 
       {/* ── How it works ──────────────────────────────────────────────────── */}
-      <section className="border-t border-[#E5E7EB] px-4 py-16 sm:px-6">
+      <section className="border-t border-[var(--border)] px-4 py-16 sm:px-6">
         <Container>
           <div className="mb-10 text-center">
             <p className="font-mono text-[10px] font-bold uppercase tracking-[0.18em]" style={{ color: PINK }}>How it works</p>
@@ -355,7 +355,7 @@ export default function Landing() {
           <div className="grid gap-4 lg:grid-cols-2">
 
             {/* Job seeker */}
-            <div className="rounded-xl border border-[#E5E7EB] bg-[#FAFAFA] p-7">
+            <div className="rounded-xl border border-[var(--border)] bg-[var(--surface-2)] p-7">
               <p className="font-mono text-[10px] font-bold uppercase tracking-[0.18em]" style={{ color: PINK }}>For job seekers</p>
               <h3 className="mt-2 text-xl font-bold tracking-tight text-black">Land your next UAE role</h3>
               <ol className="mt-6 grid gap-5">
@@ -419,7 +419,7 @@ export default function Landing() {
 
       {/* ── Featured jobs ─────────────────────────────────────────────────── */}
       {featured.length > 0 && (
-        <section className="border-t border-[#E5E7EB] bg-[#FAFAFA] px-4 py-16 sm:px-6">
+        <section className="border-t border-[var(--border)] bg-[var(--surface-2)] px-4 py-16 sm:px-6">
           <Container>
             <div className="mb-6 flex items-end justify-between gap-4">
               <div>
@@ -439,8 +439,8 @@ export default function Landing() {
             </div>
 
             {/* Jobs list — same item style as Jobs page list */}
-            <div className="overflow-hidden rounded-xl border border-[#E5E7EB] bg-white">
-              <div className="divide-y divide-[#E5E7EB]">
+            <div className="overflow-hidden rounded-xl border border-[var(--border)] bg-white">
+              <div className="divide-y divide-[var(--border)]">
                 {featured.map((job) => {
                   const sal = money(job.salaryMin, job.salaryMax, job.salaryCurrency)
                   const skills = parseSkills(job.skills).slice(0, 3)
@@ -448,7 +448,7 @@ export default function Landing() {
                     <Link
                       key={job.id}
                       to={`/jobs/${job.id}`}
-                      className="group flex items-center gap-4 px-5 py-4 transition-colors hover:bg-[#FAFAFA]"
+                      className="group flex items-center gap-4 px-5 py-4 transition-colors hover:bg-[var(--surface-2)]"
                     >
                       <CompanyLogo logoUrl={job.companyLogoUrl} companyName={job.companyName} size="sm" className="shrink-0" />
                       <div className="min-w-0 flex-1">
@@ -475,7 +475,7 @@ export default function Landing() {
                   )
                 })}
               </div>
-              <div className="border-t border-[#E5E7EB] px-5 py-3.5">
+              <div className="border-t border-[var(--border)] px-5 py-3.5">
                 <Link
                   to="/jobs"
                   className="font-mono text-xs font-bold uppercase tracking-wider transition"
@@ -492,7 +492,7 @@ export default function Landing() {
       )}
 
       {/* ── Why uaeitjobs ─────────────────────────────────────────────────── */}
-      <section className="border-t border-[#E5E7EB] px-4 py-16 sm:px-6">
+      <section className="border-t border-[var(--border)] px-4 py-16 sm:px-6">
         <Container>
           <div className="grid gap-12 lg:grid-cols-[1fr_1.15fr] lg:items-center">
             <div>
@@ -527,14 +527,14 @@ export default function Landing() {
                   { label: 'Time to first interview', value: '4.8 days', sub: '2.3× faster than peers' },
                   { label: 'Verified employer rate',   value: '100%',     sub: 'Manual review'           },
                 ].map(({ label, value, sub }) => (
-                  <div key={label} className="rounded-xl border border-[#E5E7EB] bg-[#FAFAFA] p-5">
+                  <div key={label} className="rounded-xl border border-[var(--border)] bg-[var(--surface-2)] p-5">
                     <p className="font-mono text-[9px] uppercase tracking-[0.14em] text-gray-400">{label}</p>
                     <p className="mt-2 font-mono text-2xl font-bold text-black">{value}</p>
                     <p className="mt-1 font-mono text-[10px] font-bold" style={{ color: PINK }}>▲ {sub}</p>
                   </div>
                 ))}
               </div>
-              <div className="rounded-xl border border-[#E5E7EB] bg-white p-5">
+              <div className="rounded-xl border border-[var(--border)] bg-white p-5">
                 <div className="mb-4 flex items-center justify-between">
                   <span className="font-mono text-[9px] font-bold uppercase tracking-[0.16em] text-gray-400">Application funnel</span>
                   <span className="font-mono text-[9px] uppercase tracking-wider" style={{ color: PINK }}>Last 30 days</span>
@@ -551,7 +551,7 @@ export default function Landing() {
                         <span className="font-medium text-gray-600">{label}</span>
                         <span className="font-bold text-gray-500">{pct}%</span>
                       </div>
-                      <div className="h-1.5 overflow-hidden rounded-full bg-[#F3F4F6]">
+                      <div className="h-1.5 overflow-hidden rounded-full bg-[var(--surface-3)]">
                         <div
                           className="h-full rounded-full"
                           style={{ width: `${pct}%`, background: PINK }}
@@ -567,7 +567,7 @@ export default function Landing() {
       </section>
 
       {/* ── FAQ ───────────────────────────────────────────────────────────── */}
-      <section className="border-t border-[#E5E7EB] bg-[#FAFAFA] px-4 py-16 sm:px-6">
+      <section className="border-t border-[var(--border)] bg-[var(--surface-2)] px-4 py-16 sm:px-6">
         <Container>
           <div className="mb-8 text-center">
             <p className="font-mono text-[10px] font-bold uppercase tracking-[0.18em]" style={{ color: PINK }}>FAQ</p>
@@ -577,7 +577,7 @@ export default function Landing() {
             {FAQ.map(({ q, a }) => (
               <details
                 key={q}
-                className="group rounded-lg border border-[#E5E7EB] bg-white p-5 transition open:border-[#FBCFE8]"
+                className="group rounded-lg border border-[var(--border)] bg-white p-5 transition open:border-[var(--accent-ring)]"
               >
                 <summary className="flex cursor-pointer list-none items-center justify-between gap-4 text-sm font-bold text-black">
                   {q}
@@ -595,7 +595,7 @@ export default function Landing() {
       </section>
 
       {/* ── Final CTA ─────────────────────────────────────────────────────── */}
-      <section className="border-t border-[#E5E7EB] px-4 py-16 sm:px-6">
+      <section className="border-t border-[var(--border)] px-4 py-16 sm:px-6">
         <Container>
           <div className="relative overflow-hidden rounded-xl bg-slate-950 px-8 py-14 text-white sm:px-12">
             <div

@@ -2,6 +2,7 @@ import { Activity, Bookmark, Briefcase, Building2, LayoutDashboard, LogIn, Menu,
 import { useState } from 'react'
 import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { useAuthStore } from '../store/authStore'
+import { ThemeMenu } from './ThemeMenu'
 import { Toasts } from './Toast'
 import { Button, Container } from './ui'
 
@@ -112,6 +113,7 @@ export function Layout() {
           <nav className="hidden items-center gap-1 md:flex">{links}</nav>
 
           <div className="hidden items-center gap-2 md:flex">
+            <ThemeMenu />
             {user ? (
               <>
                 <Link
@@ -161,7 +163,8 @@ export function Layout() {
             <nav className="grid gap-4" onClick={() => setOpen(false)}>
               {links}
             </nav>
-            <div className="mt-4 flex gap-2">
+            <div className="mt-4 flex items-center gap-2">
+              <ThemeMenu align="left" />
               {user ? (
                 <Button className="w-full" variant="secondary" onClick={handleLogout}>
                   Logout

@@ -118,7 +118,7 @@ export default function ForgotPassword() {
                 </p>
               ) : null}
 
-              <Button size="lg" disabled={isSubmitting} className="mt-2 bg-[#BE185D] hover:bg-[#9D174D]">
+              <Button size="lg" disabled={isSubmitting} className="mt-2 bg-[var(--accent)] hover:bg-[var(--accent-hover)]">
                 {isSubmitting ? 'Sending...' : 'Send reset link'}
                 <ArrowRight size={18} />
               </Button>

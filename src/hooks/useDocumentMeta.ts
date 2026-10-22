@@ -16,7 +16,7 @@ export interface DocumentMeta {
 }
 
 const SUFFIX = ' · UAEITJOBS'
-const DEFAULT_IMAGE = 'https://www.uaeitjobs.com/og-default.png'
+const DEFAULT_IMAGE = 'https://www.uaeitjobs.com/logo-full.png'
 const JSON_LD_TAG_ID = 'page-jsonld'
 
 function setMetaTag(attr: 'name' | 'property', key: string, value: string | undefined) {
