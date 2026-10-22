@@ -1,6 +1,5 @@
 import DOMPurify from 'dompurify'
 import {
-  BadgeCheck,
   Bell,
   Bookmark,
   BookmarkCheck,
@@ -139,10 +138,7 @@ export default function JobBrowse() {
   // Kept as the same 'linkedin=easy' URL param used before this was simplified
   // from a dropdown to a toggle, so old bookmarks/saved searches keep working.
   const [easyApplyOnly,   setEasyApplyOnly]   = useState(() => searchParams.get('linkedin') === 'easy')
-  // Quick toggles for the three things UAE candidates check first: visa, remote, start date.
-  const [visaFree,        setVisaFree]        = useState(() => searchParams.get('visa') === 'free')
   const [remoteOnly,      setRemoteOnly]      = useState(() => searchParams.get('remote') === '1')
-  const [immediateOnly,   setImmediateOnly]   = useState(() => searchParams.get('immediate') === '1')
   const [nudgeHidden,     setNudgeHidden]     = useState(() => {
     try { return localStorage.getItem('uaeitjobs.browseNudge') === '1' } catch { return false }
   })
@@ -197,11 +193,9 @@ export default function JobBrowse() {
     if (sortBy !== 'newest') p.set('sort',     sortBy)
     sources.forEach(s       => p.append('publisher', s))
     if (easyApplyOnly)       p.set('linkedin', 'easy')
-    if (visaFree)            p.set('visa',      'free')
     if (remoteOnly)          p.set('remote',    '1')
-    if (immediateOnly)       p.set('immediate', '1')
     setSearchParams(p, { replace: true })
-  }, [query, company, emirates, jobCats, jobTypes, posted, sortBy, sources, easyApplyOnly, visaFree, remoteOnly, immediateOnly, setSearchParams])
+  }, [query, company, emirates, jobCats, jobTypes, posted, sortBy, sources, easyApplyOnly, remoteOnly, setSearchParams])
 
   // fetch — search + all filtering in a single DB round-trip via filterMulti.
   // The 'q' param drives plainto_tsquery full-text ranking server-side so
@@ -226,9 +220,7 @@ export default function JobBrowse() {
       ...(sortBy !== 'newest'   && { sort:            SORT_PARAM[sortBy] }),
       ...(sArr.length           && { publisher:       sArr }),
       ...(easyApplyOnly         && { linkedinEasyApply: true }),
-      ...(visaFree              && { visaType:        'free_visa' }),
       ...(remoteOnly            && { remoteUae:       true }),
-      ...(immediateOnly         && { immediateJoiner: true }),
     }
     const req = jobsApi.filterMulti(params)
 
@@ -245,7 +237,7 @@ export default function JobBrowse() {
       }
     }).catch(() => {}).finally(() => { if (ok) setJobsLoading(false) })
     return () => { ok = false }
-  }, [debouncedQuery, company, emirates, jobCats, jobTypes, posted, sortBy, sources, easyApplyOnly, visaFree, remoteOnly, immediateOnly])
+  }, [debouncedQuery, company, emirates, jobCats, jobTypes, posted, sortBy, sources, easyApplyOnly, remoteOnly])
 
   useEffect(() => {
     if (!selectedId) return
@@ -346,7 +338,7 @@ export default function JobBrowse() {
     setQuery(''); setCompany(''); setEmirates(new Set()); setJobCats(new Set())
     setJobTypes(new Set())
     setPosted(''); setSortBy('newest'); setSources(new Set())
-    setEasyApplyOnly(false); setVisaFree(false); setRemoteOnly(false); setImmediateOnly(false)
+    setEasyApplyOnly(false); setRemoteOnly(false)
   }
 
   const saveJob = useCallback(async (id: number, e: React.MouseEvent) => {
@@ -381,9 +373,7 @@ export default function JobBrowse() {
     ...Array.from(sources).map(v  => ({ key: `s-${v}`, label: publishers.find(p => p.key === v)?.label ?? v, onRemove: () => setSources(toggleSet(sources, v)) })),
     ...(posted       ? [{ key: 'posted', label: POSTED_OPTIONS.find(x => x.value === posted)?.label  ?? posted,  onRemove: () => setPosted('')  }] : []),
     ...(easyApplyOnly ? [{ key: 'ea', label: 'Easy Apply', onRemove: () => setEasyApplyOnly(false) }] : []),
-    ...(visaFree      ? [{ key: 'visa', label: 'Visa provided', onRemove: () => setVisaFree(false) }] : []),
     ...(remoteOnly    ? [{ key: 'remote', label: 'Remote UAE', onRemove: () => setRemoteOnly(false) }] : []),
-    ...(immediateOnly ? [{ key: 'now', label: 'Immediate joiner', onRemove: () => setImmediateOnly(false) }] : []),
   ]
 
   const newestAgo = jobs.length ? relativeTime(jobs[0].postedAt ?? jobs[0].createdAt) : ''
@@ -405,9 +395,7 @@ export default function JobBrowse() {
     sortBy, onSortChange: setSortBy,
     sources, onSourcesChange: setSources,
     easyApplyOnly, onEasyApplyOnlyChange: setEasyApplyOnly,
-    visaFree, onVisaFreeChange: setVisaFree,
     remoteOnly, onRemoteOnlyChange: setRemoteOnly,
-    immediateOnly, onImmediateOnlyChange: setImmediateOnly,
     publishers,
     chips, activeCount, total, loading: jobsLoading,
     onClearAll: clearAll, hasFilters,
@@ -543,9 +531,7 @@ interface SharedFilterProps {
   sortBy: string;            onSortChange: (v: string) => void
   sources: Set<string>;      onSourcesChange: (s: Set<string>) => void
   easyApplyOnly: boolean;    onEasyApplyOnlyChange: (v: boolean) => void
-  visaFree: boolean;         onVisaFreeChange: (v: boolean) => void
   remoteOnly: boolean;       onRemoteOnlyChange: (v: boolean) => void
-  immediateOnly: boolean;    onImmediateOnlyChange: (v: boolean) => void
   publishers: Publisher[]
   chips: { key: string; label: string; onRemove: () => void }[]
   activeCount: number; hasFilters: boolean
@@ -576,7 +562,7 @@ function FilterBar(props: SharedFilterProps & SavedSearchProps & { onMobileOpen:
     sortBy, onSortChange,
     sources, onSourcesChange, publishers,
     easyApplyOnly, onEasyApplyOnlyChange,
-    visaFree, onVisaFreeChange, remoteOnly, onRemoteOnlyChange, immediateOnly, onImmediateOnlyChange,
+    remoteOnly, onRemoteOnlyChange,
     chips, activeCount, hasFilters,
     onClearAll, onMobileOpen,
     isJobSeeker, savedSearches, applySavedSearch, deleteSavedSearch,
@@ -689,14 +675,8 @@ function FilterBar(props: SharedFilterProps & SavedSearchProps & { onMobileOpen:
             <RadioPanel options={POSTED_OPTIONS} selected={posted} onSelect={v => { onPostedChange(v); close() }} />
           </FilterDropdown>
 
-          <QuickToggle on={visaFree} onToggle={() => onVisaFreeChange(!visaFree)} title="Employer provides the work visa">
-            <BadgeCheck size={12} strokeWidth={2.5} /> Visa provided
-          </QuickToggle>
           <QuickToggle on={remoteOnly} onToggle={() => onRemoteOnlyChange(!remoteOnly)} title="Roles you can do remotely from the UAE">
             <Laptop size={12} strokeWidth={2.5} /> Remote
-          </QuickToggle>
-          <QuickToggle on={immediateOnly} onToggle={() => onImmediateOnlyChange(!immediateOnly)} title="Employer wants someone who can start right away">
-            <Zap size={11} strokeWidth={2.5} /> Immediate joiner
           </QuickToggle>
           <QuickToggle on={easyApplyOnly} onToggle={() => onEasyApplyOnlyChange(!easyApplyOnly)} title="Jobs where the candidate can apply without leaving the source site">
             <Zap size={11} strokeWidth={2.5} /> Easy Apply
@@ -855,7 +835,7 @@ function MobileFilterSheet(props: SharedFilterProps & { open: boolean; onClose: 
     sortBy, onSortChange,
     sources, onSourcesChange, publishers,
     easyApplyOnly, onEasyApplyOnlyChange,
-    visaFree, onVisaFreeChange, remoteOnly, onRemoteOnlyChange, immediateOnly, onImmediateOnlyChange,
+    remoteOnly, onRemoteOnlyChange,
     total, loading, onClearAll, activeCount,
   } = props
 
@@ -873,11 +853,9 @@ function MobileFilterSheet(props: SharedFilterProps & { open: boolean; onClose: 
 
         <div className="flex-1 overflow-y-auto px-5 py-4 space-y-7">
 
-          <SheetSection label="Quick filters">
+          <SheetSection label="Work location">
             <div className="grid gap-0.5">
-              <SheetToggle on={visaFree} onToggle={() => onVisaFreeChange(!visaFree)}>Visa provided</SheetToggle>
               <SheetToggle on={remoteOnly} onToggle={() => onRemoteOnlyChange(!remoteOnly)}>Remote UAE</SheetToggle>
-              <SheetToggle on={immediateOnly} onToggle={() => onImmediateOnlyChange(!immediateOnly)}>Immediate joiner</SheetToggle>
             </div>
           </SheetSection>
 

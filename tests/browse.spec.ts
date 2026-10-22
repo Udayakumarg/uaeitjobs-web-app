@@ -85,6 +85,16 @@ test.describe('Browse jobs page', () => {
     expect(1920 - edges[0][1]).toBe(edges[0][0]) // equal space on both sides
   })
 
+  test('the removed Visa provided and Immediate joiner filters are gone', async ({ page }) => {
+    await mockJobsApi(page)
+    await page.setViewportSize({ width: 1440, height: 900 })
+    await page.goto(`${baseUrl}/jobs?visa=free&immediate=1`)
+    await expect(page.getByText('3 roles')).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Visa provided' })).toHaveCount(0)
+    await expect(page.getByRole('button', { name: 'Immediate joiner' })).toHaveCount(0)
+    await expect(page.getByRole('button', { name: 'Remote', exact: true })).toBeVisible()
+  })
+
   test('has a single heading and no duplicate result count', async ({ page }) => {
     await mockJobsApi(page)
     await page.goto(`${baseUrl}/jobs?publisher=linkedin`)
@@ -92,7 +102,7 @@ test.describe('Browse jobs page', () => {
     await expect(page.getByText('3 roles')).toHaveCount(1)
   })
 
-  test('quick filters send the right API params, update the URL and show chips', async ({ page }) => {
+  test('the Remote filter sends the right API param, updates the URL and shows a chip', async ({ page }) => {
     const calls = await mockJobsApi(page)
     await page.setViewportSize({ width: 1440, height: 900 })
     await page.goto(`${baseUrl}/jobs`)
@@ -100,18 +110,14 @@ test.describe('Browse jobs page', () => {
 
     await page.getByRole('button', { name: 'Remote', exact: true }).click()
     await expect(page.locator('aside [aria-live]')).toContainText('1 role')
-    await page.getByRole('button', { name: 'Visa provided' }).click()
-    await page.getByRole('button', { name: 'Immediate joiner' }).click()
 
     await expect(page).toHaveURL(/remote=1/)
-    await expect(page).toHaveURL(/visa=free/)
-    await expect(page).toHaveURL(/immediate=1/)
     await expect(page.getByRole('button', { name: 'Remove filter: Remote UAE' })).toBeVisible()
 
     const last = calls.at(-1)!
     expect(last.get('remoteUae')).toBe('true')
-    expect(last.get('visaType')).toBe('free_visa')
-    expect(last.get('immediateJoiner')).toBe('true')
+    expect(last.has('visaType')).toBe(false)
+    expect(last.has('immediateJoiner')).toBe(false)
 
     await page.getByRole('button', { name: 'Clear', exact: true }).click()
     await expect(page.getByText('3 roles')).toBeVisible()
@@ -170,7 +176,6 @@ test.describe('Browse jobs page', () => {
     await expect(page.getByText('3 roles')).toBeVisible()
     expect(await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth)).toBe(false)
     await page.getByRole('button', { name: /^Filters/ }).click()
-    await expect(page.getByRole('button', { name: 'Immediate joiner' }).last()).toBeVisible()
     await page.getByRole('button', { name: 'Remote UAE' }).click()
     await expect(page).toHaveURL(/remote=1/)
   })
