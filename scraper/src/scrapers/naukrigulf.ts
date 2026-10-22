@@ -64,40 +64,90 @@ interface Card {
 }
 
 /**
+ * Runs inside the page (no closures — Playwright serialises it). Pulls three
+ * independent sources so one markup change doesn't blank the description:
+ *   1. every `.job-description` block ("Roles & Responsibilities", "Desired
+ *      Candidate Profile", ...) except the keyword cloud, which is noise
+ *   2. the facts grid (`p.head` label + value): experience, education, benefits
+ *   3. the JobPosting JSON-LD `description`, used only if (1) found nothing
+ */
+export function extractDetailInPage(): { blocks: string[]; facts: string[]; ldDescription: string } {
+  const blocks = Array.from(document.querySelectorAll('.job-description'))
+    .filter(el => !el.classList.contains('keyword'))
+    .map(el => (el as HTMLElement).innerText.trim())
+    .filter(Boolean)
+
+  const wanted = ['experience', 'education', 'benefits']
+  const facts: string[] = []
+  document.querySelectorAll('p.head').forEach(label => {
+    const name = (label.textContent ?? '').trim()
+    if (!wanted.includes(name.toLowerCase())) return
+    const value = ((label.nextElementSibling as HTMLElement | null)?.innerText ?? '').trim()
+    if (value) facts.push(`${name}: ${value}`)
+  })
+
+  let ldDescription = ''
+  document.querySelectorAll('script[type="application/ld+json"]').forEach(node => {
+    try {
+      const data = JSON.parse(node.textContent ?? '')
+      const list = Array.isArray(data) ? data : [data]
+      for (const item of list) {
+        if (item && item['@type'] === 'JobPosting' && typeof item.description === 'string') ldDescription = item.description
+      }
+    } catch {
+      /* ignore malformed JSON-LD */
+    }
+  })
+  return { blocks, facts, ldDescription }
+}
+
+/** Why a detail fetch produced nothing — logged so a stale/blocked run is diagnosable from pm2 logs. */
+type DetailFailure = 'blocked' | 'no-description' | 'error'
+
+const BLOCK_MARKERS = ['access denied', 'just a moment', 'attention required', 'captcha', 'unusual traffic']
+
+/**
  * Fetches a job's own detail page and extracts the real description.
  *
- * Verified live 2026-08: NaukriGulf's detail pages are NOT blocked — same
- * stealth Playwright session already used for listing pages navigates
- * straight to a 200 with a rich `.job-description` block (there are
- * multiple `.job-description` elements per page — "Roles & Responsibilities"
- * and "Desired Candidate Profile" are separate blocks with the same class,
- * so all of them are joined rather than just the first). Returns null on
- * any failure so the caller can fall back to the card snippet instead of
- * dropping the job. Reuses the same shared `page` the listing scrape uses —
- * navigating away and back per job, not a second tab.
+ * Verified live 2026-10: detail pages render a rich `.job-description` set,
+ * a facts grid and JobPosting JSON-LD. Returns the reason on failure so the
+ * caller can fall back to the card snippet (a job is never dropped over this)
+ * and report how often that happens. One retry, because a single slow/empty
+ * render on a client-rendered page is common and cheap to recover from.
  */
-async function fetchDetailDescription(page: Page, url: string): Promise<string | null> {
-  try {
-    await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30_000 })
-    const found = await page
-      .waitForSelector('.job-description', { timeout: 10_000 })
-      .then(() => true)
-      .catch(() => false)
-    if (!found) return null
-
-    const parts = await page.$$eval('.job-description', els =>
-      els.map(el => (el as HTMLElement).innerText.trim()).filter(Boolean))
-    const text = parts.join('\n\n').trim()
-    return text.length >= 60 ? text : null
-  } catch (err) {
-    console.warn(`  [naukrigulf] detail fetch failed for ${url}:`, (err as Error).message)
-    return null
+async function fetchDetailDescription(
+  page: Page,
+  url: string,
+): Promise<{ text: string } | { failure: DetailFailure }> {
+  let failure: DetailFailure = 'no-description'
+  for (let attempt = 1; attempt <= 2; attempt++) {
+    try {
+      await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30_000 })
+      const title = (await page.title()).toLowerCase()
+      if (BLOCK_MARKERS.some(m => title.includes(m))) {
+        failure = 'blocked'
+      } else {
+        await page.waitForSelector('.job-description', { timeout: 10_000 }).catch(() => undefined)
+        const { blocks, facts, ldDescription } = await page.evaluate(extractDetailInPage)
+        const body = blocks.length > 0 ? blocks.join('\n\n') : ldDescription.trim()
+        const text = [...facts, body].filter(Boolean).join('\n\n').trim()
+        if (body.length >= 60) return { text }
+        failure = 'no-description'
+      }
+    } catch (err) {
+      failure = 'error'
+      console.warn(`  [naukrigulf] detail fetch error for ${url}:`, (err as Error).message)
+    }
+    if (attempt < 2) await page.waitForTimeout(2_500)
   }
+  return { failure }
 }
 
 export async function scrapeNaukrigulf(page: Page): Promise<ScrapedJob[]> {
   const seen = new Set<string>()
   const jobs: ScrapedJob[] = []
+  let detailOk = 0
+  const detailFailures: Record<DetailFailure, number> = { blocked: 0, 'no-description': 0, error: 0 }
 
   for (const slug of SEARCH_SLUGS) {
     for (let pageNum = 1; pageNum <= MAX_PAGES; pageNum++) {
@@ -180,12 +230,14 @@ export async function scrapeNaukrigulf(page: Page): Promise<ScrapedJob[]> {
         for (const c of cards) {
           const detail = await fetchDetailDescription(page, c.applyUrl)
           await delayWithJitter(page, 1_200)
+          if ('text' in detail) detailOk++
+          else detailFailures[detail.failure]++
 
           jobs.push({
             externalId: c.jobId,
             title: c.title,
             company: c.company,
-            description: detail ?? (c.snippet || c.title),
+            description: 'text' in detail ? detail.text : (c.snippet || c.title),
             location: c.location.includes('AE') || c.location.includes('Emirates') ? c.location : `${c.location}, AE`,
             emirate: inferEmirate(c.location),
             applyUrl: c.applyUrl,
@@ -208,5 +260,9 @@ export async function scrapeNaukrigulf(page: Page): Promise<ScrapedJob[]> {
   }
 
   console.log(`  [naukrigulf] total scraped: ${jobs.length}`)
+  console.log(
+    `  [naukrigulf] full descriptions: ${detailOk}/${jobs.length} ` +
+    `(card-snippet fallback — blocked: ${detailFailures.blocked}, no description: ${detailFailures['no-description']}, error: ${detailFailures.error})`,
+  )
   return jobs
 }
