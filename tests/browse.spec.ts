@@ -133,6 +133,36 @@ test.describe('Browse jobs page', () => {
     await expect(page.getByText('Salary not listed by employer')).toBeVisible()
   })
 
+  test('a thin description is labelled honestly and links to the full posting', async ({ page }) => {
+    await mockJobsApi(page)
+    const thin = makeJob(9, {
+      source: 'naukrigulf',
+      descriptionHtml: '<p>Provide onsite IT support and maintain network security.</p>',
+      applyUrl: 'https://www.naukrigulf.com/it-support-jobs-in-dubai-jid-1',
+    })
+    await page.route('**/api/v1/jobs/filter**', (route) =>
+      route.fulfill({ json: { content: [thin], totalPages: 1, totalElements: 1, number: 0, size: 80 } }),
+    )
+    await page.route(/\/api\/v1\/jobs\/9$/, (route) => route.fulfill({ json: thin }))
+    await page.setViewportSize({ width: 1440, height: 900 })
+    await page.goto(`${baseUrl}/jobs`)
+    const notice = page.getByRole('note')
+    await expect(notice).toContainText('This is a short summary')
+    await expect(notice).toContainText('NaukriGulf')
+    await expect(notice.getByRole('link', { name: /Read the full posting/ })).toHaveAttribute(
+      'href',
+      'https://www.naukrigulf.com/it-support-jobs-in-dubai-jid-1',
+    )
+  })
+
+  test('a full description does not show the short-summary notice', async ({ page }) => {
+    await mockJobsApi(page)
+    await page.setViewportSize({ width: 1440, height: 900 })
+    await page.goto(`${baseUrl}/jobs`)
+    await expect(page.getByRole('heading', { name: 'Engineer 1', level: 1 })).toBeVisible()
+    await expect(page.getByRole('note')).toHaveCount(0)
+  })
+
   test('list items are keyboard accessible without nesting buttons', async ({ page }) => {
     await mockJobsApi(page)
     await page.goto(`${baseUrl}/jobs`)

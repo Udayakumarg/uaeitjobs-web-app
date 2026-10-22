@@ -92,3 +92,11 @@ export function parseSkills(value?: string | string[] | null): string[] {
     return value.split(',').map((item) => item.trim()).filter(Boolean)
   }
 }
+
+/** Below this many characters of readable text, a description is a title/one-liner rather than a real posting. */
+const THIN_DESCRIPTION_CHARS = 300
+
+export function isThinDescription(job: { descriptionHtml?: string | null; description?: string | null }) {
+  const source = job.descriptionHtml?.trim() ? job.descriptionHtml.replace(/<[^>]+>/g, ' ') : (job.description ?? '')
+  return source.replace(/\s+/g, ' ').trim().length < THIN_DESCRIPTION_CHARS
+}

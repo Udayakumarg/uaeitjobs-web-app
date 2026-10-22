@@ -19,6 +19,7 @@ import {
 import { memo, useCallback, useEffect, useRef, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { CompanyLogo } from '../../components/CompanyLogo'
+import { FullPostingNotice } from '../../components/FullPostingNotice'
 import { useDocumentMeta } from '../../hooks/useDocumentMeta'
 import { errorMessage, jobsApi, seekerApi, type FilterMultiParams, type SavedSearch } from '../../services/api'
 
@@ -28,7 +29,7 @@ import { useAuthStore } from '../../store/authStore'
 import { useToastStore } from '../../components/Toast'
 import { JOB_CATEGORIES } from '../../types'
 import type { Emirate, Job, JobCategory } from '../../types'
-import { labelize, money, parseSkills, relativeTime } from '../../utils/format'
+import { isThinDescription, labelize, money, parseSkills, relativeTime } from '../../utils/format'
 import { isSafeUrl } from '../../utils/url'
 
 // ── Static data ───────────────────────────────────────────────────────────────
@@ -1334,6 +1335,7 @@ function DetailPanel({ job, onSave, isSaved, isApplied, onApply }: {
       )}
 
       <JobDescriptionBlock job={job} />
+      {applyUrl && isThinDescription(job) && <FullPostingNotice href={applyUrl} sourceName={sourceLabel(job)} />}
 
       <div className="mt-10 pt-6 border-t border-[var(--border)] flex items-center justify-between text-xs text-gray-400 font-mono">
         <div className="flex items-center gap-4">
@@ -1461,6 +1463,14 @@ const JobListItem = memo(function JobListItem({
     </div>
   )
 })
+
+const SOURCE_NAMES: Record<string, string> = {
+  linkedin: 'LinkedIn', indeed: 'Indeed', naukrigulf: 'NaukriGulf', gulftalent: 'GulfTalent', bayt: 'Bayt',
+  himalayas: 'Himalayas', remoteok: 'RemoteOK',
+}
+function sourceLabel(job: Job) {
+  return job.source ? SOURCE_NAMES[job.source.toLowerCase()] ?? null : null
+}
 
 function InfoPill({ children, accent, loc, sal, li }: { children: React.ReactNode; accent?: boolean; loc?: boolean; sal?: boolean; li?: boolean }) {
   const cls = accent

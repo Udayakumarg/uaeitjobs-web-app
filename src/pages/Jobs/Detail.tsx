@@ -24,12 +24,13 @@ function LinkedinIcon({ size = 12 }: { size?: number }) {
 import { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { CompanyLogo } from '../../components/CompanyLogo'
+import { FullPostingNotice } from '../../components/FullPostingNotice'
 import { useToastStore } from '../../components/Toast'
 import { useDocumentMeta } from '../../hooks/useDocumentMeta'
 import { errorMessage, jobsApi, seekerAiApi, seekerApi } from '../../services/api'
 import { useAuthStore } from '../../store/authStore'
 import type { Job } from '../../types'
-import { labelize, money, parseSkills, relativeTime } from '../../utils/format'
+import { isThinDescription, labelize, money, parseSkills, relativeTime } from '../../utils/format'
 import { isSafeUrl } from '../../utils/url'
 
 function buildJobPostingJsonLd(job: Job): Record<string, unknown> {
@@ -401,6 +402,7 @@ export default function JobDetail() {
                 <div>
                   <h2 className="text-lg font-semibold tracking-tight text-slate-950">About the role</h2>
                   {renderBody(job.description)}
+                  {applyUrl && isThinDescription(job) && <FullPostingNotice href={applyUrl} sourceName={applySource?.name} />}
                 </div>
                 {job.requirements ? (
                   <div>
